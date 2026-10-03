@@ -16,7 +16,7 @@ export default function Navbar() {
   return (
     <header className="w-full bg-[#056F1C] sticky top-0 z-50">
       {/* Inner — constrained to 1500px */}
-      <div className="max-w-[1500px] mx-auto px-0 h-14 flex items-center gap-6">
+      <div className="max-w-[1500px] mx-auto px-0 h-[76px] flex items-center gap-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <img

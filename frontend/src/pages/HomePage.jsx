@@ -166,7 +166,7 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
         />
 
         {/* Overlay content — bottom-left, không che phần chữ/búa trong ảnh */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pb-7 flex flex-col gap-2.5 items-center w-full">
+        <div className="absolute bottom-0 left-0 pb-8 flex flex-col gap-3 items-center w-1/2">
 
           {/* Sub-text (closed / active) */}
           {subText && (
@@ -192,14 +192,14 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
           )}
 
           {/* Buttons */}
-          <div className="flex items-center gap-4 justify-center">
+          <div className="flex items-center gap-6">
             <button
               id="auction-banner-primary-btn"
               onClick={handlePrimary}
               disabled={primaryDisabled}
-              className={`px-5 py-2 rounded text-sm font-semibold transition-all shadow ${primaryGreen
-                  ? 'bg-[#056F1C] text-white hover:bg-[#045517]'
-                  : 'bg-white/25 text-white/70 cursor-pointer hover:bg-white/35'
+              className={`min-w-[200px] px-7 py-3 rounded text-base font-semibold text-center transition-all shadow ${primaryGreen
+                ? 'bg-[#056F1C] text-white hover:bg-[#045517]'
+                : 'bg-white/25 text-white/70 cursor-pointer hover:bg-white/35'
                 } ${primaryDisabled ? 'opacity-80 cursor-default' : ''}`}
             >
               {primaryLabel}
@@ -207,7 +207,7 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
             <Link
               to="/auction/about"
               id="auction-banner-learn-more-btn"
-              className="text-sm font-semibold text-white hover:underline transition-all drop-shadow"
+              className="min-w-[200px] px-7 py-3 rounded text-base font-semibold text-center border-2 border-[#056F1C] text-white bg-transparent hover:bg-[#056F1C]/20 transition-all"
             >
               Tìm hiểu thêm
             </Link>
@@ -399,69 +399,6 @@ export default function HomePage() {
           </p>
         </div>
       </section>
-
-      {/* ── 4. Footer ── */}
-      <footer className="bg-[#f0f0f0] text-gray-500">
-        <div className={`${LAYOUT} px-0 py-10`}>
-          <div className="grid grid-cols-3 gap-12 border-b border-gray-300 pb-10">
-
-            {/* Customer Service */}
-            <div>
-              <h4 className="text-gray-800 text-[10px] font-bold uppercase tracking-[0.15em] mb-4">
-                Customer Service
-              </h4>
-              <ul className="space-y-2 text-xs">
-                <li><Link to="/help/how-to-buy" className="hover:text-white transition-colors">How To Buy</Link></li>
-                <li><Link to="/help/how-to-sell" className="hover:text-white transition-colors">How To Sell</Link></li>
-                <li><Link to="/help/payment" className="hover:text-white transition-colors">Payment</Link></li>
-                <li><Link to="/help/shipping" className="hover:text-white transition-colors">Shipping</Link></li>
-                <li><Link to="/help/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-              </ul>
-            </div>
-
-            {/* About NaviShop */}
-            <div>
-              <h4 className="text-gray-800 text-[10px] font-bold uppercase tracking-[0.15em] mb-4">
-                About NaviShop
-              </h4>
-              <ul className="space-y-2 text-xs">
-                <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                <li><Link to="/policies" className="hover:text-white transition-colors">Policies</Link></li>
-              </ul>
-            </div>
-
-            {/* Follow Us */}
-            <div>
-              <h4 className="text-gray-800 text-[10px] font-bold uppercase tracking-[0.15em] mb-4">
-                Follow Us
-              </h4>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <a href="#" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <img src="/images/facebook.png" alt="Facebook" className="h-4 w-4 object-contain" />
-                    Facebook
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <img src="/images/instagram.png" alt="Instagram" className="h-4 w-4 object-contain" />
-                    Instagram
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Bottom */}
-        <div className="border-t border-gray-300 py-5 text-center text-xs leading-6 text-gray-500">
-          <p>Địa chỉ: 01 Đ. Võ Văn Ngân, Thủ Đức, Hồ Chí Minh, Việt Nam</p>
-          <p>Chăm sóc khách hàng: Gọi tổng đài NaviShop (miễn phí) ngay tại Trung tâm trợ giúp</p>
-          <p>Chịu Trách Nhiệm Quản Lý Nội Dung: Nguyễn Hoàng Lâm</p>
-          <p className="mt-1">© 2026 · Bản quyền thuộc về Navi Team</p>
-        </div>
-      </footer>
     </main>
   )
 }
