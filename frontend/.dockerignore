@@ -18,6 +18,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Build output
+dist
+
 # OS
 .DS_Store
 Thumbs.db
