@@ -1,31 +1,21 @@
 export default {
-  title: 'Các phương thức thanh toán trên NaviShop',
+  title: 'Phương thức thanh toán',
   body: `
-NaviShop dùng **ví NaviShop** cho mọi giao dịch: mua hàng, nhận tiền bán hàng và tham gia đấu giá. Hiện chưa yêu cầu thẻ ngân hàng hay tài khoản ngân hàng.
+## Ví NaviShop
 
-## Nạp tiền vào ví
-Chọn **Nạp tiền**, nhập số tiền và xác nhận. Số dư được cộng vào ví ngay lập tức. Việc nạp tiền hiện chỉ mang tính mô phỏng, chưa kết nối ngân hàng hay cổng thanh toán thật.
-
-[Ảnh: màn hình nạp tiền]
+Mọi giao dịch trên NaviShop đều thực hiện qua ví NaviShop — mua hàng, nhận tiền bán, thanh toán đấu giá. Mỗi tài khoản có một ví, dùng chung cho cả mua và bán.
 
 ## Hai loại số dư
 
-| Số dư | Ý nghĩa |
-|---|---|
-| **Khả dụng** | Số tiền bạn dùng được ngay để đặt hàng hoặc đặt giá |
-| **Đang khóa** | Số tiền đang được giữ cho lượt đặt giá bạn đang dẫn đầu trong phiên đấu giá |
+- Khả dụng: số tiền có thể dùng ngay.
+- Đang khóa: số tiền đang giữ cho lượt đặt giá bạn đang dẫn đầu trong phiên đấu giá. Khi có người đặt giá cao hơn, tiền này trả lại về khả dụng.
 
-## Ví hoạt động trong từng tình huống
-- **Mua hàng:** toàn bộ tổng thanh toán được trừ từ số dư khả dụng khi bạn đặt hàng.
-- **Đặt giá đấu giá:** hệ thống khóa đúng số tiền bạn đặt. Khi có người đặt giá cao hơn, tiền của bạn được trả lại số dư khả dụng. Khi bạn thắng, số tiền đã khóa được trừ thật.
-- **Bán hàng:** tiền bạn nhận được cộng vào số dư khả dụng.
+## Nạp tiền
 
-## Lịch sử ví
-Mục **Lịch sử ví** liệt kê mọi lần tiền ra vào ví của bạn, để bạn đối chiếu bất cứ lúc nào.
+Vào mục "Ví" trong tài khoản để nạp tiền. Hiện tại tính năng nạp tiền chỉ mang tính mô phỏng. NaviShop chưa hỗ trợ rút tiền từ ví về ngân hàng.
 
-[Ảnh: màn hình Lịch sử ví]
+## Tiền được bảo vệ khi đặt hàng
 
-## Khi tài khoản bị khóa
-Tài khoản bị khóa vẫn đăng nhập và xem được, nhưng không thể nạp tiền, mua hàng hay đặt giá, và ví không chi tiêu được cho tới khi được mở khóa.
+Khi đặt hàng, tiền bị trừ khỏi ví và NaviShop giữ hộ cho đến khi đơn kết thúc. Đơn hoàn thành thì tiền chuyển cho cửa hàng; đơn bị hủy thì tiền hoàn lại đủ về ví của bạn.
 `,
 }

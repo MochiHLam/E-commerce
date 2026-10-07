@@ -1,19 +1,21 @@
 export default {
   title: 'Thời gian giao hàng',
   body: `
-Từ lúc bạn đặt hàng đến lúc đơn hoàn thành, đơn đi qua các mốc sau. Mỗi mốc có thời hạn để không ai phải chờ vô thời hạn.
+## Thời gian cửa hàng xử lý
 
-| Mốc | Thời hạn tối đa | Nếu quá hạn |
-|---|---|---|
-| Cửa hàng xác nhận đơn | 48 giờ kể từ lúc bạn đặt hàng | Đơn tự hủy, hoàn tiền đầy đủ |
-| Cửa hàng giao cho đơn vị vận chuyển | 1 ngày kể từ lúc xác nhận | Đơn tự hủy, hoàn tiền đầy đủ |
-| Bạn xác nhận đã nhận hàng | 3 ngày kể từ lúc cửa hàng báo giao | Đơn tự hoàn thành, tiền chuyển cho cửa hàng |
+Trước khi hàng được giao, cửa hàng phải xử lý trong các mốc sau:
 
-[Ảnh: sơ đồ các mốc thời gian của một đơn hàng]
+- Xác nhận đơn trong 48 giờ kể từ lúc bạn đặt.
+- Giao cho đơn vị vận chuyển trong 1 ngày sau khi xác nhận.
 
-## Lưu ý
-- Các mốc thời hạn trên do NaviShop quy định và có thể được điều chỉnh. Mốc áp dụng cho đơn của bạn được cố định tại thời điểm bạn đặt hàng.
-- Thời gian hàng thực tế đến tay bạn phụ thuộc vào cửa hàng và đơn vị vận chuyển. Hãy theo dõi trạng thái đơn trong [Theo dõi đơn hàng](/help/mua-sam/track-order).
-- Với đơn từ đấu giá, cửa hàng cũng giao hàng theo cùng quy trình sau khi vật phẩm được chốt.
+Nếu cửa hàng không xử lý đúng hạn, đơn tự hủy và tiền hoàn về ví của bạn.
+
+## Theo dõi đơn
+
+Sau khi cửa hàng báo giao, bạn theo dõi trạng thái và mã vận đơn trong mục [Theo dõi đơn hàng](/help/shopping/track-order).
+
+## Xác nhận nhận hàng
+
+Nhận được hàng thì bấm "Đã nhận hàng". Nếu bạn không bấm trong 3 ngày kể từ lúc báo giao, đơn tự hoàn thành.
 `,
 }

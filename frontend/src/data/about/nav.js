@@ -10,9 +10,10 @@ export const ABOUT_GROUPS = [
     groupSlug: 'policies',
     label: 'Chính sách',
     items: [
-      { slug: 'terms',   label: 'Điều khoản sử dụng' },
-      { slug: 'privacy', label: 'Bảo mật thông tin' },
-      { slug: 'auction', label: 'Chính sách đấu giá' },
+      { slug: 'terms', label: 'Điều khoản Người dùng' },
+      { slug: 'privacy', label: 'Chính sách Bảo mật' },
+      { slug: 'trade', label: 'Thỏa thuận Mua bán' },
+      { slug: 'auction', label: 'Thỏa thuận Đấu giá' },
     ],
   },
 ]

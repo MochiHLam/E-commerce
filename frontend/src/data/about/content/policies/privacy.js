@@ -1,20 +1,26 @@
-export default {
-  title: 'Chính sách bảo mật thông tin',
+﻿export default {
+  title: 'Chính sách Bảo mật',
   body: `
-NaviShop cam kết bảo vệ thông tin cá nhân của bạn.
-
 ## Thông tin chúng tôi thu thập
 
-Khi đăng ký, chúng tôi thu thập họ tên, email, số điện thoại và địa chỉ giao hàng. Thông tin này chỉ dùng để cung cấp dịch vụ và liên lạc với bạn khi cần thiết.
+- Tài khoản: email, mật khẩu, tên hiển thị, giới tính, ngày sinh, số điện thoại, địa chỉ. Nếu đăng nhập bằng Google, chúng tôi nhận email và tên từ Google.
+- Giao dịch: đơn hàng, lượt đặt giá, lịch sử ví, đánh giá và báo cáo bạn gửi.
+- Cửa hàng: thông tin cửa hàng, sản phẩm và ảnh bạn đăng.
 
-## Chúng tôi không làm gì với thông tin của bạn
+## Thông tin được chia sẻ với ai
 
-- Không bán hoặc chia sẻ dữ liệu cá nhân với bên thứ ba
-- Không gửi quảng cáo ngoài ý muốn
-- Không yêu cầu mật khẩu qua email hoặc điện thoại — nếu nhận được yêu cầu như vậy, đó là lừa đảo
+- Cửa hàng bạn mua hàng: nhận họ tên, số điện thoại và địa chỉ ghi trên đơn để giao hàng.
+- Người dùng khác: thấy tên hiển thị của bạn trên đánh giá và lịch sử đặt giá.
+- Dịch vụ bên thứ ba: ảnh lưu trên Cloudinary. Khi dùng gợi ý hoặc tìm kiếm bằng mô tả, nội dung bạn nhập có thể được gửi tới dịch vụ AI (Google Gemini).
 
-## Quyền của bạn
+NaviShop không bán dữ liệu cá nhân của bạn.
 
-Bạn có thể chỉnh sửa thông tin cá nhân trong phần **Cài đặt tài khoản**. Để yêu cầu xóa tài khoản, liên hệ **nhoanglam2309@gmail.com**.
+## Bảo vệ tài khoản
+
+Mật khẩu được lưu ở dạng đã mã hóa. NaviShop không bao giờ hỏi mật khẩu của bạn qua email hay điện thoại. Mã OTP chỉ dùng để đăng ký và đặt lại mật khẩu, không chia sẻ mã này cho ai.
+
+## Dữ liệu giao dịch
+
+Sổ giao dịch ví chỉ được thêm dòng, không sửa hay xóa, để đối soát chính xác. Cần hỗ trợ về dữ liệu của bạn, liên hệ [Email hỗ trợ](/help/contact/email-support).
 `,
 }

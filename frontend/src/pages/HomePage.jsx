@@ -69,12 +69,6 @@ function CountdownBox({ value, label }) {
   )
 }
 
-// ─── AuctionBanner ────────────────────────────────────────────────────────────
-// Props:
-//   session    — { status: 'pending'|'active'|'closed', startTime?: string, _id?: string }
-//   isLoggedIn — bool
-//   isRegistered — bool (meaningful only when status === 'pending')
-//   onRegister — callback
 function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
   const status = session?.status ?? 'closed'
 

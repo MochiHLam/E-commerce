@@ -1,26 +1,32 @@
-export default {
-  title: 'Điều khoản sử dụng',
+﻿export default {
+  title: 'Điều khoản Người dùng',
   body: `
-Khi sử dụng NaviShop, bạn đồng ý tuân thủ các điều khoản dưới đây.
-
 ## Tài khoản
 
-- Người dùng phải từ **18 tuổi trở lên**
-- Thông tin đăng ký phải chính xác và đầy đủ
-- Mỗi người chỉ được sở hữu **một tài khoản**
+- Bạn phải từ 18 tuổi trở lên để đăng ký.
+- Đăng ký bằng email (xác thực qua mã OTP) hoặc tài khoản Google, kèm họ tên, giới tính, ngày sinh, địa chỉ và số điện thoại. Thông tin phải chính xác.
+- Một tài khoản dùng chung cho cả mua và bán. Muốn bán, bạn đăng ký mở cửa hàng và chờ được duyệt.
+- Chưa đăng nhập, bạn vẫn xem được trang chủ, tìm kiếm, lọc và xem chi tiết sản phẩm. Các thao tác còn lại cần đăng nhập.
 
 ## Hành vi bị cấm
 
-- Đăng sản phẩm giả, nhái hoặc vi phạm pháp luật
-- Gian lận trong đấu giá hoặc thao túng đánh giá
-- Quấy rối, spam hoặc lạm dụng chức năng báo cáo
+- Cung cấp thông tin giả mạo.
+- Đăng sản phẩm vi phạm pháp luật hoặc mô tả sai sự thật.
+- Gian lận trong đấu giá hoặc thao túng đánh giá.
+- Báo cáo hàng loạt không có căn cứ để làm ẩn nội dung của người khác.
 
-## Xử lý vi phạm
+## Báo cáo và kiểm duyệt
 
-Vi phạm có thể dẫn đến cảnh cáo, tạm khóa hoặc khóa tài khoản vĩnh viễn tùy theo mức độ.
+Bạn có thể báo cáo cửa hàng, sản phẩm hoặc đánh giá vi phạm, kèm lý do và bằng chứng. Để báo cáo, bạn cần đăng nhập, không bị khóa, đã có ít nhất một đơn hoàn thành, và không báo cáo nội dung của chính mình.
 
-## Thay đổi điều khoản
+- Các báo cáo về cùng một đối tượng được gom lại, mỗi người chỉ tính một lần.
+- Khi đủ số người báo cáo theo ngưỡng của NaviShop, đối tượng tạm ẩn với người dùng trong lúc chờ kiểm duyệt. Chủ sở hữu vẫn thấy, kèm nhãn "đang được xem xét".
+- Kiểm duyệt viên quyết định: bỏ qua (hiển thị lại), cảnh cáo (hiển thị lại và gửi cảnh cáo cho chủ), ẩn hoặc khóa tạm (tiếp tục ẩn), hoặc chuyển quản trị viên. Khóa vĩnh viễn cửa hàng chỉ quản trị viên được quyết định.
+- Đánh giá bị ẩn không được tính vào số đánh giá và điểm sao trung bình.
+- Bạn nhận thông báo khi báo cáo của mình được xử lý.
 
-NaviShop có thể cập nhật điều khoản bất kỳ lúc nào và sẽ thông báo trước khi áp dụng. Tiếp tục sử dụng dịch vụ đồng nghĩa với việc chấp nhận điều khoản mới.
+## Tài khoản bị khóa
+
+Tài khoản bị khóa vẫn đăng nhập và xem được, nhưng không mua hàng, đặt giá, báo cáo, nạp tiền hay bình luận được, và ví không chi tiêu được. Cửa hàng của tài khoản đó bị khóa tạm, các đơn đang xử lý vẫn được tiếp tục.
 `,
 }

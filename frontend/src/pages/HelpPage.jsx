@@ -9,7 +9,7 @@ const LAYOUT = 'max-w-[1500px] mx-auto'
 // Trang 404 nhỏ dùng riêng trong help
 function HelpNotFound() {
   const firstGroup = HELP_GROUPS[0]
-  const firstItem  = firstGroup.items[0]
+  const firstItem = firstGroup.items[0]
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 py-24 text-center">
       <span className="text-5xl">🔍</span>
@@ -25,7 +25,6 @@ function HelpNotFound() {
   )
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function HelpPage() {
   const { groupSlug, itemSlug } = useParams()
 
