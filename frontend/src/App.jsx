@@ -9,6 +9,8 @@ import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import OtpPage from '@/pages/OtpPage'
 import OnboardPage from '@/pages/OnboardPage'
+import AuctionAboutPage from '@/pages/AuctionAboutPage'
+import AuctionHistoryDetailPage from '@/pages/AuctionHistoryDetailPage'
 
 // Trang chưa hoàn thiện
 function ComingSoon({ title }) {
@@ -42,16 +44,19 @@ function Layout() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
 
+  const isAuctionPage = pathname.startsWith('/auction')
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Navbar />
+      <Navbar variant={isAuctionPage ? 'auction' : 'default'} />
       <div className="flex-1 flex flex-col">
         <Routes>
           <Route path="/"              element={<HomePage />} />
           <Route path="/products"      element={<ComingSoon title="Danh sách sản phẩm" />} />
           <Route path="/search"        element={<ComingSoon title="Kết quả tìm kiếm" />} />
           <Route path="/cart"          element={<ComingSoon title="Giỏ hàng" />} />
-          <Route path="/auction/about" element={<ComingSoon title="Giới thiệu đấu giá" />} />
+          <Route path="/auction/about" element={<AuctionAboutPage />} />
+          <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />
 
           {/* Help pages */}
           <Route path="/help"                     element={<HelpPage />} />
@@ -62,6 +67,7 @@ function Layout() {
           <Route path="/info"                     element={<InfoPage defaultGroup="about" />} />
           <Route path="/info/:groupSlug"           element={<InfoPage defaultGroup="about" />} />
           <Route path="/info/:groupSlug/:itemSlug" element={<InfoPage defaultGroup="about" />} />
+          <Route path="/auction/:id" element={<ComingSoon title="Phòng đấu giá" />} />
 
           {/* Redirect cũ */}
           <Route path="/about"    element={<Navigate to="/info/about/overview" replace />} />

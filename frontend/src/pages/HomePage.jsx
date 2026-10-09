@@ -153,7 +153,7 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
       <div className="relative select-none">
         {/* Ảnh banner full-width */}
         <img
-          src="/images/auction_banner.png"
+          src="/images/auction_banner.webp"
           alt="Phiên đấu giá NaviShop"
           className="w-full block"
           draggable={false}

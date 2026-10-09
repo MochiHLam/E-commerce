@@ -41,6 +41,7 @@ export const HELP_GROUPS = [
     label: 'Liên hệ hỗ trợ',
     items: [
       { slug: 'email-support', label: 'Email hỗ trợ' },
+      { slug: 'report',        label: 'Báo cáo vi phạm' },
     ],
   },
 ]

@@ -1,14 +1,20 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // TODO: gọi API đăng nhập
+    // TODO: gọi API đăng nhập, chỉ login() khi API trả token thật
+    login('mock-token')
+    navigate(location.state?.returnTo ?? '/', { replace: true })
   }
 
   return (
@@ -18,7 +24,7 @@ export default function LoginPage() {
         {/* ── Left 60%: Auth Banner — sát mép trái ── */}
         <div className="w-[60%] shrink-0 flex items-center justify-center pl-[210px] py-12">
           <img
-            src="/images/auth_banner.png"
+            src="/images/auth_banner.webp"
             alt="NaviShop auth banner"
             className="w-full object-contain drop-shadow-2xl"
           />

@@ -16,6 +16,7 @@ import shippingTime     from './shipping/shipping-time'
 import shippingFee      from './shipping/shipping-fee'
 
 import emailSupport     from './contact/email-support'
+import report           from './contact/report'
 
 export const CONTENT_MAP = {
   'shopping/find-product':      findProduct,
@@ -36,4 +37,5 @@ export const CONTENT_MAP = {
   'shipping/shipping-fee':      shippingFee,
 
   'contact/email-support':      emailSupport,
+  'contact/report':             report,
 }
