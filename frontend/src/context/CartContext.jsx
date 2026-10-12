@@ -9,9 +9,10 @@ export function CartProvider({ children }) {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === product.id)
       if (existing) {
-        return prev.map((i) =>
-          i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
-        )
+        return [
+          ...prev.filter((i) => i.id !== product.id),
+          { ...existing, ...product, quantity: existing.quantity + 1 },
+        ]
       }
       return [...prev, { ...product, quantity: 1 }]
     })

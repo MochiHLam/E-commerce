@@ -11,6 +11,10 @@ import OtpPage from '@/pages/OtpPage'
 import OnboardPage from '@/pages/OnboardPage'
 import AuctionAboutPage from '@/pages/AuctionAboutPage'
 import AuctionHistoryDetailPage from '@/pages/AuctionHistoryDetailPage'
+import AuctionHistoryItemPage from '@/pages/AuctionHistoryItemPage'
+import AuctionSessionPage from '@/pages/AuctionSessionPage'
+import AuctionSessionItemPage from '@/pages/AuctionSessionItemPage'
+import RequireRole from '@/components/RequireRole'
 
 // Trang chưa hoàn thiện
 function ComingSoon({ title }) {
@@ -53,10 +57,21 @@ function Layout() {
         <Routes>
           <Route path="/"              element={<HomePage />} />
           <Route path="/products"      element={<ComingSoon title="Danh sách sản phẩm" />} />
+          {/* TODO: wrap the real search page in RequireAuth and preserve the full URL as returnTo. */}
           <Route path="/search"        element={<ComingSoon title="Kết quả tìm kiếm" />} />
           <Route path="/cart"          element={<ComingSoon title="Giỏ hàng" />} />
+          <Route path="/account"       element={<ComingSoon title="My Account" />} />
           <Route path="/auction/about" element={<AuctionAboutPage />} />
           <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />
+          <Route path="/auction/history/:sessionId/items/:itemId" element={<AuctionHistoryItemPage />} />
+          <Route path="/auction/:id" element={<AuctionSessionPage />} />
+          <Route path="/auction/:id/items/:itemId" element={<AuctionSessionItemPage />} />
+          <Route element={<RequireRole roles={['mod']} />}>
+            <Route path="/mod/*" element={<ComingSoon title="Dashboard kiểm duyệt" />} />
+          </Route>
+          <Route element={<RequireRole roles={['admin']} />}>
+            <Route path="/admin/*" element={<ComingSoon title="Dashboard quản trị" />} />
+          </Route>
 
           {/* Help pages */}
           <Route path="/help"                     element={<HelpPage />} />
@@ -67,7 +82,6 @@ function Layout() {
           <Route path="/info"                     element={<InfoPage defaultGroup="about" />} />
           <Route path="/info/:groupSlug"           element={<InfoPage defaultGroup="about" />} />
           <Route path="/info/:groupSlug/:itemSlug" element={<InfoPage defaultGroup="about" />} />
-          <Route path="/auction/:id" element={<ComingSoon title="Phòng đấu giá" />} />
 
           {/* Redirect cũ */}
           <Route path="/about"    element={<Navigate to="/info/about/overview" replace />} />

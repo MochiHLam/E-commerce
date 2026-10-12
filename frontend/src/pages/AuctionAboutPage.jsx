@@ -68,8 +68,9 @@ function Countdown({ startTime }) {
   )
 }
 
-function HeroSection({ session }) {
+function HeroSection({ session, isRegistered }) {
   const status = session?.status ?? 'closed'
+  const sessionPath = session?.id ? `/auction/${session.id}` : null
 
   return (
     <section className="relative overflow-hidden bg-[#056F1C]">
@@ -92,14 +93,26 @@ function HeroSection({ session }) {
             <div className="mt-8 flex flex-col items-start gap-4">
               <p className="text-sm font-medium text-white/75">Phiên sẽ bắt đầu sau:</p>
               <Countdown startTime={session.startTime} />
-              <AuctionCTA variant="white" label="Đăng ký tham gia" onClick={() => alert('Đăng ký thành công!')} />
+              {isRegistered ? (
+                sessionPath
+                  ? <Link to={sessionPath}><AuctionCTA variant="white" label="Xem trước vật phẩm đấu giá" /></Link>
+                  : <AuctionCTA variant="white" label="Xem trước vật phẩm đấu giá" />
+              ) : (
+                sessionPath
+                  ? <Link to={sessionPath}><AuctionCTA variant="white" label="Đăng ký tham gia" /></Link>
+                  : <AuctionCTA variant="white" label="Đăng ký tham gia" />
+              )}
             </div>
           )}
 
           {status === 'active' && (
-            <div className="mt-8">
-              <p className="mb-4 text-sm font-medium text-white/75">Phiên hiện đang diễn ra.</p>
-              <AuctionCTA variant="white" label="Tham gia đấu giá" onClick={() => alert('Chuyển đến phiên đấu giá!')} />
+            <div className="mt-8 flex flex-col items-start gap-4">
+              <p className="text-sm font-medium text-white/75">Phiên hiện đang diễn ra.</p>
+              {isRegistered && sessionPath ? (
+                <Link to={sessionPath}><AuctionCTA variant="white" label="Tham gia đấu giá" /></Link>
+              ) : (
+                <AuctionCTA variant="gray" label="Tham gia đấu giá" disabled />
+              )}
             </div>
           )}
 
@@ -117,10 +130,10 @@ function HeroSection({ session }) {
 
 function StatsStrip() {
   const stats = [
-    ['5 phút', 'Mỗi vật phẩm'],
-    ['1 phút', 'Nghỉ giữa hai món'],
-    ['15 giây', 'Gia hạn cuối giờ'],
-    ['24 giờ', 'Thời gian đăng ký'],
+    ['30 phút', 'Mỗi vật phẩm'],
+    ['3 phút', 'Gia hạn cuối giờ'],
+    ['7 ngày', 'Thời gian đăng ký'],
+    ['10+', 'Vật phẩm mỗi phiên'],
   ]
 
   return (
@@ -173,12 +186,14 @@ function RulesSection() {
           <h2 className="mt-3 text-3xl font-bold text-gray-900">Những điều bạn cần biết</h2>
         </div>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-10 max-w-3xl divide-y divide-gray-200">
           {rules.map((rule) => (
-            <div key={rule.title} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <span className="text-3xl">{rule.icon}</span>
-              <h3 className="mt-4 font-bold text-gray-900">{rule.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-600">{rule.description}</p>
+            <div key={rule.title} className="py-7 first:pt-0">
+              <h3 className="flex items-center gap-2.5 text-base font-bold text-gray-900">
+                <span aria-hidden="true">{rule.icon}</span>
+                {rule.title}
+              </h3>
+              <p className="mt-3 leading-relaxed text-gray-600">{rule.description}</p>
             </div>
           ))}
         </div>
@@ -428,14 +443,18 @@ function FaqSection() {
 
 export default function AuctionAboutPage() {
   const { isLoggedIn } = useAuth()
+
+  // MOCK: đổi các giá trị này để test UI
   const mockSession = {
-    status: 'active',
+    id: 'ses_mock',            // ID phiên → /auction/ses_mock
+    status: 'pending',         // 'pending' | 'active' | 'closed'
     startTime: new Date(Date.now() + 3600000).toISOString(),
+    isRegistered: true,        // true → đã đăng ký, false → chưa
   }
 
   return (
     <main className="bg-white">
-      <HeroSection session={mockSession} />
+      <HeroSection session={mockSession} isRegistered={mockSession.isRegistered} />
       <StatsStrip />
       <StepsSection />
       <RulesSection />

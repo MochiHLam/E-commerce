@@ -1,20 +1,36 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { MOCK_ACCOUNTS } from '@/data/mockAccounts'
+
+const ROLE_HOME = { user: '/', mod: '/mod', admin: '/admin' }
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // TODO: gọi API đăng nhập, chỉ login() khi API trả token thật
-    login('mock-token')
-    navigate(location.state?.returnTo ?? '/', { replace: true })
+    // TODO: thay bằng API đăng nhập thật. Mock chỉ chạy khi dev.
+    const account = import.meta.env.DEV
+      ? MOCK_ACCOUNTS.find((candidate) =>
+          candidate.email === email.trim().toLowerCase() && candidate.password === password)
+      : null
+
+    if (!account) {
+      setError('Email hoặc mật khẩu không đúng')
+      return
+    }
+
+    const user = { ...account }
+    delete user.password
+    login(user)
+    navigate(location.state?.returnTo ?? ROLE_HOME[user.role], { replace: true })
   }
 
   return (
@@ -99,6 +115,7 @@ export default function LoginPage() {
               </div>
 
               {/* Submit */}
+              {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
               <button
                 id="login-submit-btn"
                 type="submit"
@@ -126,6 +143,28 @@ export default function LoginPage() {
               <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" className="h-4 w-4" />
               Tiếp tục với Google
             </button>
+
+            {import.meta.env.DEV && (
+              <div className="mt-5 rounded-lg border border-dashed border-gray-300 p-3 text-xs text-gray-500">
+                <p className="mb-2 font-semibold">Tài khoản thử (chỉ hiện khi dev)</p>
+                <div className="flex flex-wrap gap-2">
+                  {MOCK_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.id}
+                      type="button"
+                      onClick={() => {
+                        setEmail(account.email)
+                        setPassword(account.password)
+                        setError('')
+                      }}
+                      className="rounded border border-gray-300 px-2 py-1 hover:bg-gray-50"
+                    >
+                      {account.role}{account.hasShop ? ' + shop' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

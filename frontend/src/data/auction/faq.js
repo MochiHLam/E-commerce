@@ -1,42 +1,47 @@
 export default [
   {
-    question: 'Tôi đăng ký sau khi phiên đã bắt đầu được không?',
+    question: 'Tôi có xem được phiên khi chưa đăng ký không?',
     answer:
-      'Không. Sau khi NaviShop mở phiên, bạn có 24 giờ để đăng ký, và chỉ đăng ký được trước lúc phiên bắt đầu. Nếu lỡ mất, bạn hãy đợi phiên kế tiếp và nhớ đăng ký sớm hơn.',
+      'Có. Khi phiên đang ở giai đoạn xem trước, mọi thành viên đã đăng nhập đều xem được toàn bộ vật phẩm, giá, thứ tự, giờ lên sàn và phí đăng ký. Bạn xem rồi mới quyết định có đăng ký hay không.',
   },
   {
-    question: 'Tiền bị giữ khi đặt giá bao giờ được trả lại?',
+    question: 'Phí đăng ký là bao nhiêu, và đi đâu?',
     answer:
-      'Ngay khi có người khác đặt giá cao hơn bạn, số tiền bạn đã đặt được trả về số dư khả dụng. Còn nếu bạn đang dẫn đầu cho đến hết giờ và thắng, số tiền đó sẽ được trừ để thanh toán vật phẩm.',
+      'NaviShop đặt mức phí cho từng phiên, thường nhỏ so với giá trị vật phẩm, và có phiên miễn phí. Phí được trừ vào ví của bạn ngay khi đăng ký và thuộc về NaviShop. Mức phí hiển thị rõ trước khi bạn xác nhận.',
   },
   {
-    question: 'Tôi đang dẫn đầu thì có đặt thêm được không?',
+    question: 'Tôi hủy đăng ký được không?',
     answer:
-      'Không, và bạn cũng không cần làm vậy vì giá của bạn đang là cao nhất. Bạn chỉ có thể bấm mua ngay nếu muốn chốt luôn vật phẩm, khi đó hệ thống chỉ giữ thêm phần chênh so với số bạn đã đặt.',
+      'Được, trong thời gian xem trước: bạn hủy lúc nào cũng nhận lại đủ phí và có thể đăng ký lại nếu đổi ý. Khi phiên đã bắt đầu thì không hủy được và phí không được hoàn.',
   },
   {
-    question: 'Nếu nhiều người đặt giá cùng một lúc thì sao?',
+    question: 'Nếu NaviShop hủy phiên thì sao?',
     answer:
-      'Chỉ một lượt hợp lệ được chấp nhận. Nếu lượt của bạn không được nhận, bạn sẽ cần đặt lại với mức giá mới. Tiền của lượt không được nhận không bị giữ.',
+      'NaviShop chỉ hủy được phiên khi nó chưa bắt đầu. Khi đó mọi người đã đăng ký đều được hoàn đủ phí và nhận thông báo. Phiên đã bắt đầu thì NaviShop không dừng hay can thiệp giữa chừng.',
   },
   {
-    question: 'Nếu không ai đặt giá cho một vật phẩm thì sao?',
+    question: 'Nhiều món đấu cùng lúc thì tiền tính thế nào?',
     answer:
-      'Vật phẩm đó không được bán và quay về kho, chờ được đưa vào một phiên sau. Với người bán, vật phẩm không mất đi mà chỉ chờ lượt đấu tiếp theo.',
+      'Với mỗi món bạn đang dẫn đầu, số tiền bạn đặt được giữ lại, và các khoản này cộng dồn. Món nào bạn bị vượt giá thì tiền của món đó quay về số dư ngay. Nếu ví không đủ cho một lượt mới, hệ thống sẽ báo số dư khả dụng còn lại.',
   },
   {
-    question: 'Thắng đấu giá rồi tôi có hủy hoặc trả hàng được không?',
+    question: 'Có người đặt giá phút chót thì sao?',
     answer:
-      'Không. Đấu giá là miễn hủy, miễn trả: kết quả không thể hủy và không hoàn tiền. Vì vậy bạn nên cân nhắc kỹ trước khi đặt giá hoặc bấm mua ngay.',
+      'Thời gian kết thúc của món đó được cộng thêm, ví dụ món 30 phút được cộng 3 phút tính từ lúc có người đặt. Các món khác không bị ảnh hưởng, vì mỗi món có giờ riêng. Mỗi lần cộng giờ, bước giá của món đó cũng tăng theo hệ số của phiên.',
   },
   {
-    question: 'Sau khi thắng, tôi cần làm gì và ví không đủ tiền ship thì sao?',
+    question: 'Nếu không ai đặt giá cho một món thì sao?',
     answer:
-      'Bạn không cần làm gì để tạo đơn, hệ thống tự tạo. Khi cửa hàng bấm giao, phí vận chuyển được trừ từ ví của bạn. Nếu ví chưa đủ, cửa hàng chưa giao được và bạn sẽ nhận thông báo nạp thêm, nên hãy giữ đủ số dư sau khi thắng. Khi nhận hàng, bạn bấm xác nhận đã nhận, hoặc đơn tự hoàn thành sau 3 ngày kể từ lúc cửa hàng báo giao.',
+      'Món đó không được bán và quay về kho, chờ được đưa vào một phiên sau. Với người bán, vật phẩm không mất đi mà chỉ chờ lượt đấu tiếp theo.',
   },
   {
-    question: 'NaviShop có thể hủy hoặc kết thúc sớm một phiên không?',
+    question: 'Thắng rồi tôi có hủy hoặc trả hàng được không, và phí ship thế nào?',
     answer:
-      'Có. NaviShop có thể hủy phiên khi còn đang chờ, và kết thúc sớm phiên trong lúc giải lao giữa hai vật phẩm. Vật phẩm đã đấu xong giữ nguyên kết quả, còn những vật phẩm chưa tới lượt sẽ quay về kho.',
+      'Không. Đấu giá là miễn hủy, miễn trả: kết quả không thể hủy và không hoàn tiền. Đơn hàng tự tạo, và khi cửa hàng bấm giao thì phí vận chuyển được trừ từ ví của bạn. Nếu ví chưa đủ, cửa hàng chưa giao được và bạn sẽ nhận thông báo nạp thêm. Khi nhận hàng bạn bấm xác nhận, hoặc đơn tự hoàn thành sau 3 ngày kể từ lúc cửa hàng báo giao.',
+  },
+  {
+    question: 'Khi nào phiên kết thúc, và xem kết quả ở đâu?',
+    answer:
+      'Phiên tự đóng khi mọi vật phẩm đã đấu xong. Sau đó bạn xem lại kết quả từng món ở mục Lịch sử phía trên, gồm giá trúng, số lượt đặt và diễn biến đặt giá.',
   },
 ]

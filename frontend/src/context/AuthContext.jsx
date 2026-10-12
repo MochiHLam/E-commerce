@@ -1,48 +1,49 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-const TOKEN_KEY = 'token'
+const STORAGE_KEY = 'auth_user'
 const AuthContext = createContext(null)
 
-function readToken() {
+function readUser() {
   try {
-    return localStorage.getItem(TOKEN_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
   } catch {
     return null
   }
 }
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(readToken)
+  const [user, setUser] = useState(readUser)
 
-  const login = useCallback((newToken) => {
+  const login = useCallback((nextUser) => {
     try {
-      localStorage.setItem(TOKEN_KEY, newToken)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
     } catch {
       // Keep the session in memory when storage is unavailable.
     }
-    setToken(newToken)
+    setUser(nextUser)
   }, [])
 
   const logout = useCallback(() => {
     try {
-      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(STORAGE_KEY)
     } catch {
       // The in-memory session is still cleared below.
     }
-    setToken(null)
+    setUser(null)
   }, [])
 
   useEffect(() => {
     const onStorage = (event) => {
-      if (event.key === TOKEN_KEY) setToken(event.newValue)
+      if (event.key === STORAGE_KEY) setUser(readUser())
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
   const value = useMemo(
-    () => ({ token, isLoggedIn: Boolean(token), login, logout }),
-    [token, login, logout],
+    () => ({ user, role: user?.role ?? 'guest', isLoggedIn: Boolean(user), login, logout }),
+    [user, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

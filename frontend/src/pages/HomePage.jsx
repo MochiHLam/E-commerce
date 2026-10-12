@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LAYOUT = 'max-w-[1500px] mx-auto'
@@ -71,6 +72,7 @@ function CountdownBox({ value, label }) {
 
 function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
   const status = session?.status ?? 'closed'
+  const navigate = useNavigate()
 
   // Countdown h/m/s
   const [hh, setHh] = useState('00')
@@ -102,7 +104,7 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
     primaryLabel = 'Đăng ký Tham gia'
     if (!isLoggedIn) {
       primaryGreen = true
-      primaryOnClick = () => { window.location.href = '/login' }
+      primaryOnClick = () => navigate('/login', { state: { returnTo: '/' } })
     } else {
       primaryGreen = false
       primaryPopupMsg = 'Hiện chưa có phiên đấu giá nào sắp diễn ra. Quay lại sau để không bỏ lỡ nhé!'
@@ -111,7 +113,7 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
     if (!isLoggedIn) {
       primaryLabel = 'Đăng ký Tham gia'
       primaryGreen = true
-      primaryOnClick = () => { window.location.href = '/login' }
+      primaryOnClick = () => navigate('/login', { state: { returnTo: '/' } })
     } else if (!isRegistered) {
       primaryLabel = 'Đăng ký Tham gia'
       primaryGreen = true
@@ -126,13 +128,13 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
     primaryLabel = 'Tham gia đấu giá'
     if (!isLoggedIn) {
       primaryGreen = true
-      primaryOnClick = () => { window.location.href = '/login' }
+      primaryOnClick = () => navigate('/login', { state: { returnTo: '/' } })
     } else if (!isRegistered) {
       primaryGreen = false
       primaryPopupMsg = 'Phiên này đã bắt đầu và bạn chưa đăng ký tham gia trước đó. Hẹn gặp bạn ở phiên đấu giá kế tiếp!'
     } else {
       primaryGreen = true
-      primaryOnClick = () => { window.location.href = `/auction/${session._id}` }
+      primaryOnClick = () => navigate(`/auction/${session.id}`)
     }
   }
 
@@ -237,8 +239,9 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
 // Layout: 2 hàng × 8 cột = 16 item hiển thị mặc định.
 // Item 17+ nằm ở cột 9+ (off-screen), cuộn sang phải bằng nút >.
 // gridAutoColumns: calc(100% / 8) → mỗi cột = 1/8 container, scroll-snap mỗi trang.
-function CategoryCarousel({ categories }) {
+function CategoryCarousel({ categories, isLoggedIn }) {
   const scrollRef = useRef(null)
+  const navigate = useNavigate()
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(false)
 
@@ -303,6 +306,14 @@ function CategoryCarousel({ categories }) {
           <Link
             key={cat.id}
             to={`/search?category=${encodeURIComponent(cat.name)}`}
+            onClick={(event) => {
+              if (!isLoggedIn) {
+                event.preventDefault()
+                navigate('/login', {
+                  state: { returnTo: `/search?category=${encodeURIComponent(cat.name)}` },
+                })
+              }
+            }}
             id={`category-${cat.id}`}
             className="flex flex-col items-center gap-2 py-3 group"
             style={{
@@ -336,13 +347,13 @@ function CategoryCarousel({ categories }) {
 
 // ─── HomePage ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
+  const { isLoggedIn } = useAuth()
   // TODO: thay bằng API call
   const mockSession = {
     status: 'pending', // 'pending' | 'active' | 'closed'
     startTime: new Date(Date.now() + 23 * 3600 * 1000 + 59 * 60 * 1000 + 59 * 1000).toISOString(),
-    _id: 'mock-session-id',
+    id: 'mock-session-id',
   }
-  const isLoggedIn = false
   const isRegistered = false
 
   return (
@@ -368,7 +379,7 @@ export default function HomePage() {
             <p className="text-[18px] font-bold text-gray-400 tracking-[0.2em] mb-4 uppercase">
               Categories
             </p>
-            <CategoryCarousel categories={CATEGORIES} />
+            <CategoryCarousel categories={CATEGORIES} isLoggedIn={isLoggedIn} />
           </div>
         </div>
       </section>
