@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft, Clock3, ImageIcon } from 'lucide-react'
-import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
+import { Link, useParams } from 'react-router-dom'
 import { getMockSession } from '@/data/auction/historyMock'
 import { ITEM_STATUS, formatDateTime, formatShortDateTime, formatVND, getItemStatus } from '@/lib/auction'
 
@@ -23,12 +22,7 @@ function NotFoundState() {
 
 export default function AuctionHistoryDetailPage() {
   const { sessionId } = useParams()
-  const { pathname } = useLocation()
-  const { isLoggedIn } = useAuth()
   const [filter, setFilter] = useState('all')
-
-  // Guest không xem được phiên đấu giá: chuyển sang đăng nhập rồi quay lại đúng trang này
-  if (!isLoggedIn) return <Navigate to="/login" replace state={{ returnTo: pathname }} />
 
   // TODO: thay bằng GET /api/auction/sessions/:sessionId/result (404 -> NotFoundState)
   const session = getMockSession(sessionId)
@@ -64,7 +58,6 @@ export default function AuctionHistoryDetailPage() {
           </div>
           <p className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
             <span className="inline-flex items-center gap-1.5"><Clock3 className="h-4 w-4 text-gray-400" />Bắt đầu: {formatDateTime(session.startTime)}</span>
-            <span className="inline-flex items-center gap-1.5"><Clock3 className="h-4 w-4 text-gray-400" />Kết thúc: {formatDateTime(session.closedAt)}</span>
           </p>
         </header>
 

@@ -9,12 +9,14 @@ import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import OtpPage from '@/pages/OtpPage'
 import OnboardPage from '@/pages/OnboardPage'
+import RoleLoginPage from '@/pages/RoleLoginPage'
 import AuctionAboutPage from '@/pages/AuctionAboutPage'
 import AuctionHistoryDetailPage from '@/pages/AuctionHistoryDetailPage'
 import AuctionHistoryItemPage from '@/pages/AuctionHistoryItemPage'
 import AuctionSessionPage from '@/pages/AuctionSessionPage'
 import AuctionSessionItemPage from '@/pages/AuctionSessionItemPage'
 import RequireRole from '@/components/RequireRole'
+import RequireAuth from '@/components/RequireAuth'
 
 // Trang chưa hoàn thiện
 function ComingSoon({ title }) {
@@ -62,12 +64,15 @@ function Layout() {
           <Route path="/cart"          element={<ComingSoon title="Giỏ hàng" />} />
           <Route path="/account"       element={<ComingSoon title="My Account" />} />
           <Route path="/auction/about" element={<AuctionAboutPage />} />
-          <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />
-          <Route path="/auction/history/:sessionId/items/:itemId" element={<AuctionHistoryItemPage />} />
-          <Route path="/auction/:id" element={<AuctionSessionPage />} />
-          <Route path="/auction/:id/items/:itemId" element={<AuctionSessionItemPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />
+            <Route path="/auction/history/:sessionId/items/:itemId" element={<AuctionHistoryItemPage />} />
+            <Route path="/auction/:id" element={<AuctionSessionPage />} />
+            <Route path="/auction/:id/items/:itemId" element={<AuctionSessionItemPage />} />
+          </Route>
           <Route element={<RequireRole roles={['mod']} />}>
-            <Route path="/mod/*" element={<ComingSoon title="Dashboard kiểm duyệt" />} />
+            <Route path="/moderator/*" element={<ComingSoon title="Dashboard kiểm duyệt" />} />
+            <Route path="/mod/*" element={<Navigate to="/moderator/dashboard" replace />} />
           </Route>
           <Route element={<RequireRole roles={['admin']} />}>
             <Route path="/admin/*" element={<ComingSoon title="Dashboard quản trị" />} />
@@ -99,6 +104,8 @@ function App() {
       <Routes>
         {/* Auth pages — layout riêng, truyền page trực tiếp qua children */}
         <Route path="/login"             element={<AuthLayout><LoginPage /></AuthLayout>} />
+        <Route path="/admin"             element={<RoleLoginPage role="admin" />} />
+        <Route path="/moderator"         element={<RoleLoginPage role="mod" />} />
         <Route path="/register"          element={<AuthLayout><RegisterPage /></AuthLayout>} />
         <Route path="/register/verify"   element={<AuthLayout><OtpPage /></AuthLayout>} />
         <Route path="/register/onboard"  element={<AuthLayout><OnboardPage /></AuthLayout>} />

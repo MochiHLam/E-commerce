@@ -1,56 +1,237 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Hash, ImageIcon, Layers, Tag, TrendingUp, Trophy, Wallet } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Hash, Minus, Plus, Tag, Trophy, X } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/components/AuctionItemLayout'
+import { useAuth } from '@/context/AuthContext'
 import { getMockLiveItem } from '@/data/auction/sessionMock'
 import { SESSION_ITEM_STATUS, formatShortDateTime, formatVND } from '@/lib/auction'
 
-const LAYOUT = 'max-w-[860px] mx-auto px-5'
+const LAYOUT = 'max-w-[1280px] mx-auto px-5'
 
-// ─── Countdown ────────────────────────────────────────────────────────────────
-function useCountdown(endTime) {
-  const [diff, setDiff] = useState(() => Math.max(0, new Date(endTime) - Date.now()))
-  useEffect(() => {
-    if (!endTime) return
-    const tick = () => setDiff(Math.max(0, new Date(endTime) - Date.now()))
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [endTime])
-  const h = String(Math.floor(diff / 3600000)).padStart(2, '0')
-  const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0')
-  const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0')
-  return { h, m, s, done: diff === 0 }
+function formatBidTime(iso) {
+  return new Date(iso).toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+  })
 }
 
-function LiveCountdown({ endTime }) {
-  const { h, m, s, done } = useCountdown(endTime)
-  if (done) return <span className="text-base font-bold text-red-600">Đã kết thúc</span>
-  return (
-    <span className="inline-flex items-center gap-1.5 text-base font-bold text-amber-700">
-      <Clock className="h-4 w-4" />
-      {h !== '00' ? `${h}:` : ''}{m}:{s}
-    </span>
-  )
+const DIGIT_WORDS = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín']
+const NUMBER_UNITS = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ']
+
+function readThreeDigits(value, includeHundreds) {
+  const hundreds = Math.floor(value / 100)
+  const tens = Math.floor((value % 100) / 10)
+  const units = value % 10
+  const words = []
+
+  if (hundreds > 0 || includeHundreds) words.push(`${DIGIT_WORDS[hundreds]} trăm`)
+  if (tens > 1) {
+    words.push(`${DIGIT_WORDS[tens]} mươi`)
+    if (units === 1) words.push('mốt')
+    else if (units === 4) words.push('tư')
+    else if (units === 5) words.push('lăm')
+    else if (units > 0) words.push(DIGIT_WORDS[units])
+  } else if (tens === 1) {
+    words.push('mười')
+    if (units > 0) words.push(units === 5 ? 'lăm' : DIGIT_WORDS[units])
+  } else if (units > 0) {
+    if (hundreds > 0 || includeHundreds) words.push('lẻ')
+    words.push(DIGIT_WORDS[units])
+  }
+
+  return words.join(' ')
+}
+
+function amountInWords(amount) {
+  if (!Number.isSafeInteger(amount) || amount < 0) return ''
+  if (amount === 0) return 'Không đồng'
+
+  const groups = []
+  for (let remaining = amount; remaining > 0; remaining = Math.floor(remaining / 1000)) {
+    groups.push(remaining % 1000)
+  }
+
+  return `${groups
+    .map((group, index) => group > 0
+      ? `${readThreeDigits(group, index < groups.length - 1)} ${NUMBER_UNITS[index]}`.trim()
+      : '')
+    .filter(Boolean)
+    .reverse()
+    .join(' ')} đồng`
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function DataCard({ icon: Icon, label, value, strong }) {
-  return (
-    <div className="flex items-start justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4">
-      <div>
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className={`mt-1 text-base font-bold ${strong ? 'text-[#056F1C]' : 'text-gray-900'}`}>{value}</p>
-      </div>
-      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-gray-300" />
-    </div>
-  )
-}
+function BiddingPanel({ item, className = 'mt-6' }) {
+  const { user } = useAuth()
+  const [currentPrice, setCurrentPrice] = useState(item.currentPrice ?? item.startingPrice)
+  const [bids, setBids] = useState(item.bids ?? [])
+  const [stepMultiplier, setStepMultiplier] = useState(1)
+  const [showAllBids, setShowAllBids] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const bidIncrement = item.baseBidIncrement * stepMultiplier
+  const nextBid = currentPrice + bidIncrement
+  const recentBids = [...bids].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-function CardGroup({ title, children }) {
+  useEffect(() => {
+    if (!showAllBids) return
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setShowAllBids(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [showAllBids])
+
+  const handleBid = (event) => {
+    event.preventDefault()
+    setCurrentPrice(nextBid)
+    setBids((currentBids) => [
+      {
+        id: `bid_user_${Date.now()}`,
+        amount: nextBid,
+        bidderDisplay: user?.id ?? 'usr•••',
+        createdAt: new Date().toISOString(),
+      },
+      ...currentBids,
+    ])
+    setError('')
+    setNotice(`Bạn đã trả giá ${formatVND(nextBid)} thành công.`)
+  }
+
   return (
-    <div className="mt-6">
-      {title && <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">{title}</p>}
-      <div className="grid grid-cols-2 gap-3">{children}</div>
+    <div className={`${className} space-y-5`}>
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+          <div>
+            <h2 className="font-bold text-gray-900">Diễn biến cuộc đấu giá</h2>
+            <p className="mt-0.5 text-xs text-gray-500">{bids.length} lượt trả giá</p>
+          </div>
+          {bids.length > 3 && (
+            <button
+              type="button"
+              onClick={() => setShowAllBids(true)}
+              aria-haspopup="dialog"
+              className="shrink-0 text-sm font-semibold text-[#056F1C] hover:underline"
+            >
+              Xem tất cả
+            </button>
+          )}
+        </div>
+        <div className="divide-y divide-gray-100 px-5">
+          {recentBids.slice(0, 3).map((bid, index) => (
+            <div key={bid.id} className="flex items-center justify-between gap-4 py-3.5">
+              <div>
+                <p className={`font-bold ${index === 0 ? 'text-lg text-[#056F1C]' : 'text-gray-900'}`}>{formatVND(bid.amount)}</p>
+                <p className="mt-1 text-xs text-gray-500">{formatBidTime(bid.createdAt)}</p>
+              </div>
+              <span className={`shrink-0 rounded-full bg-gray-100 px-3 py-1.5 text-xs ${index === 0 ? 'font-bold text-[#056F1C]' : bid.bidderDisplay === user?.id ? 'font-bold text-gray-700' : 'font-semibold text-gray-700'}`}>
+                {bid.bidderDisplay}
+              </span>
+            </div>
+          ))}
+          {bids.length === 0 && <p className="py-6 text-center text-sm text-gray-500">Chưa có lượt trả giá.</p>}
+        </div>
+      </section>
+
+      {showAllBids && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6"
+          onClick={() => setShowAllBids(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="all-bids-title"
+            className="flex max-h-[min(80vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
+              <div>
+                <h2 id="all-bids-title" className="font-bold text-gray-900">Diễn biến cuộc đấu giá</h2>
+                <p className="mt-0.5 text-xs text-gray-500">{bids.length} lượt trả giá</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAllBids(false)}
+                aria-label="Đóng diễn biến cuộc đấu giá"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="divide-y divide-gray-100 overflow-y-auto px-5">
+              {recentBids.map((bid, index) => (
+                <div key={bid.id} className="flex items-center justify-between gap-4 py-3.5">
+                  <div>
+                    <p className={`font-bold ${index === 0 ? 'text-lg text-[#056F1C]' : 'text-gray-900'}`}>{formatVND(bid.amount)}</p>
+                    <p className="mt-1 text-xs text-gray-500">{formatBidTime(bid.createdAt)}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full bg-gray-100 px-3 py-1.5 text-xs ${index === 0 ? 'font-bold text-[#056F1C]' : bid.bidderDisplay === user?.id ? 'font-bold text-gray-700' : 'font-semibold text-gray-700'}`}>
+                    {bid.bidderDisplay}
+                  </span>
+                </div>
+              ))}
+              {bids.length === 0 && <p className="py-6 text-center text-sm text-gray-500">Chưa có lượt trả giá.</p>}
+            </div>
+          </section>
+        </div>
+      )}
+
+      <section className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-amber-100 bg-amber-50/70 px-5 py-4">
+          <h2 className="font-bold text-gray-900">Trả giá</h2>
+          <div className="text-right">
+            <p className="text-lg font-extrabold text-amber-700">{formatVND(currentPrice)}</p>
+          </div>
+        </div>
+        <form onSubmit={handleBid} className="p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-2 rounded-xl px-3 py-3 text-gray-900 sm:px-4">
+            <div className="flex min-w-0 flex-col">
+              <span className="text-[10px] leading-none text-gray-500">Bước giá</span>
+              <span className="mt-1 whitespace-nowrap text-xs font-bold sm:text-sm">{formatVND(item.baseBidIncrement)}</span>
+            </div>
+            <span className="shrink-0 text-sm font-bold text-gray-500">×</span>
+            <div className="flex shrink-0 items-center gap-2 rounded-full p-1">
+              <button
+                type="button"
+                aria-label="Giảm số bước giá"
+                disabled={stepMultiplier <= 1}
+                onClick={() => setStepMultiplier((value) => Math.max(1, value - 1))}
+                className="flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-[#056F1C] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="min-w-4 text-center text-xs font-bold">{stepMultiplier}</span>
+              <button
+                type="button"
+                aria-label="Tăng số bước giá"
+                onClick={() => setStepMultiplier((value) => value + 1)}
+                className="flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-[#056F1C]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <span className="shrink-0 text-sm font-bold text-gray-500">=</span>
+            <span className="whitespace-nowrap px-3 py-2 text-xs font-bold sm:text-sm">
+              {formatVND(bidIncrement)}
+            </span>
+          </div>
+
+          {error && <p role="alert" className="mt-3 text-sm font-medium text-red-600">{error}</p>}
+          {notice && <p role="status" className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-relaxed text-blue-800">{notice}</p>}
+
+          <button
+            type="submit"
+            className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[#056F1C] px-5 py-3 font-bold text-white transition hover:bg-[#045517]"
+          >
+            Trả giá {formatVND(nextBid)}
+          </button>
+          <p className="mt-2 text-center text-xs capitalize text-gray-500">{amountInWords(nextBid)}</p>
+        </form>
+      </section>
     </div>
   )
 }
@@ -111,95 +292,47 @@ export default function AuctionSessionItemPage() {
           </div>
         </div>
 
-        {/* Tiêu đề + trạng thái */}
-        <h1 className="mt-5 text-xl font-bold text-gray-900">Chi tiết tài sản đấu giá</h1>
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-sm text-gray-500">Trạng thái:</span>
-          {state === 'bidding' && (
-            <span className="flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
-              </span>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.className}`}>{meta.label}</span>
-            </span>
+        <AuctionItemLayout
+          details={
+            <AuctionItemDetails
+              item={item}
+              statusLabel={meta.label}
+              statusClassName={meta.className}
+              isBidding={state === 'bidding'}
+            />
+          }
+        >
+          {state === 'bidding' && <BiddingPanel key={item.itemId} item={item} className="mt-0" />}
+
+          {state === 'sold' && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+              <AuctionItemCardGroup title="Kết quả đấu giá" columns={1}>
+                <AuctionItemDataCard icon={Tag} label="Giá khởi điểm" value={formatVND(item.startingPrice)} />
+                <AuctionItemDataCard icon={Trophy} label="Giá trúng đấu giá" value={formatVND(item.currentPrice)} strong />
+                <AuctionItemDataCard icon={Hash} label="Mã người trúng" value={item.highestBidder ?? '—'} />
+              </AuctionItemCardGroup>
+            </div>
           )}
-          {state !== 'bidding' && (
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.className}`}>{meta.label}</span>
-          )}
-        </div>
 
-        {/* Ảnh */}
-        {item.images?.[0] ? (
-          <img src={item.images[0]} alt={item.title} className="mt-5 w-full rounded-2xl object-cover" style={{ maxHeight: 340 }} />
-        ) : (
-          <div className="mt-5 flex aspect-video w-full items-center justify-center rounded-2xl bg-gray-100">
-            <ImageIcon className="h-14 w-14 text-gray-300" />
-          </div>
-        )}
-
-        {/* Tên + mã */}
-        <p className="mt-5 text-lg font-bold leading-snug text-gray-900">{item.title}</p>
-        <p className="mt-1 text-xs text-gray-400">Mã tài sản: {item.itemId}</p>
-
-        {/* Thông tin tài sản */}
-        <CardGroup title="Thông tin tài sản">
-          <DataCard icon={Tag}        label="Giá khởi điểm" value={formatVND(item.startingPrice)} />
-          <DataCard icon={TrendingUp} label="Bước giá"       value={formatVND(item.baseBidIncrement)} />
-          <DataCard icon={Wallet}     label="Giá mua ngay"   value={formatVND(item.buyNowPrice)} />
-          <DataCard icon={Layers}     label="Loại vật phẩm"  value={item.category} />
-        </CardGroup>
-
-        {/* Thời gian */}
-        <CardGroup title="Thời gian đấu giá">
-          <DataCard icon={Clock} label="Thời gian bắt đầu"  value={formatShortDateTime(item.startTime)} />
-          <DataCard icon={Clock} label="Thời gian kết thúc" value={formatShortDateTime(item.endTime)} />
-        </CardGroup>
-
-        {/* Đang đấu giá: hiện đồng hồ + giá hiện tại */}
-        {state === 'bidding' && (
-          <div className="mt-6">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">Diễn biến hiện tại</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <p className="text-xs text-amber-600">Giá hiện tại</p>
-                <p className="mt-1 text-base font-bold text-amber-700">{formatVND(item.currentPrice ?? item.startingPrice)}</p>
-              </div>
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <p className="text-xs text-amber-600">Thời gian còn lại</p>
-                <div className="mt-1"><LiveCountdown endTime={item.endTime} /></div>
+          {state === 'unsold' && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-5 sm:p-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-red-500">Kết quả đấu giá</p>
+              <div className="mt-3 flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 text-sm">✕</span>
+                <p className="font-semibold text-red-700">Đấu giá không thành</p>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Đã thành: kết quả giống lịch sử */}
-        {state === 'sold' && (
-          <CardGroup title="Kết quả đấu giá">
-            <DataCard icon={Tag}    label="Giá khởi điểm"     value={formatVND(item.startingPrice)} />
-            <DataCard icon={Trophy} label="Giá trúng đấu giá" value={formatVND(item.currentPrice)} strong />
-            <DataCard icon={Hash}   label="Hình thức chốt"    value={item.soldVia === 'buy_now' ? 'Mua ngay' : 'Đặt giá'} />
-            <DataCard icon={Hash}   label="Mã người trúng"    value={item.highestBidder ?? '—'} />
-          </CardGroup>
-        )}
-
-        {/* Không thành */}
-        {state === 'unsold' && (
-          <div className="mt-6">
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">Kết quả đấu giá</p>
-            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 text-sm">✕</span>
-              <p className="font-semibold text-red-700">Đấu giá không thành</p>
+          {state === 'queued' && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 text-sm text-gray-600 shadow-sm sm:p-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Sắp lên sàn</p>
+              <p className="mt-3">
+                Vật phẩm chưa đến giờ đấu giá. Phiên bắt đầu lúc <strong>{formatShortDateTime(item.startTime)}</strong>.
+              </p>
             </div>
-          </div>
-        )}
-
-        {/* Chờ lên sàn */}
-        {state === 'queued' && (
-          <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-            Vật phẩm này chưa đến giờ lên sàn. Quay lại lúc <strong>{formatShortDateTime(item.startTime)}</strong> để đặt giá.
-          </div>
-        )}
+          )}
+        </AuctionItemLayout>
       </div>
     </main>
   )

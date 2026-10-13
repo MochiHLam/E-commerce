@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import AuctionCTA from '@/components/AuctionCTA'
+import AuctionCTAButton from '@/components/AuctionCTAButton'
 import { useAuth } from '@/context/AuthContext'
 import steps from '@/data/auction/steps'
 import rules from '@/data/auction/rules'
 import faq from '@/data/auction/faq'
+import { MOCK_SESSION } from '@/data/auction/sessionMock'
 
 const LAYOUT = 'max-w-[1200px] mx-auto px-5'
 
@@ -29,17 +30,21 @@ const formatDateTime = (iso) =>
   new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
 
 function Countdown({ startTime }) {
-  const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' })
+  const [timeLeft, setTimeLeft] = useState({ d: '00', h: '00', m: '00', s: '00' })
 
   useEffect(() => {
     if (!startTime) return
 
     const update = () => {
       const diff = new Date(startTime) - Date.now()
-      if (diff <= 0) return
+      if (diff <= 0) {
+        setTimeLeft({ d: '00', h: '00', m: '00', s: '00' })
+        return
+      }
 
       setTimeLeft({
-        h: String(Math.floor(diff / 3600000)).padStart(2, '0'),
+        d: String(Math.floor(diff / 86400000)).padStart(2, '0'),
+        h: String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0'),
         m: String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0'),
         s: String(Math.floor((diff % 60000) / 1000)).padStart(2, '0'),
       })
@@ -53,6 +58,7 @@ function Countdown({ startTime }) {
   return (
     <div className="flex items-center gap-2">
       {[
+        { value: timeLeft.d, label: 'Ngày' },
         { value: timeLeft.h, label: 'Giờ' },
         { value: timeLeft.m, label: 'Phút' },
         { value: timeLeft.s, label: 'Giây' },
@@ -71,6 +77,7 @@ function Countdown({ startTime }) {
 function HeroSection({ session, isRegistered }) {
   const status = session?.status ?? 'closed'
   const sessionPath = session?.id ? `/auction/${session.id}` : null
+  const [popup, setPopup] = useState('')
 
   return (
     <section className="relative overflow-hidden bg-[#056F1C]">
@@ -89,65 +96,48 @@ function HeroSection({ session, isRegistered }) {
             Tham gia đấu giá trực tuyến với quy trình minh bạch, an toàn và hiệu quả. Săn vật phẩm độc đáo, đặt giá theo thời gian thực.
           </p>
 
-          {status === 'pending' && (
-            <div className="mt-8 flex flex-col items-start gap-4">
-              <p className="text-sm font-medium text-white/75">Phiên sẽ bắt đầu sau:</p>
-              <Countdown startTime={session.startTime} />
-              {isRegistered ? (
-                sessionPath
-                  ? <Link to={sessionPath}><AuctionCTA variant="white" label="Xem trước vật phẩm đấu giá" /></Link>
-                  : <AuctionCTA variant="white" label="Xem trước vật phẩm đấu giá" />
-              ) : (
-                sessionPath
-                  ? <Link to={sessionPath}><AuctionCTA variant="white" label="Đăng ký tham gia" /></Link>
-                  : <AuctionCTA variant="white" label="Đăng ký tham gia" />
-              )}
-            </div>
-          )}
-
-          {status === 'active' && (
-            <div className="mt-8 flex flex-col items-start gap-4">
+          <div className="mt-8 flex flex-col items-start gap-4">
+            {status === 'pending' && (
+              <>
+                <p className="text-sm font-medium text-white/75">Phiên sẽ bắt đầu sau:</p>
+                <Countdown startTime={session.startTime} />
+              </>
+            )}
+            {status === 'active' && (
               <p className="text-sm font-medium text-white/75">Phiên hiện đang diễn ra.</p>
-              {isRegistered && sessionPath ? (
-                <Link to={sessionPath}><AuctionCTA variant="white" label="Tham gia đấu giá" /></Link>
-              ) : (
-                <AuctionCTA variant="gray" label="Tham gia đấu giá" disabled />
-              )}
+            )}
+            {status === 'closed' && (
+              <p className="text-sm font-medium text-white/75">Hiện chưa có phiên đấu giá nào đang mở.</p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to={sessionPath ?? '/login'}
+                className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white px-6 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                Xem trước buổi đấu giá
+              </Link>
+              <AuctionCTAButton
+                session={session}
+                isRegistered={isRegistered}
+                onDark
+                onPopup={(msg) => setPopup(msg)}
+              />
             </div>
-          )}
-
-          {status === 'closed' && (
-            <div className="mt-8">
-              <p className="mb-4 text-sm font-medium text-white/75">Hiện chưa có phiên đấu giá nào đang mở.</p>
-              <AuctionCTA label="Đăng ký tham gia" variant="gray" disabled />
-            </div>
-          )}
+          </div>
         </div>
       </div>
-    </section>
-  )
-}
 
-function StatsStrip() {
-  const stats = [
-    ['30 phút', 'Mỗi vật phẩm'],
-    ['3 phút', 'Gia hạn cuối giờ'],
-    ['7 ngày', 'Thời gian đăng ký'],
-    ['10+', 'Vật phẩm mỗi phiên'],
-  ]
-
-  return (
-    <section className="relative z-10 -mt-10">
-      <div className={LAYOUT}>
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 shadow-lg lg:grid-cols-4">
-          {stats.map(([value, label]) => (
-            <div key={label} className="bg-white px-6 py-5 text-center">
-              <p className="text-2xl font-extrabold text-[#056F1C]">{value}</p>
-              <p className="mt-1 text-sm text-gray-600">{label}</p>
-            </div>
-          ))}
+      {/* Popup */}
+      {popup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setPopup('')}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full mx-4 p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <p className="text-gray-700 text-sm leading-relaxed mb-5">{popup}</p>
+            <button onClick={() => setPopup('')} className="px-6 py-2 bg-[#056F1C] text-white rounded text-sm font-medium hover:bg-[#045517]">
+              Đã hiểu
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   )
 }
@@ -214,7 +204,7 @@ function ImportantNotice() {
             <div>
               <h2 className="text-2xl font-bold text-amber-950">Lưu ý quan trọng</h2>
               <ul className="mt-5 space-y-3 text-sm leading-relaxed text-amber-900">
-                <li>• <strong>Đấu giá miễn hủy, miễn trả.</strong> Khi bạn thắng, kết quả không thể hủy và không được hoàn tiền, nên hãy cân nhắc kỹ trước khi đặt giá hoặc bấm mua ngay.</li>
+                <li>• <strong>Đấu giá miễn hủy, miễn trả.</strong> Khi bạn thắng, kết quả không thể hủy và không được hoàn tiền, nên hãy cân nhắc kỹ trước khi đặt giá.</li>
                 <li>• <strong>Giá đã đặt không rút lại được.</strong> Số tiền được giữ lại cho đến khi có người đặt cao hơn hoặc phiên kết thúc.</li>
                 <li>• Phí vận chuyển được trừ từ ví lúc cửa hàng bấm giao. Nếu ví không đủ, cửa hàng chưa giao được, vì vậy hãy giữ đủ số dư sau khi thắng.</li>
                 <li>• Phiên đã bắt đầu thì không đăng ký được nữa, bạn sẽ phải chờ phiên kế tiếp.</li>
@@ -361,7 +351,7 @@ function SellerSection() {
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#056F1C]">Dành cho người bán</p>
           <h2 className="mt-3 text-3xl font-bold text-gray-900">Đưa vật phẩm độc đáo lên phiên đấu giá</h2>
           <p className="mt-4 leading-relaxed text-gray-600">
-            Nếu bạn là chủ cửa hàng, bạn có thể gửi vật phẩm thuộc danh mục được phép và còn đúng một món trong kho để đưa lên đấu giá. NaviShop sẽ duyệt và tự quyết định giá khởi điểm, bước giá và giá mua ngay.
+            Nếu bạn là chủ cửa hàng, bạn có thể gửi vật phẩm thuộc danh mục được phép và còn đúng một món trong kho để đưa lên đấu giá.             NaviShop sẽ duyệt và tự quyết định giá khởi điểm và bước giá.
           </p>
           <p className="mt-4 leading-relaxed text-gray-600">
             Giá bạn đề xuất chỉ để tham khảo. Sau khi được duyệt, vật phẩm không thể rút lại. Nếu không ai đặt giá, vật phẩm quay về kho để chờ phiên sau, bạn không mất gì.
@@ -446,16 +436,17 @@ export default function AuctionAboutPage() {
 
   // MOCK: đổi các giá trị này để test UI
   const mockSession = {
-    id: 'ses_mock',            // ID phiên → /auction/ses_mock
-    status: 'pending',         // 'pending' | 'active' | 'closed'
-    startTime: new Date(Date.now() + 3600000).toISOString(),
-    isRegistered: true,        // true → đã đăng ký, false → chưa
+    id: 'ses_mock',
+    status: 'pending',    // 'pending' | 'active' | 'closed'
+    startTime: MOCK_SESSION.startTime,
+    isRegistered: false,  // TODO: lấy từ API Boolean(session.myRegistration)
+    registrationFee: 50000,
+    walletAvailable: 100000,
   }
 
   return (
     <main className="bg-white">
       <HeroSection session={mockSession} isRegistered={mockSession.isRegistered} />
-      <StatsStrip />
       <StepsSection />
       <RulesSection />
       <ImportantNotice />

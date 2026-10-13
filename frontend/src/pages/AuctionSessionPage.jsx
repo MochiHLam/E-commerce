@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Clock, ImageIcon } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
-import { getMockLiveSession } from '@/data/auction/sessionMock'
+import { Link, Navigate, useParams } from 'react-router-dom'
+import useAuctionSession from '@/hooks/useAuctionSession'
 import { SESSION_ITEM_STATUS, formatHourMinute, formatShortDateTime, formatVND } from '@/lib/auction'
-// TODO: bật lại guard khi có auth thật
-// import { Navigate, useLocation } from 'react-router-dom'
-// import { useAuth } from '@/context/AuthContext'
 
 const LAYOUT = 'max-w-[1200px] mx-auto px-5'
 
@@ -35,6 +32,39 @@ function CountdownBadge({ endTime }) {
       <Clock className="h-3 w-3" />
       {h !== '00' ? `${h}:` : ''}{m}:{s}
     </span>
+  )
+}
+
+function SessionConfiguration({ configuration, itemCount }) {
+  const stats = [
+    {
+      label: 'Mỗi vật phẩm',
+      value: configuration?.itemDurationMinutes,
+      unit: 'phút',
+    },
+    {
+      label: 'Gia hạn cuối giờ',
+      value: configuration?.extensionDurationMinutes,
+      unit: 'phút',
+    },
+    {
+      label: 'Tổng số vật phẩm',
+      value: itemCount,
+      unit: '',
+    },
+  ].filter(({ value }) => Number.isFinite(value) && value > 0)
+
+  if (!stats.length) return null
+
+  return (
+    <section aria-label="Thông số phiên đấu giá" className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {stats.map(({ label, value, unit }) => (
+        <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5">
+          <p className="text-2xl font-extrabold text-[#056F1C]">{value}{unit === '+' ? unit : unit ? ` ${unit}` : ''}</p>
+          <p className="mt-1 text-sm text-gray-500">{label}</p>
+        </div>
+      ))}
+    </section>
   )
 }
 
@@ -143,6 +173,100 @@ function NotFoundState() {
   )
 }
 
+function NotRegistered() {
+  return (
+    <main className="bg-gray-50 py-24">
+      <div className={`${LAYOUT} text-center`}>
+        <h1 className="text-2xl font-bold text-gray-900">Bạn chưa đăng ký tham gia phiên này</h1>
+        <p className="mt-2 text-gray-500">Phiên đấu giá đã bắt đầu nên hiện không thể đăng ký thêm.</p>
+        <Link to="/auction/about" className="mt-6 inline-block font-semibold text-[#056F1C] hover:underline">
+          Quay lại trang đấu giá
+        </Link>
+      </div>
+    </main>
+  )
+}
+
+function CancelledNotice() {
+  return (
+    <main className="bg-gray-50 py-24">
+      <div className={`${LAYOUT} text-center`}>
+        <h1 className="text-2xl font-bold text-gray-900">Phiên đấu giá đã bị hủy</h1>
+        <p className="mt-2 text-gray-500">Phiên đã bị hủy trước khi bắt đầu và sẽ không diễn ra.</p>
+        <Link to="/auction/about" className="mt-6 inline-block font-semibold text-[#056F1C] hover:underline">
+          Quay lại trang đấu giá
+        </Link>
+      </div>
+    </main>
+  )
+}
+
+function RegistrationPanel({ session, onChange }) {
+  const [confirm, setConfirm] = useState(null)
+  const fee = session.registrationFee
+  const balance = session.walletAvailable ?? 0
+  const short = Math.max(0, fee - balance)
+
+  const handleConfirm = () => {
+    // TODO: POST /auction/sessions/:id/register hoặc /cancel-registration
+    onChange(confirm === 'register')
+    setConfirm(null)
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="text-sm text-gray-600">
+          <p>Phí đăng ký: <strong className="text-gray-900">{fee > 0 ? formatVND(fee) : 'Miễn phí'}</strong></p>
+          {short > 0 && !session.isRegistered && (
+            <p className="mt-1 text-red-600">Còn thiếu {formatVND(short)}. Nạp thêm để đăng ký.</p>
+          )}
+        </div>
+        {session.isRegistered ? (
+          <div className="flex items-center gap-3">
+            <span className="font-semibold text-[#056F1C]">Đã đăng ký</span>
+            <button type="button" onClick={() => setConfirm('cancel')} className="text-sm font-semibold text-gray-600 hover:underline">
+              Hủy đăng ký
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={short > 0}
+            onClick={() => setConfirm('register')}
+            className="rounded-lg bg-[#056F1C] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#045517] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Đăng ký tham gia
+          </button>
+        )}
+      </div>
+
+      {confirm && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6">
+            <h3 className="text-lg font-bold text-gray-900">
+              {confirm === 'register' ? 'Xác nhận đăng ký' : 'Xác nhận hủy đăng ký'}
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-gray-600">
+              {confirm === 'register'
+                ? `Phí ${formatVND(fee)} sẽ được trừ ngay vào ví. Bạn hủy được trong thời gian xem trước và được hoàn đủ. Phiên bắt đầu thì không hủy và không hoàn.`
+                : `Bạn sẽ được hoàn đủ ${formatVND(fee)} vào ví.`}
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" onClick={() => setConfirm(null)} className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600">
+                Đóng
+              </button>
+              <button type="button" onClick={handleConfirm} className="rounded-lg bg-[#056F1C] px-4 py-2 text-sm font-semibold text-white">
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'all',     label: 'Tất cả' },
@@ -155,23 +279,21 @@ const TABS = [
 export default function AuctionSessionPage() {
   const { id: sessionId } = useParams()
   const [filter, setFilter] = useState('all')
-
-  // TODO: thay bằng GET /api/auction/sessions/:sessionId
-  const session = getMockLiveSession(sessionId)
+  const { session, setRegistered } = useAuctionSession(sessionId)
   if (!session) return <NotFoundState />
+  if (session.status === 'closed') {
+    return session.closedReason === 'cancelled_pending'
+      ? <CancelledNotice />
+      : <Navigate to={`/auction/history/${sessionId}`} replace />
+  }
+  if (session.status === 'active' && !session.isRegistered) return <NotRegistered />
 
   const items = session.items
   const count = (state) => items.filter((i) => i.state === state).length
+  const tabCount = (key) => (key === 'all' ? items.length : count(key))
 
   const tabs = TABS.filter((t) => t.key === 'all' || count(t.key) > 0)
   const visible = filter === 'all' ? items : items.filter((i) => i.state === filter)
-
-  const stats = [
-    ['Tổng vật phẩm', items.length],
-    ['Đang đấu giá',  count('bidding')],
-    ['Chờ lên sàn',   count('queued')],
-    ['Đã kết thúc',   count('sold') + count('unsold')],
-  ]
 
   const isPending = session.status === 'pending'
 
@@ -206,15 +328,9 @@ export default function AuctionSessionPage() {
           </p>
         </header>
 
-        {/* Stats */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-4">
-          {stats.map(([label, value]) => (
-            <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5">
-              <p className="text-sm text-gray-500">{label}</p>
-              <p className="mt-1 text-2xl font-extrabold text-[#056F1C]">{value}</p>
-            </div>
-          ))}
-        </div>
+        <SessionConfiguration configuration={session.configuration} itemCount={items.length} />
+
+        {isPending && <RegistrationPanel session={session} onChange={setRegistered} />}
 
         {/* Tabs */}
         <div className="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Lọc vật phẩm">
@@ -231,7 +347,7 @@ export default function AuctionSessionPage() {
                   : 'border-gray-300 bg-white text-gray-700 hover:border-[#056F1C]'
               }`}
             >
-              {t.label} {t.key !== 'all' && count(t.key) > 0 ? count(t.key) : t.key === 'all' ? items.length : ''}
+              {t.label} {tabCount(t.key)}
             </button>
           ))}
         </div>

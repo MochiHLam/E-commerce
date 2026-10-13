@@ -2,6 +2,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import AuctionCTAButton from '@/components/AuctionCTAButton'
+import { MOCK_SESSION } from '@/data/auction/sessionMock'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LAYOUT = 'max-w-[1500px] mx-auto'
@@ -46,7 +48,7 @@ const WHY_ITEMS = [
   },
   {
     title: 'ĐẤU GIÁ VẬT PHẨM ĐỘC BẢN: HỒI HỘP TỪNG GIÂY',
-    desc: 'Sắm những món hiếm chỉ có một cây nhất trong các phiên đấu giá do sàn tổ chức. Đăng ký tham gia trước khi phiên bắt đầu, theo dõi giá nhảy theo thời gian thực và ra giá ngay trong phòng đấu giá. Không sợ bị chen vào phút chót vì mỗi lượt đặt giá cuối giờ sẽ được gia hạn thêm thời gian. Thích món nào, bạn có thể "Mua ngay" để chốt luôn.',
+    desc: 'Sắm những món hiếm chỉ có một cây nhất trong các phiên đấu giá do sàn tổ chức. Đăng ký tham gia trước khi phiên bắt đầu, theo dõi giá nhảy theo thời gian thực và ra giá ngay trong phòng đấu giá. Không sợ bị chen vào phút chót vì mỗi lượt đặt giá cuối giờ sẽ được gia hạn thêm thời gian.',
   },
   {
     title: 'ĐÁNH GIÁ THẬT TỪ NGƯỜI ĐÃ MUA',
@@ -70,11 +72,11 @@ function CountdownBox({ value, label }) {
   )
 }
 
-function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
+function AuctionBanner({ session, isRegistered }) {
   const status = session?.status ?? 'closed'
-  const navigate = useNavigate()
 
-  // Countdown h/m/s
+  // Countdown d/h/m/s
+  const [dd, setDd] = useState('00')
   const [hh, setHh] = useState('00')
   const [mm, setMm] = useState('00')
   const [ss, setSs] = useState('00')
@@ -83,8 +85,9 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
     if (status !== 'pending' || !session?.startTime) return
     const tick = () => {
       const diff = new Date(session.startTime) - Date.now()
-      if (diff <= 0) { setHh('00'); setMm('00'); setSs('00'); return }
-      setHh(String(Math.floor(diff / 3600000)).padStart(2, '0'))
+      if (diff <= 0) { setDd('00'); setHh('00'); setMm('00'); setSs('00'); return }
+      setDd(String(Math.floor(diff / 86400000)).padStart(2, '0'))
+      setHh(String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0'))
       setMm(String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0'))
       setSs(String(Math.floor((diff % 60000) / 1000)).padStart(2, '0'))
     }
@@ -93,59 +96,8 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
     return () => clearInterval(t)
   }, [status, session?.startTime])
 
-  // ── Tính nhãn & hành vi nút chính theo bảng trong docs ──────────────────
-  let primaryLabel = ''
-  let primaryGreen = true   // true = xanh, false = xám
-  let primaryDisabled = false
-  let primaryOnClick = null
-  let primaryPopupMsg = ''
-
-  if (status === 'closed') {
-    primaryLabel = 'Đăng ký Tham gia'
-    if (!isLoggedIn) {
-      primaryGreen = true
-      primaryOnClick = () => navigate('/login', { state: { returnTo: '/' } })
-    } else {
-      primaryGreen = false
-      primaryPopupMsg = 'Hiện chưa có phiên đấu giá nào sắp diễn ra. Quay lại sau để không bỏ lỡ nhé!'
-    }
-  } else if (status === 'pending') {
-    if (!isLoggedIn) {
-      primaryLabel = 'Đăng ký Tham gia'
-      primaryGreen = true
-      primaryOnClick = () => navigate('/login', { state: { returnTo: '/' } })
-    } else if (!isRegistered) {
-      primaryLabel = 'Đăng ký Tham gia'
-      primaryGreen = true
-      primaryOnClick = onRegister
-    } else {
-      primaryLabel = 'Đã đăng ký'
-      primaryGreen = false
-      primaryDisabled = true
-    }
-  } else {
-    // active
-    primaryLabel = 'Tham gia đấu giá'
-    if (!isLoggedIn) {
-      primaryGreen = true
-      primaryOnClick = () => navigate('/login', { state: { returnTo: '/' } })
-    } else if (!isRegistered) {
-      primaryGreen = false
-      primaryPopupMsg = 'Phiên này đã bắt đầu và bạn chưa đăng ký tham gia trước đó. Hẹn gặp bạn ở phiên đấu giá kế tiếp!'
-    } else {
-      primaryGreen = true
-      primaryOnClick = () => navigate(`/auction/${session.id}`)
-    }
-  }
-
   const [popup, setPopup] = useState('')
-  const handlePrimary = () => {
-    if (primaryDisabled) return
-    if (primaryPopupMsg) { setPopup(primaryPopupMsg); return }
-    primaryOnClick?.()
-  }
 
-  // ── Sub-text bên dưới tiêu đề trong ảnh ─────────────────────────────────
   let subText = ''
   if (status === 'closed') subText = 'Hiện chưa có phiên đấu giá nào sắp diễn ra'
   if (status === 'active') subText = 'Buổi đấu giá đang được diễn ra'
@@ -153,7 +105,6 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
   return (
     <section className={`${LAYOUT}`}>
       <div className="relative select-none">
-        {/* Ảnh banner full-width */}
         <img
           src="/images/auction_banner.webp"
           alt="Phiên đấu giá NaviShop"
@@ -161,23 +112,19 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
           draggable={false}
         />
 
-        {/* Overlay content — bottom-left, không che phần chữ/búa trong ảnh */}
         <div className="absolute bottom-0 left-0 pb-8 flex flex-col gap-3 items-center w-1/2">
-
-          {/* Sub-text (closed / active) */}
           {subText && (
-            <p className="text-white font-semibold text-sm drop-shadow">
-              {subText}
-            </p>
+            <p className="text-white font-semibold text-sm drop-shadow">{subText}</p>
           )}
 
-          {/* Countdown (pending only) */}
           {status === 'pending' && (
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col items-center gap-1.5">
               <p className="text-white font-semibold text-sm drop-shadow">
                 Phiên đấu giá sẽ bắt đầu sau:
               </p>
               <div className="flex items-end gap-1.5">
+                <CountdownBox value={dd} label="Ngày" />
+                <span className="text-white font-bold text-xl mb-3.5 leading-none">:</span>
                 <CountdownBox value={hh} label="Giờ" />
                 <span className="text-white font-bold text-xl mb-3.5 leading-none">:</span>
                 <CountdownBox value={mm} label="Phút" />
@@ -187,19 +134,8 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
             </div>
           )}
 
-          {/* Buttons */}
           <div className="flex items-center gap-6">
-            <button
-              id="auction-banner-primary-btn"
-              onClick={handlePrimary}
-              disabled={primaryDisabled}
-              className={`min-w-[200px] px-7 py-3 rounded text-base font-semibold text-center transition-all shadow ${primaryGreen
-                ? 'bg-[#056F1C] text-white hover:bg-[#045517]'
-                : 'bg-white/25 text-white/70 cursor-pointer hover:bg-white/35'
-                } ${primaryDisabled ? 'opacity-80 cursor-default' : ''}`}
-            >
-              {primaryLabel}
-            </button>
+            <AuctionCTAButton session={session} isRegistered={isRegistered} onDark={false} onPopup={setPopup} />
             <Link
               to="/auction/about"
               id="auction-banner-learn-more-btn"
@@ -211,7 +147,6 @@ function AuctionBanner({ session, isLoggedIn, isRegistered, onRegister }) {
         </div>
       </div>
 
-      {/* Popup */}
       {popup && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
@@ -351,25 +286,20 @@ export default function HomePage() {
   // TODO: thay bằng API call
   const mockSession = {
     status: 'pending', // 'pending' | 'active' | 'closed'
-    startTime: new Date(Date.now() + 23 * 3600 * 1000 + 59 * 60 * 1000 + 59 * 1000).toISOString(),
-    id: 'mock-session-id',
+    startTime: MOCK_SESSION.startTime,
+    id: 'ses_mock',
+    isRegistered: false, // TODO: lấy từ API
+    registrationFee: 50000,
+    walletAvailable: 100000,
   }
-  const isRegistered = false
+  const isRegistered = Boolean(mockSession.isRegistered)
 
   return (
     <main className="bg-white">
 
       {/* ── 1. Auction Banner ── */}
       <div className="bg-gray-100 py-6">
-        <AuctionBanner
-          session={mockSession}
-          isLoggedIn={isLoggedIn}
-          isRegistered={isRegistered}
-          onRegister={() => {
-            // TODO: gọi API đăng ký
-            alert('Đăng ký thành công!')
-          }}
-        />
+        <AuctionBanner session={mockSession} isRegistered={isRegistered} />
       </div>
 
       {/* ── 2. Categories ── */}

@@ -3,46 +3,61 @@
 
 const now = Date.now()
 const MIN = 60 * 1000
-const ITEM_GAP = 30 * MIN // 30 phút mỗi vật
+const SESSION_CONFIGURATION = {
+  itemDurationMinutes: 30,
+  extensionDurationMinutes: 3,
+  registrationDurationDays: 7,
+  minimumItemsPerSession: 10,
+}
+const ITEM_GAP = SESSION_CONFIGURATION.itemDurationMinutes * MIN
+const PENDING_END = now + 5 * MIN
 
 // Xây mock: 2 vật đã xong, 1 vật đang đấu (hết giờ 8 phút nữa), 9 vật xếp hàng
 const BASE = now - 2 * ITEM_GAP
 
 function itemStart(i) { return new Date(BASE + i * ITEM_GAP).toISOString() }
-function itemEnd(i, extra = 0) { return new Date(BASE + i * ITEM_GAP + 30 * MIN + extra).toISOString() }
+function itemEnd(i, extra = 0) {
+  return new Date(BASE + i * ITEM_GAP + SESSION_CONFIGURATION.itemDurationMinutes * MIN + extra).toISOString()
+}
 
 const CATEGORIES = ['Đồng hồ & Trang sức', 'Máy ảnh & Quang học', 'Âm nhạc & Giải trí', 'Gốm sứ & Thủ công', 'Điện tử cổ', 'Nghệ thuật', 'Tem & Tiền xu', 'Trò chơi & Bộ sưu tập', 'Máy móc cổ', 'Văn phòng phẩm', 'Đèn & Nội thất', 'Tiền xu & Huy chương']
 
 const RAW = [
-  // [title, startingPrice, currentPrice, state, soldVia]
-  ['Đồng hồ cơ cổ 1960',        500000,  1850000, 'sold',   'bid'],
-  ['Máy ảnh film Pentax',        800000,  4000000, 'sold',   'buy_now'],
-  ['Bộ tem sưu tầm',             300000,   820000, 'bidding', null],
-  ['Đĩa than Beatles bản gốc',   600000,       null, 'queued', null],
-  ['Bút máy Parker cổ',          650000,       null, 'queued', null],
-  ['Tranh sơn mài nhỏ',         1000000,       null, 'queued', null],
-  ['Radio Philips đời 70',        450000,       null, 'queued', null],
-  ['Bàn cờ vua gỗ óc chó',       700000,       null, 'queued', null],
-  ['Ấm trà gốm Bát Tràng',       400000,       null, 'queued', null],
-  ['Máy đánh chữ Olivetti',      900000,       null, 'queued', null],
-  ['Bộ tiền xu cổ',              350000,       null, 'queued', null],
-  ['Đèn dầu đồng',               300000,       null, 'queued', null],
+  // [title, startingPrice, currentPrice, state]
+  ['Đồng hồ cơ cổ 1960',        500000,  1850000, 'sold'],
+  ['Máy ảnh film Pentax',        800000,  4000000, 'sold'],
+  ['Bộ tem sưu tầm',             300000,   820000, 'bidding'],
+  ['Đĩa than Beatles bản gốc',   600000,       null, 'queued'],
+  ['Bút máy Parker cổ',          650000,       null, 'queued'],
+  ['Tranh sơn mài nhỏ',         1000000,       null, 'queued'],
+  ['Radio Philips đời 70',        450000,       null, 'queued'],
+  ['Bàn cờ vua gỗ óc chó',       700000,       null, 'queued'],
+  ['Ấm trà gốm Bát Tràng',       400000,       null, 'queued'],
+  ['Máy đánh chữ Olivetti',      900000,       null, 'queued'],
+  ['Bộ tiền xu cổ',              350000,       null, 'queued'],
+  ['Đèn dầu đồng',               300000,       null, 'queued'],
 ]
 
-export const MOCK_SESSION_ITEMS = RAW.map(([title, startingPrice, currentPrice, state, soldVia], i) => ({
+export const MOCK_SESSION_ITEMS = RAW.map(([title, startingPrice, currentPrice, state], i) => ({
   itemId: `itm_${String(i + 1).padStart(2, '0')}`,
   order: i + 1,
   title,
   category: CATEGORIES[i % CATEGORIES.length],
   images: [],
   startingPrice,
-  buyNowPrice: startingPrice * 5,
   baseBidIncrement: startingPrice >= 800000 ? 100000 : 50000,
   currentPrice: state === 'bidding' || state === 'sold' ? currentPrice : null,
   highestBidder: state === 'sold' || state === 'bidding' ? 'usr•••c2a9' : null,
   bidCount: state === 'sold' ? 14 : state === 'bidding' ? 6 : 0,
+  bids: state === 'bidding'
+    ? Array.from({ length: 6 }, (_, bidIndex) => ({
+      id: `bid_${i + 1}_${bidIndex + 1}`,
+      amount: currentPrice - (5 - bidIndex) * (startingPrice >= 800000 ? 100000 : 50000),
+      bidderDisplay: bidIndex === 5 ? 'usr•••c2a9' : `usr•••${['5e07', '91c2', 'a841', '70bd', '33f0'][bidIndex]}`,
+      createdAt: new Date(now - (6 - bidIndex) * 45 * 1000).toISOString(),
+    }))
+    : [],
   state,
-  soldVia: state === 'sold' ? soldVia : null,
   startTime: itemStart(i),
   endTime: state === 'bidding'
     ? new Date(now + 8 * MIN).toISOString()   // còn 8 phút
@@ -54,17 +69,19 @@ export const MOCK_SESSION_ITEMS = RAW.map(([title, startingPrice, currentPrice, 
 export const MOCK_SESSION = {
   id: 'ses_mock',
   name: 'Phiên đấu giá cuối tuần',
-  status: 'active',   // 'pending' | 'active'
+  status: 'pending',   // 'pending' | 'active' | 'closed'
+  configuration: SESSION_CONFIGURATION,
   registrationFee: 50000,
+  walletAvailable: 100000,
   isRegistered: true,
-  startTime: new Date(BASE).toISOString(),
-  pendingEndTime: new Date(BASE - 5 * MIN).toISOString(), // đã hết pending
+  startTime: new Date(PENDING_END).toISOString(),
+  pendingEndTime: new Date(PENDING_END).toISOString(),
   itemCount: RAW.length,
   items: MOCK_SESSION_ITEMS,
 }
 
 export function getMockLiveSession(sessionId) {
-  return /^ses_/.test(sessionId) ? { ...MOCK_SESSION, id: sessionId } : null
+  return sessionId.startsWith('ses_') ? { ...MOCK_SESSION, id: sessionId } : null
 }
 
 export function getMockLiveItem(sessionId, itemId) {

@@ -3,9 +3,10 @@
   body: `
 ## Cách vận hành
 
-- Mỗi thời điểm chỉ có một phiên, gồm ít nhất 10 vật phẩm, đấu giá lần lượt.
-- Mỗi vật phẩm 5 phút, giữa hai vật phẩm nghỉ 1 phút.
-- Sau khi NaviShop mở phiên, có 24 giờ chờ để bạn đăng ký tham gia. Các thông số thời gian và bước giá được cố định khi mở phiên, không đổi giữa chừng.
+- Mỗi thời điểm chỉ có một phiên đấu giá, các vật phẩm được tổ chức theo lịch của phiên.
+- Số lượng vật phẩm, thời lượng mỗi vật phẩm, khoảng cách giữa các lượt lên sàn, thời gian mở đăng ký và quy tắc gia hạn được xác định theo cấu hình của phiên.
+- Admin có thể cấu hình các thông số thời gian và giá tiền, gồm số lượng vật phẩm, thời lượng mỗi vật phẩm, ngưỡng và thời lượng gia hạn, thời gian đăng ký, giá khởi điểm, bước giá và phí đăng ký khi phiên còn đóng, chưa mở.
+- Khi phiên được mở, toàn bộ thông số đã chốt và không thể chỉnh sửa trong trạng thái chờ đăng ký (pending) hoặc đang diễn ra (active).
 
 ## Điều kiện tham gia
 
@@ -16,14 +17,13 @@
 ## Giá và cách đặt giá
 
 - Giá khởi điểm: mức thấp nhất của lượt đầu. Có một lượt hợp lệ là vật phẩm được bán, không có giá sàn nào được giấu.
-- Bước giá: mức tăng tối thiểu mỗi lượt. Giá mua ngay: mức trần của vật phẩm. Cả ba mức do NaviShop quyết định khi duyệt, mọi vật phẩm đều có giá mua ngay.
+- Bước giá: mức tăng tối thiểu mỗi lượt. Giá khởi điểm và bước giá do NaviShop quyết định khi duyệt vật phẩm.
 - Bạn không đặt giá khi đang dẫn đầu. Khi đặt giá, hệ thống khóa đúng số tiền bạn đặt và trả lại khi có người đặt cao hơn.
 - Nhiều người đặt cùng lúc thì chỉ một lượt hợp lệ được chấp nhận, bạn cần đặt lại. Giá đã đặt không rút lại được.
 
-## Gia hạn và mua ngay
+## Gia hạn
 
-- Đặt giá trong 15 giây cuối thì thời gian kết thúc dời tới 15 giây sau lượt đó, không giới hạn số lần. Sau mỗi lần gia hạn, bước giá nhân lên theo hệ số của NaviShop (hiện là 1,5 lần).
-- Mua ngay chốt vật phẩm với đúng giá mua ngay; người đang dẫn đầu vẫn bấm được và chỉ khóa thêm phần chênh. Lượt đặt giá thường đạt hoặc vượt giá mua ngay cũng chốt ngay, với đúng số đã đặt.
+- Khi có lượt đặt trong khoảng thời gian gia hạn do admin cấu hình, thời gian kết thúc được dời thêm theo thời lượng gia hạn đã thiết lập cho phiên. Gia hạn lặp lại không giới hạn số lần.
 
 ## Kết thúc vật phẩm
 

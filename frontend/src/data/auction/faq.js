@@ -27,7 +27,7 @@ export default [
   {
     question: 'Có người đặt giá phút chót thì sao?',
     answer:
-      'Thời gian kết thúc của món đó được cộng thêm, ví dụ món 30 phút được cộng 3 phút tính từ lúc có người đặt. Các món khác không bị ảnh hưởng, vì mỗi món có giờ riêng. Mỗi lần cộng giờ, bước giá của món đó cũng tăng theo hệ số của phiên.',
+      'Nếu có người đặt giá trong khoảng gia hạn của món đó, thời gian kết thúc được cộng thêm theo cấu hình của phiên. Các món khác không bị ảnh hưởng, vì mỗi món có giờ riêng. Admin cấu hình ngưỡng và thời lượng gia hạn trước khi mở phiên; sau khi mở, các thông số này không thay đổi.',
   },
   {
     question: 'Nếu không ai đặt giá cho một món thì sao?',
@@ -37,7 +37,7 @@ export default [
   {
     question: 'Thắng rồi tôi có hủy hoặc trả hàng được không, và phí ship thế nào?',
     answer:
-      'Không. Đấu giá là miễn hủy, miễn trả: kết quả không thể hủy và không hoàn tiền. Đơn hàng tự tạo, và khi cửa hàng bấm giao thì phí vận chuyển được trừ từ ví của bạn. Nếu ví chưa đủ, cửa hàng chưa giao được và bạn sẽ nhận thông báo nạp thêm. Khi nhận hàng bạn bấm xác nhận, hoặc đơn tự hoàn thành sau 3 ngày kể từ lúc cửa hàng báo giao.',
+      'Không. Đấu giá là miễn hủy, miễn trả: kết quả không thể hủy và không hoàn tiền. Đơn hàng tự tạo, và khi cửa hàng bấm giao thì phí vận chuyển được trừ từ ví của bạn. Nếu ví chưa đủ, cửa hàng chưa giao được và bạn sẽ nhận thông báo nạp thêm. Khi nhận hàng bạn bấm xác nhận, hoặc đơn tự hoàn thành sau thời hạn quy định kể từ lúc cửa hàng báo giao.',
   },
   {
     question: 'Khi nào phiên kết thúc, và xem kết quả ở đâu?',

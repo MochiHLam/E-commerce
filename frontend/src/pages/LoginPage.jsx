@@ -3,8 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { MOCK_ACCOUNTS } from '@/data/mockAccounts'
 
-const ROLE_HOME = { user: '/', mod: '/mod', admin: '/admin' }
-
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,7 +17,9 @@ export default function LoginPage() {
     // TODO: thay bằng API đăng nhập thật. Mock chỉ chạy khi dev.
     const account = import.meta.env.DEV
       ? MOCK_ACCOUNTS.find((candidate) =>
-          candidate.email === email.trim().toLowerCase() && candidate.password === password)
+          candidate.role === 'user'
+          && candidate.email === email.trim().toLowerCase()
+          && candidate.password === password)
       : null
 
     if (!account) {
@@ -30,12 +30,29 @@ export default function LoginPage() {
     const user = { ...account }
     delete user.password
     login(user)
-    navigate(location.state?.returnTo ?? ROLE_HOME[user.role], { replace: true })
+    navigate(location.state?.returnTo ?? '/', { replace: true })
   }
 
   return (
-    <main className="flex-1 bg-[#056F1C] flex items-stretch min-h-[calc(100vh-76px)]">
-      <div className="w-full flex items-center">
+    <main className="relative isolate flex min-h-[calc(100vh-76px)] flex-1 items-stretch overflow-hidden bg-[#056F1C]">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+            maskImage: 'linear-gradient(to bottom right, black, transparent 75%)',
+          }}
+        />
+        <div className="absolute -left-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-[#72D98A]/20 blur-3xl" />
+        <div className="absolute -bottom-56 -right-40 h-[38rem] w-[38rem] rounded-full bg-[#003D12]/45 blur-3xl" />
+        <div className="absolute -right-24 -top-28 h-[34rem] w-[34rem] rounded-full border border-white/10" />
+        <div className="absolute -right-8 -top-12 h-[26rem] w-[26rem] rounded-full border border-white/10" />
+        <div className="absolute -bottom-40 left-[12%] h-[26rem] w-[26rem] rounded-full border border-white/[0.08]" />
+        <div className="absolute left-[18%] top-[16%] h-24 w-24 rotate-12 rounded-3xl border border-white/10" />
+      </div>
+
+      <div className="relative z-10 w-full flex items-center">
 
         {/* ── Left 60%: Auth Banner — sát mép trái ── */}
         <div className="w-[60%] shrink-0 flex items-center justify-center pl-[210px] py-12">
@@ -148,7 +165,7 @@ export default function LoginPage() {
               <div className="mt-5 rounded-lg border border-dashed border-gray-300 p-3 text-xs text-gray-500">
                 <p className="mb-2 font-semibold">Tài khoản thử (chỉ hiện khi dev)</p>
                 <div className="flex flex-wrap gap-2">
-                  {MOCK_ACCOUNTS.map((account) => (
+                  {MOCK_ACCOUNTS.filter((account) => account.role === 'user').map((account) => (
                     <button
                       key={account.id}
                       type="button"

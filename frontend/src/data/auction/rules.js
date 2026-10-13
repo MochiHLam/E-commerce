@@ -1,9 +1,9 @@
 export default [
   {
     icon: '💰',
-    title: 'Ba mức giá của mỗi vật phẩm',
+    title: 'Giá và bước giá của mỗi vật phẩm',
     description:
-      'Mỗi vật phẩm có giá khởi điểm (mức thấp nhất cho lượt đặt đầu), bước giá (mức tăng tối thiểu mỗi lượt) và giá mua ngay (mức trần). Cả ba do NaviShop quyết định khi duyệt và không đổi giữa chừng. Chỉ cần một lượt đặt hợp lệ là vật phẩm sẽ được bán.',
+      'Mỗi vật phẩm có giá khởi điểm (mức thấp nhất cho lượt đặt đầu) và bước giá (mức tăng tối thiểu mỗi lượt). Admin cấu hình các mức giá khi phiên còn đóng, trước khi mở; khi phiên đã mở và ở trạng thái chờ đăng ký hoặc đang diễn ra, không thể chỉnh sửa. Chỉ cần một lượt đặt hợp lệ là vật phẩm sẽ được bán.',
   },
   {
     icon: '🔒',
@@ -15,13 +15,7 @@ export default [
     icon: '⏱️',
     title: 'Cộng thêm giờ khi đặt phút chót',
     description:
-      'Nếu có người đặt giá trong khoảng cuối giờ của món đó, thời gian kết thúc được dời ra. Khoảng này bằng khoảng một phần mười thời lượng của món: món 30 phút thì là 3 phút cuối, và được cộng đủ 3 phút tính từ lúc đặt. Việc này lặp lại được nhiều lần. Mỗi lần cộng giờ, bước giá của món đó tăng theo hệ số NaviShop cài cho phiên (thường là 1,5 lần).',
-  },
-  {
-    icon: '⚡',
-    title: 'Mua ngay để chốt luôn',
-    description:
-      'Bạn có thể bấm mua ngay để chốt món với đúng giá mua ngay, kể cả khi đang dẫn đầu (lúc đó bạn chỉ bị giữ thêm phần chênh). Một lượt đặt giá mà đạt hoặc vượt giá mua ngay cũng chốt luôn, với đúng số bạn đã đặt.',
+      'Nếu có người đặt giá trong khoảng cuối giờ, thời gian kết thúc được dời thêm theo cấu hình của phiên. Gia hạn có thể lặp lại nhiều lần. Ngưỡng kích hoạt và thời lượng gia hạn do admin cấu hình trước khi mở phiên; khi phiên đã mở thì không thể chỉnh sửa.',
   },
   {
     icon: '🚫',
