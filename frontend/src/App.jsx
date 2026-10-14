@@ -15,8 +15,11 @@ import AuctionHistoryDetailPage from '@/pages/AuctionHistoryDetailPage'
 import AuctionHistoryItemPage from '@/pages/AuctionHistoryItemPage'
 import AuctionSessionPage from '@/pages/AuctionSessionPage'
 import AuctionSessionItemPage from '@/pages/AuctionSessionItemPage'
+import AccountPage from '@/pages/AccountPage'
 import RequireRole from '@/components/RequireRole'
 import RequireAuth from '@/components/RequireAuth'
+import FloatingChatButton from '@/components/FloatingChatButton'
+import MockShopPage from '@/pages/MockShopPage'
 
 // Trang chưa hoàn thiện
 function ComingSoon({ title }) {
@@ -62,9 +65,18 @@ function Layout() {
           {/* TODO: wrap the real search page in RequireAuth and preserve the full URL as returnTo. */}
           <Route path="/search"        element={<ComingSoon title="Kết quả tìm kiếm" />} />
           <Route path="/cart"          element={<ComingSoon title="Giỏ hàng" />} />
-          <Route path="/account"       element={<ComingSoon title="My Account" />} />
+          <Route path="/:shopSlug"     element={<MockShopPage />} />
           <Route path="/auction/about" element={<AuctionAboutPage />} />
           <Route element={<RequireAuth />}>
+            <Route path="/account" element={<Navigate to="/user/account/profile" replace />} />
+            <Route path="/user" element={<Navigate to="/user/account/profile" replace />} />
+            <Route path="/user/account" element={<Navigate to="/user/account/profile" replace />} />
+            <Route path="/user/account/profile" element={<AccountPage section="profile" />} />
+            <Route path="/user/account/address" element={<AccountPage section="address" />} />
+            <Route path="/user/account/password" element={<AccountPage section="password" />} />
+            <Route path="/user/account/notifications" element={<AccountPage section="notifications" />} />
+            <Route path="/user/orders" element={<AccountPage section="orders" />} />
+            <Route path="/user/auctions" element={<AccountPage section="auctions" />} />
             <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />
             <Route path="/auction/history/:sessionId/items/:itemId" element={<AuctionHistoryItemPage />} />
             <Route path="/auction/:id" element={<AuctionSessionPage />} />
@@ -113,6 +125,7 @@ function App() {
         {/* Tất cả trang còn lại */}
         <Route path="/*" element={<Layout />} />
       </Routes>
+      <FloatingChatButton />
     </BrowserRouter>
   )
 }

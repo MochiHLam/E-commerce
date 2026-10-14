@@ -12,40 +12,56 @@ export default function OnboardPage() {
   })
   const [show, setShow] = useState(false)
   const [errors, setErrors] = useState({})
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
 
   // Guard: nếu không đến từ bước OTP thì redirect về /register
   if (!email) return <Navigate to="/register" replace />
 
   const set = (field) => (e) => {
-    setForm({ ...form, [field]: e.target.value })
-    setErrors((prev) => ({ ...prev, [field]: undefined }))
+    const value = e.target.value
+    const nextForm = { ...form, [field]: value }
+    setForm(nextForm)
+    if (hasAttemptedSubmit) setErrors(validate(nextForm))
   }
 
-  const validate = () => {
+  const passwordTooShort = form.password.length > 0 && form.password.length < 8
+  const passwordMismatch = form.confirm.length > 0 && form.confirm !== form.password
+
+  const validate = (values = form) => {
     const errs = {}
+    if (!values.name.trim()) errs.name = 'Vui lòng nhập họ và tên.'
+    if (!values.email.trim()) errs.email = 'Vui lòng nhập email.'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errs.email = 'Email không đúng định dạng.'
+    if (!values.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại.'
+    if (!values.gender) errs.gender = 'Vui lòng chọn giới tính.'
+    if (!values.address.trim()) errs.address = 'Vui lòng nhập địa chỉ.'
+    if (!values.password) errs.password = 'Vui lòng nhập mật khẩu.'
 
     // Tuổi tối thiểu 18
-    if (form.dob) {
+    if (!values.dob) {
+      errs.dob = 'Vui lòng chọn ngày sinh.'
+    } else {
       const today = new Date()
-      const birth = new Date(form.dob)
+      const birth = new Date(values.dob)
       const age = today.getFullYear() - birth.getFullYear() -
         (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate()) ? 1 : 0)
-      if (age < 18) errs.dob = 'Bạn phải từ 18 tuổi trở lên để đăng ký.'
+      if (Number.isNaN(birth.getTime()) || age < 18) errs.dob = 'Ngày sinh không hợp lệ hoặc bạn chưa đủ 18 tuổi.'
     }
 
     // Mật khẩu tối thiểu 8 ký tự
-    if (form.password.length > 0 && form.password.length < 8)
+    if (values.password && values.password.length < 8)
       errs.password = 'Mật khẩu phải có ít nhất 8 ký tự.'
 
     // Xác nhận khớp
-    if (form.confirm && form.confirm !== form.password)
-      errs.confirm = 'Mật khẩu xác nhận không khớp.'
+    if (!values.confirm) errs.confirm = 'Vui lòng xác nhận mật khẩu.'
+    else if (values.confirm !== values.password) errs.confirm = 'Mật khẩu xác nhận không khớp.'
 
     return errs
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    setHasAttemptedSubmit(true)
     const errs = validate()
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     // TODO: gọi API đăng ký
@@ -60,18 +76,20 @@ export default function OnboardPage() {
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Tạo tài khoản</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
           {/* Họ tên */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="reg-name">
               Họ và tên
             </label>
             <input
-              id="reg-name" type="text" required
+              id="reg-name" name="name" type="text" required
               value={form.name} onChange={set('name')}
               placeholder="Nguyễn Văn A"
-              className={inputClass}
+              aria-invalid={Boolean(errors.name)}
+              className={`${inputClass} ${errors.name ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
             />
+            {errors.name && <p role="alert" className="mt-1 text-xs text-red-500">{errors.name}</p>}
           </div>
 
           {/* Email */}
@@ -80,11 +98,13 @@ export default function OnboardPage() {
               Email
             </label>
             <input
-              id="reg-email" type="email" autoComplete="email" required
+              id="reg-email" name="email" type="email" autoComplete="email" required
               value={form.email} onChange={set('email')}
               placeholder="you@example.com"
-              className={inputClass}
+              aria-invalid={Boolean(errors.email)}
+              className={`${inputClass} ${errors.email ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
             />
+            {errors.email && <p role="alert" className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
 
           {/* Số điện thoại */}
@@ -93,11 +113,13 @@ export default function OnboardPage() {
               Số điện thoại
             </label>
             <input
-              id="reg-phone" type="tel" required
+              id="reg-phone" name="phone" type="tel" required
               value={form.phone} onChange={set('phone')}
               placeholder="0901 234 567"
-              className={inputClass}
+              aria-invalid={Boolean(errors.phone)}
+              className={`${inputClass} ${errors.phone ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
             />
+            {errors.phone && <p role="alert" className="mt-1 text-xs text-red-500">{errors.phone}</p>}
           </div>
 
           {/* Giới tính + Ngày sinh */}
@@ -107,23 +129,26 @@ export default function OnboardPage() {
                 Giới tính
               </label>
               <select
-                id="reg-gender" required
+                id="reg-gender" name="gender" required
                 value={form.gender} onChange={set('gender')}
-                className={`${inputClass} bg-white`}
+                aria-invalid={Boolean(errors.gender)}
+                className={`${inputClass} bg-white ${errors.gender ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
               >
                 <option value="" disabled>Chọn...</option>
                 <option value="male">Nam</option>
                 <option value="female">Nữ</option>
                 <option value="other">Khác</option>
               </select>
+              {errors.gender && <p role="alert" className="mt-1 text-xs text-red-500">{errors.gender}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="reg-dob">
                 Ngày sinh
               </label>
               <input
-                id="reg-dob" type="date" required
+                id="reg-dob" name="dob" type="date" required
                 value={form.dob} onChange={set('dob')}
+                aria-invalid={Boolean(errors.dob)}
                 className={`${inputClass} text-gray-600 ${errors.dob ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
               />
               {errors.dob && <p className="mt-1 text-xs text-red-500">{errors.dob}</p>}
@@ -136,11 +161,13 @@ export default function OnboardPage() {
               Địa chỉ
             </label>
             <input
-              id="reg-address" type="text" required
+              id="reg-address" name="address" type="text" required
               value={form.address} onChange={set('address')}
               placeholder="Số nhà, đường, phường/xã, tỉnh/thành"
-              className={inputClass}
+              aria-invalid={Boolean(errors.address)}
+              className={`${inputClass} ${errors.address ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
             />
+            {errors.address && <p role="alert" className="mt-1 text-xs text-red-500">{errors.address}</p>}
           </div>
 
           {/* Mật khẩu */}
@@ -154,8 +181,9 @@ export default function OnboardPage() {
                 type={show ? 'text' : 'password'}
                 autoComplete="new-password" required
                 value={form.password} onChange={set('password')}
-                placeholder="Tối thiểu 8 ký tự"
-                className={`${inputClass} pr-10 ${errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
+                placeholder="Nhập mật khẩu"
+                aria-invalid={passwordTooShort || Boolean(errors.password)}
+                className={`${inputClass} pr-10 ${passwordTooShort || errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
               />
               <button
                 type="button"
@@ -165,7 +193,10 @@ export default function OnboardPage() {
                 {show ? 'Ẩn' : 'Hiện'}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
+            <p className={`mt-1.5 text-xs ${passwordTooShort ? 'text-red-500' : 'text-gray-500'}`}>
+              {passwordTooShort ? 'Mật khẩu phải có ít nhất 8 ký tự.' : 'Mật khẩu tối thiểu 8 ký tự'}
+            </p>
+            {errors.password && (!passwordTooShort || !form.password) && <p role="alert" className="mt-1 text-xs text-red-500">{errors.password}</p>}
           </div>
 
           {/* Xác nhận mật khẩu */}
@@ -174,14 +205,19 @@ export default function OnboardPage() {
               Xác nhận mật khẩu
             </label>
             <input
-              id="reg-confirm"
+              id="reg-confirm" name="confirm"
               type={show ? 'text' : 'password'}
               autoComplete="new-password" required
               value={form.confirm} onChange={set('confirm')}
               placeholder="Nhập lại mật khẩu"
-              className={`${inputClass} ${errors.confirm ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
+              aria-invalid={passwordMismatch || Boolean(errors.confirm)}
+              className={`${inputClass} ${passwordMismatch || errors.confirm ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
             />
-            {errors.confirm && <p className="mt-1 text-xs text-red-500">{errors.confirm}</p>}
+            {(passwordMismatch || errors.confirm) && (
+              <p role="alert" className="mt-1 text-xs text-red-500">
+                {passwordMismatch ? 'Mật khẩu xác nhận không khớp.' : errors.confirm}
+              </p>
+            )}
           </div>
 
           {/* Submit */}

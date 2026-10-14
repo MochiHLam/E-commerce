@@ -24,6 +24,17 @@ export function AuthProvider({ children }) {
     setUser(nextUser)
   }, [])
 
+  const updateUser = useCallback((updates) => {
+    if (!user) return
+    const nextUser = { ...user, ...updates }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
+    } catch {
+      // Keep the updated profile in memory when storage is unavailable.
+    }
+    setUser(nextUser)
+  }, [user])
+
   const logout = useCallback(() => {
     try {
       localStorage.removeItem(STORAGE_KEY)
@@ -42,8 +53,8 @@ export function AuthProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, role: user?.role ?? 'guest', isLoggedIn: Boolean(user), login, logout }),
-    [user, login, logout],
+    () => ({ user, role: user?.role ?? 'guest', isLoggedIn: Boolean(user), login, updateUser, logout }),
+    [user, login, updateUser, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

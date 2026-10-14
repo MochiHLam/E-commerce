@@ -20,7 +20,9 @@ export default function RoleLoginPage({ role }) {
   const config = ROLE_CONFIG[role]
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [credentialsError, setCredentialsError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
@@ -33,15 +35,27 @@ export default function RoleLoginPage({ role }) {
 
   const handleSubmit = (event) => {
     event.preventDefault()
+    const normalizedEmail = email.trim()
+    setEmailError(!normalizedEmail
+      ? 'Vui lòng nhập email.'
+      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+        ? 'Email không đúng định dạng.'
+        : '')
+    setPasswordError(password ? '' : 'Vui lòng nhập mật khẩu.')
+    setCredentialsError('')
+    if (!normalizedEmail || !password || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return
+
     const account = import.meta.env.DEV
       ? MOCK_ACCOUNTS.find((candidate) =>
         candidate.role === role
-        && candidate.email === email.trim().toLowerCase()
+        && candidate.email === normalizedEmail.toLowerCase()
         && candidate.password === password)
       : null
 
     if (!account) {
-      setError('Email hoặc mật khẩu không đúng với quyền truy cập này.')
+      setEmailError('')
+      setPasswordError('')
+      setCredentialsError('Email hoặc mật khẩu không đúng với quyền truy cập này.')
       return
     }
 
@@ -86,21 +100,28 @@ export default function RoleLoginPage({ role }) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+        <form noValidate onSubmit={handleSubmit} className="mt-7 space-y-5">
           <div>
             <label htmlFor="role-login-email" className="mb-1.5 block text-sm font-medium text-gray-700">
               Email
             </label>
             <input
               id="role-login-email"
+              name="email"
               type="email"
               autoComplete="username"
               required
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="h-11 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none transition focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15"
+              onChange={(event) => {
+                setEmail(event.target.value)
+                setEmailError('')
+                setCredentialsError('')
+              }}
+              aria-invalid={Boolean(emailError || credentialsError)}
+              className={`h-11 w-full rounded-lg border px-3 text-sm outline-none transition focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15 ${emailError || credentialsError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/15' : 'border-gray-300'}`}
               placeholder="name@navishop.vn"
             />
+            {emailError && <p role="alert" className="mt-1 text-xs text-red-600">{emailError}</p>}
           </div>
 
           <div>
@@ -110,12 +131,18 @@ export default function RoleLoginPage({ role }) {
             <div className="relative">
               <input
                 id="role-login-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="h-11 w-full rounded-lg border border-gray-300 px-3 pr-16 text-sm outline-none transition focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15"
+                onChange={(event) => {
+                  setPassword(event.target.value)
+                  setPasswordError('')
+                  setCredentialsError('')
+                }}
+                aria-invalid={Boolean(passwordError || credentialsError)}
+                className={`h-11 w-full rounded-lg border px-3 pr-16 text-sm outline-none transition focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15 ${passwordError || credentialsError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/15' : 'border-gray-300'}`}
                 placeholder="Nhập mật khẩu"
               />
               <button
@@ -126,9 +153,10 @@ export default function RoleLoginPage({ role }) {
                 {showPassword ? 'Ẩn' : 'Hiện'}
               </button>
             </div>
+            {passwordError && <p role="alert" className="mt-1 text-xs text-red-600">{passwordError}</p>}
+            {credentialsError && <p role="alert" className="mt-1 text-xs text-red-600">{credentialsError}</p>}
           </div>
 
-          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
             className="h-11 w-full rounded-lg bg-[#056F1C] text-sm font-semibold text-white transition hover:bg-[#045517] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2"

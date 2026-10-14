@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight, Hash, Minus, Plus, Tag, Trophy, X } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Hash, Minus, Plus, Tag, Trophy, X } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/components/AuctionItemLayout'
 import { useAuth } from '@/context/AuthContext'
@@ -72,9 +72,21 @@ function BiddingPanel({ item, className = 'mt-6' }) {
   const [showAllBids, setShowAllBids] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [remainingTime, setRemainingTime] = useState(() => Math.max(0, new Date(item.endTime).getTime() - Date.now()))
   const bidIncrement = item.baseBidIncrement * stepMultiplier
   const nextBid = currentPrice + bidIncrement
   const recentBids = [...bids].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  const remainingMinutes = String(Math.floor(remainingTime / 60000)).padStart(2, '0')
+  const remainingSeconds = String(Math.floor((remainingTime % 60000) / 1000)).padStart(2, '0')
+
+  useEffect(() => {
+    const updateRemainingTime = () => {
+      setRemainingTime(Math.max(0, new Date(item.endTime).getTime() - Date.now()))
+    }
+    updateRemainingTime()
+    const timer = setInterval(updateRemainingTime, 1000)
+    return () => clearInterval(timer)
+  }, [item.endTime])
 
   useEffect(() => {
     if (!showAllBids) return
@@ -185,6 +197,15 @@ function BiddingPanel({ item, className = 'mt-6' }) {
           <h2 className="font-bold text-gray-900">Trả giá</h2>
           <div className="text-right">
             <p className="text-lg font-extrabold text-amber-700">{formatVND(currentPrice)}</p>
+            <p
+              role="timer"
+              aria-label={`Thời gian còn lại ${remainingMinutes}:${remainingSeconds}`}
+              className="mt-1 inline-flex items-center gap-1 text-xs font-semibold tabular-nums text-amber-800"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>Còn lại:</span>
+              {remainingMinutes}:{remainingSeconds}
+            </p>
           </div>
         </div>
         <form onSubmit={handleBid} className="p-5 sm:p-6">

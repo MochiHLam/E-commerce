@@ -1,34 +1,9 @@
-import { Bell, CheckCheck, CircleDollarSign, Gavel, PackageCheck, Search, ShoppingBag, Trash2 } from 'lucide-react'
+import { Bell, CheckCheck, Search, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
-
-const INITIAL_NOTIFICATIONS = import.meta.env.DEV ? [
-  { id: 'noti-1', type: 'order', title: 'Đơn hàng của bạn đã được xác nhận.', createdAt: Date.now() - 5 * 60_000, href: '/cart', isRead: false },
-  { id: 'noti-2', type: 'auction', title: 'Phiên đấu giá mùa thu đã kết thúc.', createdAt: Date.now() - 42 * 60_000, href: '/auction/history/ses_004', isRead: false },
-  { id: 'noti-3', type: 'wallet', title: 'Ví của bạn vừa được cập nhật.', createdAt: Date.now() - 3 * 60 * 60_000, href: '/account', isRead: true },
-  { id: 'noti-4', type: 'report', title: 'Báo cáo của bạn đã được xử lý.', createdAt: Date.now() - 8 * 60 * 60_000, href: '/help/contact/report', isRead: true },
-  { id: 'noti-5', type: 'order', title: 'Cửa hàng đã bàn giao đơn hàng cho đơn vị vận chuyển.', createdAt: Date.now() - 24 * 60 * 60_000, href: '/cart', isRead: true },
-  { id: 'noti-6', type: 'auction', title: 'Phiên đấu giá sắp diễn ra.', createdAt: Date.now() - 2 * 24 * 60 * 60_000, href: '/auction/about', isRead: true },
-  { id: 'noti-7', type: 'order', title: 'Đơn hàng đã giao thành công.', createdAt: Date.now() - 3 * 24 * 60 * 60_000, href: '/cart', isRead: true },
-] : []
-
-const NOTIFICATION_ICONS = {
-  order: PackageCheck,
-  auction: Gavel,
-  wallet: CircleDollarSign,
-  report: ShoppingBag,
-}
-
-function formatRelativeTime(timestamp) {
-  const minutes = Math.max(1, Math.floor((Date.now() - timestamp) / 60_000))
-  if (minutes < 60) return `${minutes} phút trước`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} giờ trước`
-  const days = Math.floor(hours / 24)
-  return `${days} ngày trước`
-}
+import { INITIAL_NOTIFICATIONS, NOTIFICATION_ICONS, formatRelativeTime } from '@/data/mockNotifications'
 
 function formatPrice(price) {
   return `${new Intl.NumberFormat('vi-VN').format(price ?? 0)} ₫`
@@ -143,7 +118,11 @@ export default function Navbar({ variant = 'default' }) {
             <div ref={dropdownAreaRef} className="ml-auto flex items-center gap-3 shrink-0">
               {isLoggedIn ? (
                 <>
-                  <div className="relative">
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setActiveDropdown('cart')}
+                    onMouseLeave={() => setActiveDropdown((current) => (current === 'cart' ? null : current))}
+                  >
                     <button
                       type="button"
                       aria-label="Giỏ hàng"
@@ -161,7 +140,7 @@ export default function Navbar({ variant = 'default' }) {
                       )}
                     </button>
                     {activeDropdown === 'cart' && (
-                      <div role="menu" className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96">
+                      <div role="menu" className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-96">
                         <div className="border-b border-gray-100 px-4 py-3 font-semibold">Giỏ hàng</div>
                         {cartItems.length === 0 ? (
                           <div className="px-5 py-8 text-center">
@@ -200,7 +179,11 @@ export default function Navbar({ variant = 'default' }) {
                       </div>
                     )}
                   </div>
-                  <div className="relative">
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setActiveDropdown('notifications')}
+                    onMouseLeave={() => setActiveDropdown((current) => (current === 'notifications' ? null : current))}
+                  >
                     <button
                       type="button"
                       aria-label="Thông báo"
@@ -218,7 +201,7 @@ export default function Navbar({ variant = 'default' }) {
                       )}
                     </button>
                     {activeDropdown === 'notifications' && (
-                      <div className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96">
+                      <div className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-96">
                         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                           <span className="font-semibold">Thông báo</span>
                           <button
@@ -262,7 +245,11 @@ export default function Navbar({ variant = 'default' }) {
                       </div>
                     )}
                   </div>
-                  <div className="relative">
+                  <div
+                    className="relative"
+                    onMouseEnter={() => setActiveDropdown('account')}
+                    onMouseLeave={() => setActiveDropdown((current) => (current === 'account' ? null : current))}
+                  >
                     <button
                       type="button"
                       aria-label={`Tài khoản ${user?.name ?? ''}`}
@@ -271,15 +258,19 @@ export default function Navbar({ variant = 'default' }) {
                       onClick={() => toggleDropdown('account')}
                       className="flex h-10 w-10 items-center justify-center rounded-full bg-white font-semibold text-[#056F1C] hover:bg-green-100 transition-colors"
                     >
-                      {user?.name?.trim().charAt(0).toLocaleUpperCase('vi-VN') || '?'}
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
+                      ) : (
+                        user?.name?.trim().charAt(0).toLocaleUpperCase('vi-VN') || '?'
+                      )}
                     </button>
                     {activeDropdown === 'account' && (
-                      <div className="absolute right-0 top-full z-50 mt-2 min-w-44 rounded-lg border border-gray-200 bg-white p-2 text-gray-800 shadow-lg">
+                      <div className="absolute right-0 top-full z-50 min-w-44 rounded-lg border border-gray-200 bg-white p-2 text-gray-800 shadow-lg">
                         <p className="border-b border-gray-100 px-3 py-2 text-sm">
                           {user?.name} <span className="text-gray-500">({user?.role})</span>
                         </p>
                         <Link
-                          to="/account"
+                          to="/user/account/profile"
                           onClick={() => setActiveDropdown(null)}
                           className="block w-full rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
                         >

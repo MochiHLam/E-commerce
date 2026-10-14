@@ -7,23 +7,37 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
-  const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [credentialsError, setCredentialsError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const normalizedEmail = email.trim()
+    setEmailError(!normalizedEmail
+      ? 'Vui lòng nhập email.'
+      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+        ? 'Email không đúng định dạng.'
+        : '')
+    setPasswordError(password ? '' : 'Vui lòng nhập mật khẩu.')
+    setCredentialsError('')
+    if (!normalizedEmail || !password || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return
+
     // TODO: thay bằng API đăng nhập thật. Mock chỉ chạy khi dev.
     const account = import.meta.env.DEV
       ? MOCK_ACCOUNTS.find((candidate) =>
           candidate.role === 'user'
-          && candidate.email === email.trim().toLowerCase()
+          && candidate.email === normalizedEmail.toLowerCase()
           && candidate.password === password)
       : null
 
     if (!account) {
-      setError('Email hoặc mật khẩu không đúng')
+      setEmailError('')
+      setPasswordError('')
+      setCredentialsError('Email hoặc mật khẩu không đúng.')
       return
     }
 
@@ -74,7 +88,7 @@ export default function LoginPage() {
               </Link>
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form noValidate onSubmit={handleSubmit} className="space-y-4">
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="login-email">
@@ -82,16 +96,23 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="login-email"
+                  name="email"
                   type="email"
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setEmailError('')
+                    setCredentialsError('')
+                  }}
+                  aria-invalid={Boolean(emailError || credentialsError)}
                   placeholder="you@example.com"
-                  className="w-full h-10 px-4 rounded-lg border border-gray-300 text-sm outline-none
+                  className={`w-full h-10 px-4 rounded-lg border text-sm outline-none
                     focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15 transition-all
-                    placeholder:text-gray-300"
+                    placeholder:text-gray-300 ${emailError || credentialsError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/15' : 'border-gray-300'}`}
                 />
+                {emailError && <p role="alert" className="mt-1 text-xs text-red-600">{emailError}</p>}
               </div>
 
               {/* Password */}
@@ -111,15 +132,21 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     id="login-password"
+                    name="password"
                     type={show ? 'text' : 'password'}
                     autoComplete="current-password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      setPasswordError('')
+                      setCredentialsError('')
+                    }}
+                    aria-invalid={Boolean(passwordError || credentialsError)}
                     placeholder="••••••••"
-                    className="w-full h-10 px-4 pr-10 rounded-lg border border-gray-300 text-sm outline-none
+                    className={`w-full h-10 px-4 pr-10 rounded-lg border text-sm outline-none
                       focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15 transition-all
-                      placeholder:text-gray-300"
+                      placeholder:text-gray-300 ${passwordError || credentialsError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/15' : 'border-gray-300'}`}
                   />
                   <button
                     type="button"
@@ -129,10 +156,11 @@ export default function LoginPage() {
                     {show ? 'Ẩn' : 'Hiện'}
                   </button>
                 </div>
+                {passwordError && <p role="alert" className="mt-1 text-xs text-red-600">{passwordError}</p>}
+                {credentialsError && <p role="alert" className="mt-1 text-xs text-red-600">{credentialsError}</p>}
               </div>
 
               {/* Submit */}
-              {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
               <button
                 id="login-submit-btn"
                 type="submit"
@@ -161,27 +189,6 @@ export default function LoginPage() {
               Tiếp tục với Google
             </button>
 
-            {import.meta.env.DEV && (
-              <div className="mt-5 rounded-lg border border-dashed border-gray-300 p-3 text-xs text-gray-500">
-                <p className="mb-2 font-semibold">Tài khoản thử (chỉ hiện khi dev)</p>
-                <div className="flex flex-wrap gap-2">
-                  {MOCK_ACCOUNTS.filter((account) => account.role === 'user').map((account) => (
-                    <button
-                      key={account.id}
-                      type="button"
-                      onClick={() => {
-                        setEmail(account.email)
-                        setPassword(account.password)
-                        setError('')
-                      }}
-                      className="rounded border border-gray-300 px-2 py-1 hover:bg-gray-50"
-                    >
-                      {account.role}{account.hasShop ? ' + shop' : ''}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
