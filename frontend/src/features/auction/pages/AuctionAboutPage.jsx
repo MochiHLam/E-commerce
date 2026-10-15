@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import AuctionCTAButton from '@/components/AuctionCTAButton'
+import AuctionCTAButton from '@/features/auction/components/AuctionCTAButton'
 import { useAuth } from '@/context/AuthContext'
-import steps from '@/data/auction/steps'
-import rules from '@/data/auction/rules'
-import faq from '@/data/auction/faq'
-import { MOCK_SESSION } from '@/data/auction/sessionMock'
+import steps from '@/features/auction/data/steps'
+import rules from '@/features/auction/data/rules'
+import faq from '@/features/auction/data/faq'
+import { MOCK_SESSION } from '@/mocks/auction/sessionMock'
 
 const LAYOUT = 'max-w-[1200px] mx-auto px-5'
 

@@ -2,8 +2,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import AuctionCTAButton from '@/components/AuctionCTAButton'
-import { MOCK_SESSION } from '@/data/auction/sessionMock'
+import AuctionCTAButton from '@/features/auction/components/AuctionCTAButton'
+import { MOCK_SESSION } from '@/mocks/auction/sessionMock'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LAYOUT = 'max-w-[1500px] mx-auto'

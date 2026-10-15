@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getMockLiveSession } from '@/data/auction/sessionMock'
+import { getMockLiveSession } from '@/mocks/auction/sessionMock'
 
 export default function useAuctionSession(sessionId) {
   const [session, setSession] = useState(() => getMockLiveSession(sessionId))

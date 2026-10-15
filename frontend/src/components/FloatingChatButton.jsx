@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MessageCircle, Search, Send, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { MOCK_SHOPS } from '@/data/mockShops'
+import { MOCK_SHOPS } from '@/mocks/mockShops'
 
 function getCurrentTime() {
   return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(new Date())

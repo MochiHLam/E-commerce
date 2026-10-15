@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { MOCK_ACCOUNTS } from '@/data/mockAccounts'
+import { MOCK_ACCOUNTS } from '@/mocks/mockAccounts'
 
 const ROLE_CONFIG = {
   admin: {

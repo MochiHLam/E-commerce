@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Hash, Minus, Plus, Tag, Trophy, X } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/components/AuctionItemLayout'
+import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/features/auction/components/AuctionItemLayout'
 import { useAuth } from '@/context/AuthContext'
-import { getMockLiveItem } from '@/data/auction/sessionMock'
-import { SESSION_ITEM_STATUS, formatShortDateTime, formatVND } from '@/lib/auction'
+import { getMockLiveItem } from '@/mocks/auction/sessionMock'
+import { SESSION_ITEM_STATUS, formatShortDateTime, formatVND } from '@/features/auction/lib/auction'
 
 const LAYOUT = 'max-w-[1280px] mx-auto px-5'
 

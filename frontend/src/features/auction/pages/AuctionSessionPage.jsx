@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Clock, ImageIcon } from 'lucide-react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import useAuctionSession from '@/hooks/useAuctionSession'
-import { SESSION_ITEM_STATUS, formatHourMinute, formatShortDateTime, formatVND } from '@/lib/auction'
+import useAuctionSession from '@/features/auction/hooks/useAuctionSession'
+import { SESSION_ITEM_STATUS, formatHourMinute, formatShortDateTime, formatVND } from '@/features/auction/lib/auction'
 
 const LAYOUT = 'max-w-[1200px] mx-auto px-5'
 

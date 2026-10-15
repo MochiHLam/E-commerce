@@ -1,5 +1,5 @@
 import { Clock, ImageIcon, Layers, Tag, TrendingUp } from 'lucide-react'
-import { formatShortDateTime, formatVND } from '@/lib/auction'
+import { formatShortDateTime, formatVND } from '@/features/auction/lib/auction'
 
 export function AuctionItemLayout({ details, children }) {
   return (

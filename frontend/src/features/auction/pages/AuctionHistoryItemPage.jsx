@@ -1,8 +1,8 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, Hash, Tag, Trophy } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/components/AuctionItemLayout'
-import { getMockItem } from '@/data/auction/historyMock'
-import { ITEM_STATUS, formatVND, getItemStatus } from '@/lib/auction'
+import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/features/auction/components/AuctionItemLayout'
+import { getMockItem } from '@/mocks/auction/historyMock'
+import { ITEM_STATUS, formatVND, getItemStatus } from '@/features/auction/lib/auction'
 
 const LAYOUT = 'max-w-[1280px] mx-auto px-5'
 

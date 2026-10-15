@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
-import { INITIAL_NOTIFICATIONS, NOTIFICATION_ICONS, formatRelativeTime } from '@/data/mockNotifications'
+import { INITIAL_NOTIFICATIONS, NOTIFICATION_ICONS, formatRelativeTime } from '@/mocks/mockNotifications'
 
 function formatPrice(price) {
   return `${new Intl.NumberFormat('vi-VN').format(price ?? 0)} ₫`

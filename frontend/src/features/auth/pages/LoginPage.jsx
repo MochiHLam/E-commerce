@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { MOCK_ACCOUNTS } from '@/data/mockAccounts'
+import { MOCK_ACCOUNTS } from '@/mocks/mockAccounts'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')

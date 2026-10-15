@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { ArrowLeft, Clock3, ImageIcon } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { getMockSession } from '@/data/auction/historyMock'
-import { ITEM_STATUS, formatDateTime, formatShortDateTime, formatVND, getItemStatus } from '@/lib/auction'
+import { getMockSession } from '@/mocks/auction/historyMock'
+import { ITEM_STATUS, formatDateTime, formatShortDateTime, formatVND, getItemStatus } from '@/features/auction/lib/auction'
 
 const LAYOUT = 'max-w-[1200px] mx-auto px-5'
 

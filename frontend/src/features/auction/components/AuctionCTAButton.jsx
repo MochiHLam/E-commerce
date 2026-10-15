@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { getAuctionCta } from '@/lib/auctionCta'
-import AuctionCTA from '@/components/AuctionCTA'
-import { formatVND } from '@/lib/auction'
+import { getAuctionCta } from '@/features/auction/lib/auctionCta'
+import AuctionCTA from '@/features/auction/components/AuctionCTA'
+import { formatVND } from '@/features/auction/lib/auction'
 
 /**
  * Nút CTA đấu giá dùng chung cho banner trang chủ và hero trang about.

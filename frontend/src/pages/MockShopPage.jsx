@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { CalendarDays, MapPin, MessageCircle, Package, Store } from 'lucide-react'
-import { MOCK_SHOPS } from '@/data/mockShops'
+import { MOCK_SHOPS } from '@/mocks/mockShops'
 
 export default function MockShopPage() {
   const { shopSlug } = useParams()
