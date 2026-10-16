@@ -41,7 +41,8 @@ export default function OrdersSection({
           <div className="relative mt-5 w-full">
             <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              type="search"
+              type="text"
+              role="searchbox"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Tìm sản phẩm trong đơn hàng"

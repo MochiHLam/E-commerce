@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, Gavel, Package, UserRound } from 'lucide-react'
+import { ChevronDown, CircleDollarSign, Gavel, Package, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { INITIAL_NOTIFICATIONS } from '@/mocks/mockNotifications'
@@ -9,6 +9,8 @@ import NotificationsSection from '@/features/account/sections/NotificationsSecti
 import OrdersSection from '@/features/account/sections/OrdersSection'
 import PasswordSection from '@/features/account/sections/PasswordSection'
 import ProfileSection from '@/features/account/sections/ProfileSection'
+import WalletSection from '@/features/account/sections/WalletSection'
+import WalletHistorySection from '@/features/account/sections/WalletHistorySection'
 import { MOCK_ORDERS } from '@/mocks/account/orders'
 
 const LAYOUT = 'mx-auto max-w-[1500px]'
@@ -29,6 +31,15 @@ const SECTIONS = [
       { id: 'address', label: 'Địa chỉ' },
       { id: 'password', label: 'Đổi mật khẩu' },
       { id: 'notifications', label: 'Thông báo' },
+    ],
+  },
+  {
+    id: 'wallet-menu',
+    label: 'NaviWallet',
+    icon: CircleDollarSign,
+    children: [
+      { id: 'wallet', label: 'Ví thanh toán Navi' },
+      { id: 'wallet-history', label: 'Lịch sử giao dịch' },
     ],
   },
   { id: 'orders', label: 'Đơn hàng', icon: Package },
@@ -103,11 +114,14 @@ const ACCOUNT_SECTION_PATHS = {
   address: '/user/account/address',
   password: '/user/account/password',
   notifications: '/user/account/notifications',
+  wallet: '/user/wallet',
+  'wallet-history': '/user/wallet/history',
 }
 
 export default function AccountPage({ section = 'profile' }) {
   const { user, updateUser } = useAuth()
   const [isAccountCollapsed, setIsAccountCollapsed] = useState(false)
+  const [isWalletCollapsed, setIsWalletCollapsed] = useState(false)
   const [form, setForm] = useState(() => getProfileForm(user))
   const [addresses, setAddresses] = useState(() => getAddresses(user))
   const [notifications, setNotifications] = useState(() => INITIAL_NOTIFICATIONS)
@@ -146,6 +160,8 @@ export default function AccountPage({ section = 'profile' }) {
   const activeSection = section
   const isAccountSectionActive = ['profile', 'address', 'password', 'notifications'].includes(activeSection)
   const isAccountExpanded = isAccountSectionActive && !isAccountCollapsed
+  const isWalletSectionActive = ['wallet', 'wallet-history'].includes(activeSection)
+  const isWalletExpanded = isWalletSectionActive && !isWalletCollapsed
   const activeItem = SECTIONS.flatMap(({ id, label, children = [] }) => [
     { id, label },
     ...children,
@@ -320,17 +336,21 @@ export default function AccountPage({ section = 'profile' }) {
                 const isGroupActive = children
                   ? children.some(({ id: childId }) => activeSection === childId)
                   : activeSection === id
-                const isExpanded = children ? isAccountExpanded : false
+                const isExpanded = children
+                  ? id === 'account' ? isAccountExpanded : isWalletExpanded
+                  : false
+                const isSectionActive = id === 'account' ? isAccountSectionActive : isGroupActive
+                const parentPath = id === 'account' ? '/user/account/profile' : ACCOUNT_SECTION_PATHS[children?.[0]?.id]
                 return (
                   <div key={id} className="mb-1">
                     <div className={`flex items-center rounded text-sm transition-colors ${
-                        (children ? isAccountSectionActive : isGroupActive)
+                        isSectionActive
                           ? 'bg-[#056F1C]/[0.08] font-semibold text-[#056F1C]'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-[#056F1C]'
                       }`}
                     >
                       <Link
-                        to={children ? '/user/account/profile' : `/user/${id}`}
+                        to={children ? parentPath : `/user/${id}`}
                         aria-current={!children && isGroupActive ? 'page' : undefined}
                         className="flex min-w-0 flex-1 items-center gap-2.5 rounded px-3 py-2 text-left"
                       >
@@ -340,11 +360,12 @@ export default function AccountPage({ section = 'profile' }) {
                       {children && (
                         <button
                           type="button"
-                          aria-label={isExpanded ? 'Thu gọn mục Tài khoản của tôi' : 'Mở rộng mục Tài khoản của tôi'}
+                          aria-label={`${isExpanded ? 'Thu gọn' : 'Mở rộng'} mục ${label}`}
                           onClick={(event) => {
                             event.preventDefault()
                             event.stopPropagation()
-                            setIsAccountCollapsed((collapsed) => !collapsed)
+                            if (id === 'account') setIsAccountCollapsed((collapsed) => !collapsed)
+                            else setIsWalletCollapsed((collapsed) => !collapsed)
                           }}
                           className="rounded p-0.5 hover:bg-white/70"
                         >
@@ -455,6 +476,9 @@ export default function AccountPage({ section = 'profile' }) {
             )}
 
             {activeSection === 'auctions' && <AuctionsSection />}
+
+            {activeSection === 'wallet' && <WalletSection />}
+            {activeSection === 'wallet-history' && <WalletHistorySection />}
           </section>
         </div>
       </div>

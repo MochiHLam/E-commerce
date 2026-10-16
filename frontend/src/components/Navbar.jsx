@@ -1,9 +1,10 @@
-import { Bell, CheckCheck, Search, Trash2 } from 'lucide-react'
+import { Bell, CheckCheck, Search, ShoppingBag } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { INITIAL_NOTIFICATIONS, NOTIFICATION_ICONS, formatRelativeTime } from '@/mocks/mockNotifications'
+import { MOCK_SHOPS } from '@/mocks/mockShops'
 
 function formatPrice(price) {
   return `${new Intl.NumberFormat('vi-VN').format(price ?? 0)} ₫`
@@ -22,8 +23,14 @@ export default function Navbar({ variant = 'default' }) {
   const [isNotificationsLoading] = useState(false)
   const dropdownAreaRef = useRef(null)
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { isLoggedIn, user, logout } = useAuth()
-  const { items: cartItems, removeFromCart } = useCart()
+  const { items: cartItems, totalItems } = useCart()
+  const currentShop = MOCK_SHOPS.find((shop) => `/${shop.slug}` === pathname)
+
+  useEffect(() => {
+    setQuery('')
+  }, [pathname])
 
   useEffect(() => {
     if (!activeDropdown) return undefined
@@ -60,7 +67,9 @@ export default function Navbar({ variant = 'default' }) {
   const handleSearch = (e) => {
     e.preventDefault()
     if (query.trim()) {
-      const returnTo = `/search?q=${encodeURIComponent(query.trim())}`
+      const params = new URLSearchParams({ q: query.trim() })
+      if (currentShop) params.set('shop', currentShop.slug)
+      const returnTo = `/search?${params.toString()}`
       if (!isLoggedIn) {
         navigate('/login', { state: { returnTo } })
         return
@@ -95,10 +104,11 @@ export default function Navbar({ variant = 'default' }) {
                 <div className="relative">
                   <input
                     id="navbar-search-input"
-                    type="search"
+                    type="text"
+                    role="searchbox"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Tìm kiếm Vật phẩm hoặc Cửa hàng ..."
+                    placeholder={currentShop ? 'Tìm kiếm trong cửa hàng' : 'Tìm kiếm với từ khóa'}
                     className="w-full h-9 rounded pl-4 pr-10 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-white/40 placeholder:text-gray-400"
                   />
                   <button
@@ -129,7 +139,10 @@ export default function Navbar({ variant = 'default' }) {
                       title="Giỏ hàng"
                       aria-expanded={activeDropdown === 'cart'}
                       aria-haspopup="menu"
-                      onClick={() => toggleDropdown('cart')}
+                      onClick={() => {
+                        setActiveDropdown(null)
+                        navigate('/cart')
+                      }}
                       className="relative flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors"
                     >
                       <img src="/images/white_shoppingcart_icon.png" alt="" className="h-5 w-5 object-contain" />
@@ -142,18 +155,20 @@ export default function Navbar({ variant = 'default' }) {
                     {activeDropdown === 'cart' && (
                       <div role="menu" className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-96">
                         <div className="border-b border-gray-100 px-4 py-3 font-semibold">Giỏ hàng</div>
-                        {cartItems.length === 0 ? (
+                        {totalItems === 0 ? (
                           <div className="px-5 py-8 text-center">
                             <p className="text-sm text-gray-500">Giỏ hàng trống</p>
-                            <Link to="/" onClick={() => setActiveDropdown(null)} className="mt-3 inline-flex rounded-lg bg-[#056F1C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#045517]">
-                              Khám phá sản phẩm
-                            </Link>
                           </div>
                         ) : (
                           <>
                             <div className="max-h-80 overflow-y-auto">
                               {[...cartItems].slice(-5).reverse().map((item) => (
-                                <div key={item.id} className="flex items-center gap-3 border-b border-gray-100 px-4 py-3">
+                                <Link
+                                  key={`${item.id}-${item.variantId ?? 'default'}`}
+                                  to={`/products/${item.id}`}
+                                  onClick={() => setActiveDropdown(null)}
+                                  className="flex items-center gap-3 border-b border-gray-100 px-4 py-3 hover:bg-gray-50"
+                                >
                                   {item.image || item.thumbnail ? (
                                     <img src={item.image || item.thumbnail} alt="" className="h-12 w-12 shrink-0 rounded-md bg-gray-100 object-cover" />
                                   ) : (
@@ -161,18 +176,18 @@ export default function Navbar({ variant = 'default' }) {
                                       <ShoppingBag className="h-5 w-5" />
                                     </div>
                                   )}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="line-clamp-2 text-sm font-medium">{item.title || item.name || 'Sản phẩm'}</p>
-                                    <p className="mt-1 text-xs text-gray-500">{formatPrice(item.price)} · SL {item.quantity}</p>
+                                  <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                                    <p className="min-w-0 truncate text-sm font-medium">
+                                      {item.title || item.name || 'Sản phẩm'}
+                                      {item.variantLabel && ` (${item.variantLabel})`}
+                                    </p>
+                                    <p className="shrink-0 text-sm font-semibold text-[#056F1C]">{formatPrice(item.price)}</p>
                                   </div>
-                                  <button type="button" aria-label={`Xóa ${item.title || item.name || 'sản phẩm'} khỏi giỏ`} onClick={() => removeFromCart(item.id)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </div>
+                                </Link>
                               ))}
                             </div>
                             <Link to="/cart" onClick={() => setActiveDropdown(null)} className="block border-t border-gray-100 px-4 py-3 text-center text-sm font-semibold text-[#056F1C] hover:bg-gray-50">
-                              Xem giỏ hàng ({cartItems.length})
+                              Xem giỏ hàng ({totalItems})
                             </Link>
                           </>
                         )}

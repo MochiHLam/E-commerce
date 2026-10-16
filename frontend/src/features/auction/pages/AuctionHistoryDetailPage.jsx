@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { ArrowLeft, Clock3, ImageIcon } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { getMockSession } from '@/mocks/auction/historyMock'
-import { ITEM_STATUS, formatDateTime, formatShortDateTime, formatVND, getItemStatus } from '@/features/auction/lib/auction'
+import { formatVND } from '@/lib/format'
+import { ITEM_STATUS, formatDateTime, formatShortDateTime, getItemStatus } from '@/features/auction/lib/auction'
 
-const LAYOUT = 'max-w-[1200px] mx-auto px-5'
+const LAYOUT = 'mx-auto w-full max-w-[1500px] px-4 sm:px-6 xl:px-0'
 
 function NotFoundState() {
   return (

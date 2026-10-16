@@ -11,10 +11,14 @@ import AuctionHistoryDetailPage from '@/features/auction/pages/AuctionHistoryDet
 import AuctionHistoryItemPage from '@/features/auction/pages/AuctionHistoryItemPage'
 import AuctionSessionItemPage from '@/features/auction/pages/AuctionSessionItemPage'
 import AuctionSessionPage from '@/features/auction/pages/AuctionSessionPage'
+import ProductDetailPage from '@/features/products/pages/ProductDetailPage'
+import CartPage from '@/features/products/pages/CartPage'
+import CheckoutPage from '@/features/products/pages/CheckoutPage'
 import HelpPage from '@/pages/HelpPage'
 import HomePage from '@/pages/HomePage'
 import InfoPage from '@/pages/InfoPage'
 import MockShopPage from '@/pages/MockShopPage'
+import SearchPage from '@/features/search/pages/SearchPage'
 
 export default function MainLayout() {
   const { pathname } = useLocation()
@@ -29,12 +33,13 @@ export default function MainLayout() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ComingSoon title="Danh sách sản phẩm" />} />
-          {/* TODO: wrap the real search page in RequireAuth and preserve the full URL as returnTo. */}
-          <Route path="/search" element={<ComingSoon title="Kết quả tìm kiếm" />} />
-          <Route path="/cart" element={<ComingSoon title="Giỏ hàng" />} />
+          <Route path="/products/:id" element={<ProductDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/:shopSlug" element={<MockShopPage />} />
           <Route path="/auction/about" element={<AuctionAboutPage />} />
           <Route element={<RequireAuth />}>
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/account" element={<Navigate to="/user/account/profile" replace />} />
             <Route path="/user" element={<Navigate to="/user/account/profile" replace />} />
             <Route path="/user/account" element={<Navigate to="/user/account/profile" replace />} />
@@ -42,6 +47,8 @@ export default function MainLayout() {
             <Route path="/user/account/address" element={<AccountPage section="address" />} />
             <Route path="/user/account/password" element={<AccountPage section="password" />} />
             <Route path="/user/account/notifications" element={<AccountPage section="notifications" />} />
+            <Route path="/user/wallet" element={<AccountPage section="wallet" />} />
+            <Route path="/user/wallet/history" element={<AccountPage section="wallet-history" />} />
             <Route path="/user/orders" element={<AccountPage section="orders" />} />
             <Route path="/user/auctions" element={<AccountPage section="auctions" />} />
             <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />

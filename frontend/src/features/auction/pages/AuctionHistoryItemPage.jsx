@@ -2,9 +2,10 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Hash, Tag, Trophy } from 'lucide-
 import { Link, useParams } from 'react-router-dom'
 import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/features/auction/components/AuctionItemLayout'
 import { getMockItem } from '@/mocks/auction/historyMock'
-import { ITEM_STATUS, formatVND, getItemStatus } from '@/features/auction/lib/auction'
+import { formatVND } from '@/lib/format'
+import { ITEM_STATUS, getItemStatus } from '@/features/auction/lib/auction'
 
-const LAYOUT = 'max-w-[1280px] mx-auto px-5'
+const LAYOUT = 'mx-auto w-full max-w-[1500px] px-4 sm:px-6 xl:px-0'
 
 function NotFoundState({ sessionId }) {
   return (

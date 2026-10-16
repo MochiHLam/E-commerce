@@ -106,7 +106,8 @@ export default function FloatingChatButton() {
                 <label className="relative block">
                   <Search aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 bg-white text-gray-400" />
                   <input
-                    type="search"
+                    type="text"
+                    role="searchbox"
                     value={shopSearch}
                     onChange={(event) => setShopSearch(event.target.value)}
                     placeholder="Tìm cửa hàng"

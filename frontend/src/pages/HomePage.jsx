@@ -4,33 +4,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import AuctionCTAButton from '@/features/auction/components/AuctionCTAButton'
 import { MOCK_SESSION } from '@/mocks/auction/sessionMock'
+import { CATEGORIES } from '@/mocks/categories'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LAYOUT = 'max-w-[1500px] mx-auto'
-
-// ─── Mock categories (thay bằng API call sau) ──────────────────────────────
-const CATEGORIES = [
-  { id: 1, name: 'Thời Trang Nam', icon: '👔' },
-  { id: 2, name: 'Điện Thoại & Phụ Kiện', icon: '📱' },
-  { id: 3, name: 'Thiết Bị Điện Tử', icon: '🖥️' },
-  { id: 4, name: 'Máy Tính & Laptop', icon: '💻' },
-  { id: 5, name: 'Máy Ảnh & Máy Quay', icon: '📷' },
-  { id: 6, name: 'Đồng Hồ', icon: '⌚' },
-  { id: 7, name: 'Giày Dép Nam', icon: '👟' },
-  { id: 8, name: 'Thiết Bị Gia Dụng', icon: '🔌' },
-  { id: 9, name: 'Thể Thao & Du Lịch', icon: '⚽' },
-  { id: 10, name: 'Ô Tô & Xe Máy & Xe Đạp', icon: '🏍️' },
-  { id: 11, name: 'Thời Trang Nữ', icon: '👗' },
-  { id: 12, name: 'Mẹ & Bé', icon: '👶' },
-  { id: 13, name: 'Nhà Cửa & Đời Sống', icon: '🛋️' },
-  { id: 14, name: 'Sắc Đẹp', icon: '💄' },
-  { id: 15, name: 'Sức Khỏe', icon: '💊' },
-  { id: 16, name: 'Giày Dép Nữ', icon: '👠' },
-  { id: 17, name: 'Túi Ví Nữ', icon: '👜' },
-  { id: 18, name: 'Phụ Kiện & Trang Sức Nữ', icon: '💍' },
-  { id: 19, name: 'Bách Hóa Online', icon: '🛒' },
-  { id: 20, name: 'Nhà Sách Online', icon: '📚' },
-]
 
 // ─── Why Choose Us ────────────────────────────────────────────────────────────
 const WHY_ITEMS = [
@@ -240,12 +217,12 @@ function CategoryCarousel({ categories, isLoggedIn }) {
         {categories.map((cat, i) => (
           <Link
             key={cat.id}
-            to={`/search?category=${encodeURIComponent(cat.name)}`}
+            to={`/search?category=${encodeURIComponent(cat.name)}&categoryFromHome=true`}
             onClick={(event) => {
               if (!isLoggedIn) {
                 event.preventDefault()
                 navigate('/login', {
-                  state: { returnTo: `/search?category=${encodeURIComponent(cat.name)}` },
+                  state: { returnTo: `/search?category=${encodeURIComponent(cat.name)}&categoryFromHome=true` },
                 })
               }
             }}

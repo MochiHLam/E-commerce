@@ -1,5 +1,8 @@
 import { Clock, ImageIcon, Layers, Tag, TrendingUp } from 'lucide-react'
-import { formatShortDateTime, formatVND } from '@/features/auction/lib/auction'
+import { Link } from 'react-router-dom'
+import { Store } from 'lucide-react'
+import { formatVND } from '@/lib/format'
+import { formatShortDateTime } from '@/features/auction/lib/auction'
 
 export function AuctionItemLayout({ details, children }) {
   return (
@@ -63,6 +66,17 @@ export function AuctionItemDetails({ item, statusLabel, statusClassName, isBiddi
         <AuctionItemDataCard icon={Tag} label="Giá khởi điểm" value={formatVND(item.startingPrice)} />
         <AuctionItemDataCard icon={TrendingUp} label="Bước giá" value={formatVND(item.baseBidIncrement)} />
         <AuctionItemDataCard icon={Layers} label="Loại vật phẩm" value={item.category} />
+        {item.sourceShop && (
+          <AuctionItemDataCard
+            icon={Store}
+            label="Nguồn cung"
+            value={(
+              <Link to={`/${item.sourceShop.slug}`} className="hover:text-[#056F1C] hover:underline">
+                {item.sourceShop.name}
+              </Link>
+            )}
+          />
+        )}
       </AuctionItemCardGroup>
 
       <AuctionItemCardGroup title="Thời gian đấu giá">

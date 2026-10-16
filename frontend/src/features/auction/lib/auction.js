@@ -1,5 +1,3 @@
-export const formatVND = (n) => (n == null ? '—' : `${new Intl.NumberFormat('vi-VN').format(n)} ₫`)
-
 export const formatDateTime = (iso) =>
   new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
 

@@ -7,27 +7,36 @@ export function CartProvider({ children }) {
 
   const addToCart = useCallback((product) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === product.id)
+      const quantity = product.quantity ?? 1
+      const existing = prev.find(
+        (item) => item.id === product.id && item.variantId === product.variantId,
+      )
       if (existing) {
         return [
-          ...prev.filter((i) => i.id !== product.id),
-          { ...existing, ...product, quantity: existing.quantity + 1 },
+          ...prev.filter((item) => item !== existing),
+          { ...existing, ...product, quantity: existing.quantity + quantity },
         ]
       }
-      return [...prev, { ...product, quantity: 1 }]
+      return [...prev, { ...product, quantity }]
     })
   }, [])
 
-  const removeFromCart = useCallback((productId) => {
-    setItems((prev) => prev.filter((i) => i.id !== productId))
+  const removeFromCart = useCallback((productId, variantId) => {
+    setItems((prev) => prev.filter((item) => (
+      item.id !== productId || (variantId != null && item.variantId !== variantId)
+    )))
   }, [])
 
-  const updateQuantity = useCallback((productId, quantity) => {
+  const updateQuantity = useCallback((productId, variantId, quantity) => {
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.id !== productId))
+      setItems((prev) => prev.filter((item) => item.id !== productId || item.variantId !== variantId))
     } else {
       setItems((prev) =>
-        prev.map((i) => (i.id === productId ? { ...i, quantity } : i))
+        prev.map((item) => (
+          item.id === productId && item.variantId === variantId
+            ? { ...item, quantity }
+            : item
+        ))
       )
     }
   }, [])

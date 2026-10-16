@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Hash, Minus, Plus, Tag, Trophy, X } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/features/auction/components/AuctionItemLayout'
 import { useAuth } from '@/context/AuthContext'
-import { getMockLiveItem } from '@/mocks/auction/sessionMock'
-import { SESSION_ITEM_STATUS, formatShortDateTime, formatVND } from '@/features/auction/lib/auction'
+import { getMockLiveItem, recordMockAuctionEnd, recordMockLiveBid } from '@/mocks/auction/sessionMock'
+import { formatVND } from '@/lib/format'
+import { SESSION_ITEM_STATUS, formatShortDateTime } from '@/features/auction/lib/auction'
 
-const LAYOUT = 'max-w-[1280px] mx-auto px-5'
+const LAYOUT = 'mx-auto w-full max-w-[1500px] px-4 sm:px-6 xl:px-0'
 
 function formatBidTime(iso) {
   return new Date(iso).toLocaleString('vi-VN', {
@@ -64,14 +65,22 @@ function amountInWords(amount) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function BiddingPanel({ item, className = 'mt-6' }) {
+function BiddingPanel({ item, onAuctionEnd, className = 'mt-6' }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [currentPrice, setCurrentPrice] = useState(item.currentPrice ?? item.startingPrice)
   const [bids, setBids] = useState(item.bids ?? [])
+  const [highestBidderId, setHighestBidderId] = useState(item.highestBidderId)
+  const [highestBidder, setHighestBidder] = useState(item.highestBidder)
+  const [endTime, setEndTime] = useState(item.endTime)
   const [stepMultiplier, setStepMultiplier] = useState(1)
   const [showAllBids, setShowAllBids] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false)
+  const [auctionEnded, setAuctionEnded] = useState(
+    item.state === 'sold' || new Date(item.endTime).getTime() <= Date.now(),
+  )
   const [remainingTime, setRemainingTime] = useState(() => Math.max(0, new Date(item.endTime).getTime() - Date.now()))
   const bidIncrement = item.baseBidIncrement * stepMultiplier
   const nextBid = currentPrice + bidIncrement
@@ -80,13 +89,20 @@ function BiddingPanel({ item, className = 'mt-6' }) {
   const remainingSeconds = String(Math.floor((remainingTime % 60000) / 1000)).padStart(2, '0')
 
   useEffect(() => {
+    let timer
     const updateRemainingTime = () => {
-      setRemainingTime(Math.max(0, new Date(item.endTime).getTime() - Date.now()))
+      const remaining = Math.max(0, new Date(endTime).getTime() - Date.now())
+      setRemainingTime(remaining)
+      if (remaining === 0) {
+        clearInterval(timer)
+        setAuctionEnded(true)
+        onAuctionEnd(recordMockAuctionEnd(item.itemId))
+      }
     }
     updateRemainingTime()
-    const timer = setInterval(updateRemainingTime, 1000)
+    if (!auctionEnded) timer = setInterval(updateRemainingTime, 1000)
     return () => clearInterval(timer)
-  }, [item.endTime])
+  }, [auctionEnded, endTime, item.itemId, onAuctionEnd])
 
   useEffect(() => {
     if (!showAllBids) return
@@ -99,7 +115,22 @@ function BiddingPanel({ item, className = 'mt-6' }) {
 
   const handleBid = (event) => {
     event.preventDefault()
+    if (auctionEnded) return
+    const result = recordMockLiveBid(item.itemId, { amount: nextBid })
+    if (!result) {
+      if (Date.now() >= new Date(endTime).getTime()) {
+        setAuctionEnded(true)
+        onAuctionEnd(recordMockAuctionEnd(item.itemId))
+        return
+      }
+      setShowInsufficientBalance(true)
+      return
+    }
+
+    setEndTime(result.endTime)
     setCurrentPrice(nextBid)
+    setHighestBidderId(user?.id ?? 'usr_001')
+    setHighestBidder(user?.id ?? 'usr•••c2a9')
     setBids((currentBids) => [
       {
         id: `bid_user_${Date.now()}`,
@@ -208,6 +239,34 @@ function BiddingPanel({ item, className = 'mt-6' }) {
             </p>
           </div>
         </div>
+        {auctionEnded ? (
+          <div
+            role="status"
+            className={`m-5 rounded-xl border p-5 sm:m-6 ${
+              highestBidderId === (user?.id ?? 'usr_001')
+                ? 'border-green-200 bg-green-50'
+                : 'border-gray-200 bg-gray-50'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <Trophy className={`mt-0.5 h-6 w-6 shrink-0 ${
+                highestBidderId === (user?.id ?? 'usr_001') ? 'text-amber-500' : 'text-gray-400'
+              }`} />
+              <div>
+                <h3 className="font-bold text-gray-900">
+                  {highestBidderId === (user?.id ?? 'usr_001')
+                    ? 'Chúc mừng, bạn đã thắng đấu giá!'
+                    : 'Phiên đấu giá đã kết thúc'}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-gray-600">
+                  {highestBidderId === (user?.id ?? 'usr_001')
+                    ? `Bạn đang là người dẫn đầu cuối cùng với ${formatVND(currentPrice)}.`
+                    : `Vật phẩm được chốt cho người dẫn đầu ${highestBidder ?? 'khác'} với giá ${formatVND(currentPrice)}.`}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleBid} className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-2 rounded-xl px-3 py-3 text-gray-900 sm:px-4">
             <div className="flex min-w-0 flex-col">
@@ -252,7 +311,47 @@ function BiddingPanel({ item, className = 'mt-6' }) {
           </button>
           <p className="mt-2 text-center text-xs capitalize text-gray-500">{amountInWords(nextBid)}</p>
         </form>
+        )}
       </section>
+
+      {showInsufficientBalance && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowInsufficientBalance(false)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="insufficient-balance-title"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h2 id="insufficient-balance-title" className="text-lg font-bold text-gray-900">
+              Số dư khả dụng không đủ
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-gray-600">
+              Số dư khả dụng trong NaviWallet không đủ để tiếp tục trả giá. Vui lòng nạp thêm tiền để tham gia đấu giá.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowInsufficientBalance(false)}
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/user/wallet')}
+                className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
+              >
+                Nạp thêm
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }
@@ -276,9 +375,15 @@ export default function AuctionSessionItemPage() {
 
   // TODO: thay bằng API GET /api/auction/sessions/:sessionId/items/:itemId
   const found = getMockLiveItem(sessionId, itemId)
+  const [endedItem, setEndedItem] = useState(null)
+  useEffect(() => {
+    setEndedItem(null)
+  }, [itemId])
+
   if (!found) return <NotFoundState sessionId={sessionId} />
 
-  const { session, item, index } = found
+  const { session, index } = found
+  const item = endedItem ?? found.item
   const state = item.state // 'queued' | 'bidding' | 'sold' | 'unsold'
   const meta = SESSION_ITEM_STATUS[state] ?? SESSION_ITEM_STATUS.queued
   const prev = session.items[index - 1]
@@ -323,10 +428,38 @@ export default function AuctionSessionItemPage() {
             />
           }
         >
-          {state === 'bidding' && <BiddingPanel key={item.itemId} item={item} className="mt-0" />}
+          {state === 'bidding' && (
+            <BiddingPanel
+              key={item.itemId}
+              item={item}
+              onAuctionEnd={setEndedItem}
+              className="mt-0"
+            />
+          )}
 
           {state === 'sold' && (
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className={`mb-5 rounded-xl border p-4 ${
+                item.highestBidderId === 'usr_001' ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <Trophy className={`mt-0.5 h-6 w-6 shrink-0 ${
+                    item.highestBidderId === 'usr_001' ? 'text-amber-500' : 'text-gray-400'
+                  }`} />
+                  <div>
+                    <h2 className="font-bold text-gray-900">
+                      {item.highestBidderId === 'usr_001'
+                        ? 'Chúc mừng, bạn đã thắng đấu giá!'
+                        : 'Phiên đấu giá đã kết thúc'}
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {item.highestBidderId === 'usr_001'
+                        ? `Bạn đã dẫn đầu với giá ${formatVND(item.currentPrice)}.`
+                        : `Vật phẩm được chốt cho người dẫn đầu ${item.highestBidder ?? 'khác'}.`}
+                    </p>
+                  </div>
+                </div>
+              </div>
               <AuctionItemCardGroup title="Kết quả đấu giá" columns={1}>
                 <AuctionItemDataCard icon={Tag} label="Giá khởi điểm" value={formatVND(item.startingPrice)} />
                 <AuctionItemDataCard icon={Trophy} label="Giá trúng đấu giá" value={formatVND(item.currentPrice)} strong />

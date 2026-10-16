@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, Clock, ImageIcon } from 'lucide-react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import useAuctionSession from '@/features/auction/hooks/useAuctionSession'
-import { SESSION_ITEM_STATUS, formatHourMinute, formatShortDateTime, formatVND } from '@/features/auction/lib/auction'
+import { formatVND } from '@/lib/format'
+import { SESSION_ITEM_STATUS, formatHourMinute, formatShortDateTime } from '@/features/auction/lib/auction'
 
-const LAYOUT = 'max-w-[1200px] mx-auto px-5'
+const LAYOUT = 'mx-auto w-full max-w-[1500px] px-4 sm:px-6 xl:px-0'
 
 // ─── Countdown ───────────────────────────────────────────────────────────────
 function useCountdown(endTime) {
