@@ -9,10 +9,9 @@ const getItemKey = (item) => `${item.id}-${item.variantId ?? 'default'}`
 
 export default function CartPage() {
   const navigate = useNavigate()
-  const { items, totalItems, removeFromCart, updateQuantity } = useCart()
+  const { items, removeFromCart, updateQuantity } = useCart()
   const [selectedKeys, setSelectedKeys] = useState(() => new Set())
   const selectedItems = items.filter((item) => selectedKeys.has(getItemKey(item)))
-  const selectedTotalItems = selectedItems.reduce((sum, item) => sum + item.quantity, 0)
   const selectedTotalPrice = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const inventoryIssues = getCartInventoryIssues(selectedItems)
   const allSelected = items.length > 0 && selectedItems.length === items.length
@@ -30,7 +29,7 @@ export default function CartPage() {
         </Link>
         <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
           <h1 className="text-2xl font-bold text-gray-900">Giỏ hàng</h1>
-          {items.length > 0 && <p className="text-sm text-gray-500">{items.length} mặt hàng · {totalItems} sản phẩm</p>}
+          {items.length > 0 && <p className="text-sm text-gray-500">{items.length} sản phẩm</p>}
         </div>
 
         {items.length === 0 ? (
@@ -152,7 +151,7 @@ export default function CartPage() {
             <aside className="h-fit rounded-xl border border-gray-200 bg-white p-5">
               <h2 className="text-lg font-semibold text-gray-900">Tóm tắt đơn hàng</h2>
               <div className="mt-5 flex justify-between text-sm text-gray-600">
-                <span>Đã chọn ({selectedTotalItems} sản phẩm)</span>
+                <span>Đã chọn ({selectedItems.length} sản phẩm)</span>
                 <span>{formatVND(selectedTotalPrice)}</span>
               </div>
               <div className="mt-4 flex justify-between border-t border-gray-100 pt-4 text-base font-bold text-gray-900">

@@ -242,7 +242,7 @@ export default function ProductDetailPage() {
       {isCartAddedPopupOpen && (
         <div
           role="status"
-          className="fixed right-4 top-20 z-[60] flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 shadow-lg sm:right-6"
+          className="fixed right-4 top-20 z-40 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 shadow-lg sm:right-6"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-[#056F1C]">
             <Check className="h-5 w-5" aria-hidden="true" />

@@ -104,8 +104,11 @@ export default function AddressSection({
                 <input
                   id="address-phone"
                   type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.phone}
-                  onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
+                  onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value.replace(/\D/g, '') }))}
+                  placeholder="0901234567"
                   required
                   aria-invalid={submitted && Boolean(errors.phone)}
                   className={`${inputClass} ${submitted && errors.phone ? invalidInputClass : ''}`}

@@ -75,9 +75,9 @@ export default function FilterSidebar({ filters, categories, onChange, onClear }
         <h2 className={heading}>Khoảng giá</h2>
         <form onSubmit={applyPrice} className="space-y-2">
           <div className="flex items-center gap-2">
-            <input type="number" min="0" inputMode="numeric" value={min} onChange={(event) => setMin(event.target.value)} placeholder="Từ" aria-label="Giá thấp nhất" className={input} />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" value={min} onChange={(event) => setMin(event.target.value.replace(/\D/g, ''))} placeholder="Từ" aria-label="Giá thấp nhất" className={input} />
             <span className="text-gray-400">-</span>
-            <input type="number" min="0" inputMode="numeric" value={max} onChange={(event) => setMax(event.target.value)} placeholder="Đến" aria-label="Giá cao nhất" className={input} />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" value={max} onChange={(event) => setMax(event.target.value.replace(/\D/g, ''))} placeholder="Đến" aria-label="Giá cao nhất" className={input} />
           </div>
           {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
           <button type="submit" className="w-full rounded bg-[#056F1C] py-2 text-sm font-semibold text-white hover:bg-[#045517]">Áp dụng</button>

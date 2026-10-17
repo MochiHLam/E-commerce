@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
-import { INITIAL_NOTIFICATIONS, NOTIFICATION_ICONS, formatRelativeTime } from '@/mocks/mockNotifications'
+import { INITIAL_NOTIFICATIONS, NOTIFICATION_ICONS, formatNotificationDateTime } from '@/mocks/mockNotifications'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
 
 function formatPrice(price) {
@@ -25,12 +25,26 @@ export default function Navbar({ variant = 'default' }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { isLoggedIn, user, logout } = useAuth()
-  const { items: cartItems, totalItems } = useCart()
+  const { items: cartItems } = useCart()
   const currentShop = MOCK_SHOPS.find((shop) => `/${shop.slug}` === pathname)
 
   useEffect(() => {
     setQuery('')
   }, [pathname])
+
+  useEffect(() => {
+    const addNotification = (event) => {
+      const notification = event.detail?.notification
+      if (!notification?.id) return
+      setNotifications((current) => [
+        notification,
+        ...current.filter((item) => item.id !== notification.id),
+      ])
+    }
+
+    window.addEventListener('navishop:notification', addNotification)
+    return () => window.removeEventListener('navishop:notification', addNotification)
+  }, [])
 
   useEffect(() => {
     if (!activeDropdown) return undefined
@@ -155,7 +169,7 @@ export default function Navbar({ variant = 'default' }) {
                     {activeDropdown === 'cart' && (
                       <div role="menu" className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-96">
                         <div className="border-b border-gray-100 px-4 py-3 font-semibold">Giỏ hàng</div>
-                        {totalItems === 0 ? (
+                        {cartItems.length === 0 ? (
                           <div className="px-5 py-8 text-center">
                             <p className="text-sm text-gray-500">Giỏ hàng trống</p>
                           </div>
@@ -187,7 +201,7 @@ export default function Navbar({ variant = 'default' }) {
                               ))}
                             </div>
                             <Link to="/cart" onClick={() => setActiveDropdown(null)} className="block border-t border-gray-100 px-4 py-3 text-center text-sm font-semibold text-[#056F1C] hover:bg-gray-50">
-                              Xem giỏ hàng ({totalItems})
+                              Xem giỏ hàng ({cartItems.length})
                             </Link>
                           </>
                         )}
@@ -205,7 +219,10 @@ export default function Navbar({ variant = 'default' }) {
                       title="Thông báo"
                       aria-expanded={activeDropdown === 'notifications'}
                       aria-haspopup="menu"
-                      onClick={() => toggleDropdown('notifications')}
+                      onClick={() => {
+                        setActiveDropdown(null)
+                        navigate('/user/notifications/orders')
+                      }}
                       className="relative flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors"
                     >
                       <img src="/images/white_bell_icon.png" alt="" className="h-5 w-5 object-contain" />
@@ -216,7 +233,7 @@ export default function Navbar({ variant = 'default' }) {
                       )}
                     </button>
                     {activeDropdown === 'notifications' && (
-                      <div className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-96">
+                      <div className="fixed left-2 right-2 top-[84px] z-50 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:w-[34rem]">
                         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                           <span className="font-semibold">Thông báo</span>
                           <button
@@ -236,20 +253,55 @@ export default function Navbar({ variant = 'default' }) {
                           <div role="menu" className="max-h-96 overflow-y-auto">
                             {notifications.map((notification) => {
                               const NotificationIcon = NOTIFICATION_ICONS[notification.type] || Bell
+                              const leadingVisual = notification.image ? (
+                                <img
+                                  src={notification.image}
+                                  alt=""
+                                  className="aspect-square w-full rounded-md object-cover"
+                                />
+                              ) : (
+                                <span className="flex aspect-square w-full items-center justify-center rounded-full bg-gray-100 text-[#056F1C]">
+                                  <NotificationIcon className="h-4 w-4" />
+                                </span>
+                              )
+                              const cardClassName = `grid w-full grid-cols-[15%_minmax(0,1fr)] items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 ${notification.isRead ? 'bg-white' : 'bg-green-50'}`
+
+                              if (notification.body) {
+                                return (
+                                  <button
+                                    key={notification.id}
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => openNotification(notification)}
+                                    className={cardClassName}
+                                  >
+                                    <span className="mt-0.5">{leadingVisual}</span>
+                                    <span className="min-w-0">
+                                      <span className="flex items-start justify-between gap-2">
+                                        <span className="block text-sm font-semibold text-gray-900">{notification.title}</span>
+                                        {!notification.isRead && <span aria-label="Chưa đọc" className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#056F1C]" />}
+                                      </span>
+                                      <span className="mt-1 block text-sm leading-5 text-gray-700">
+                                        {notification.body}
+                                      </span>
+                                      <span className="mt-1 block text-xs text-gray-500">{formatNotificationDateTime(notification.createdAt)}</span>
+                                    </span>
+                                  </button>
+                                )
+                              }
+
                               return (
                                 <button
                                   key={notification.id}
                                   type="button"
                                   role="menuitem"
                                   onClick={() => openNotification(notification)}
-                                  className={`flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 ${notification.isRead ? 'bg-white' : 'bg-green-50'}`}
+                                  className={cardClassName}
                                 >
-                                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[#056F1C]">
-                                    <NotificationIcon className="h-4 w-4" />
-                                  </span>
+                                  <span className="mt-0.5">{leadingVisual}</span>
                                   <span className="min-w-0 flex-1">
                                     <span className="line-clamp-2 block text-sm">{notification.title}</span>
-                                    <span className="mt-1 block text-xs text-gray-500">{formatRelativeTime(notification.createdAt)}</span>
+                                    <span className="mt-1 block text-xs text-gray-500">{formatNotificationDateTime(notification.createdAt)}</span>
                                   </span>
                                   {!notification.isRead && <span aria-label="Chưa đọc" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#056F1C]" />}
                                 </button>

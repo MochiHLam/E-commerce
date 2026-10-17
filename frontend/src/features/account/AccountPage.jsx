@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, CircleDollarSign, Gavel, Package, UserRound } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Bell, ChevronDown, CircleDollarSign, Gavel, Package, UserRound } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { getProductDetailMock } from '@/mocks/productDetails'
+import { PRODUCTS } from '@/mocks/products'
 import { INITIAL_NOTIFICATIONS } from '@/mocks/mockNotifications'
 import AuctionsSection from '@/features/account/sections/AuctionsSection'
 import AddressSection from '@/features/account/sections/AddressSection'
 import NotificationsSection from '@/features/account/sections/NotificationsSection'
 import OrdersSection from '@/features/account/sections/OrdersSection'
+import OrderDetailSection from '@/features/account/sections/OrderDetailSection'
 import PasswordSection from '@/features/account/sections/PasswordSection'
 import ProfileSection from '@/features/account/sections/ProfileSection'
 import WalletSection from '@/features/account/sections/WalletSection'
 import WalletHistorySection from '@/features/account/sections/WalletHistorySection'
-import { MOCK_ORDERS } from '@/mocks/account/orders'
+import { getCheckoutMockOrders, MOCK_ORDERS } from '@/mocks/account/orders'
 
 const LAYOUT = 'mx-auto max-w-[1500px]'
 
@@ -30,7 +33,15 @@ const SECTIONS = [
       { id: 'profile', label: 'Hồ sơ' },
       { id: 'address', label: 'Địa chỉ' },
       { id: 'password', label: 'Đổi mật khẩu' },
-      { id: 'notifications', label: 'Thông báo' },
+    ],
+  },
+  {
+    id: 'notifications',
+    label: 'Thông báo',
+    icon: Bell,
+    children: [
+      { id: 'notification-orders', label: 'Đơn hàng' },
+      { id: 'notification-auctions', label: 'Đấu giá' },
     ],
   },
   {
@@ -50,7 +61,7 @@ function getProfileForm(user) {
   return {
     name: user?.name ?? '',
     email: user?.email ?? '',
-    phone: user?.phone ?? '',
+    phone: String(user?.phone ?? '').replace(/\D/g, ''),
     gender: user?.gender ?? '',
     dob: user?.dob ?? '',
     avatarUrl: user?.avatarUrl ?? '',
@@ -70,7 +81,7 @@ function getAddresses(user) {
   return [{
     id: 'account-address',
     recipientName: user?.name ?? '',
-    phone: user?.phone ?? '',
+    phone: String(user?.phone ?? '').replace(/\D/g, ''),
     address: user?.address ?? '',
     isDefault: true,
   }]
@@ -86,6 +97,7 @@ function getProfileErrors(form) {
   if (!form.email.trim()) errors.email = 'Vui lòng nhập email.'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = 'Email không đúng định dạng.'
   if (!form.phone.trim()) errors.phone = 'Vui lòng nhập số điện thoại.'
+  else if (!/^\d+$/.test(form.phone)) errors.phone = 'Số điện thoại chỉ được chứa chữ số.'
   if (!form.gender) errors.gender = 'Vui lòng chọn giới tính.'
   if (!form.dob) errors.dob = 'Vui lòng chọn ngày sinh.'
   return errors
@@ -95,6 +107,7 @@ function getAddressErrors(form) {
   const errors = {}
   if (!form.recipientName.trim()) errors.recipientName = 'Vui lòng nhập họ tên người nhận.'
   if (!form.phone.trim()) errors.phone = 'Vui lòng nhập số điện thoại.'
+  else if (!/^\d+$/.test(form.phone)) errors.phone = 'Số điện thoại chỉ được chứa chữ số.'
   if (!form.address.trim()) errors.address = 'Vui lòng nhập địa chỉ cụ thể.'
   return errors
 }
@@ -113,21 +126,27 @@ const ACCOUNT_SECTION_PATHS = {
   profile: '/user/account/profile',
   address: '/user/account/address',
   password: '/user/account/password',
-  notifications: '/user/account/notifications',
-  wallet: '/user/wallet',
-  'wallet-history': '/user/wallet/history',
+  notifications: '/user/notifications',
+  'notification-orders': '/user/notifications/orders',
+  'notification-auctions': '/user/notifications/auctions',
+  wallet: '/user/naviwallet/wallet',
+  'wallet-history': '/user/naviwallet/history',
 }
 
 export default function AccountPage({ section = 'profile' }) {
   const { user, updateUser } = useAuth()
+  const navigate = useNavigate()
+  const { orderId } = useParams()
   const [isAccountCollapsed, setIsAccountCollapsed] = useState(false)
   const [isWalletCollapsed, setIsWalletCollapsed] = useState(false)
+  const [areNotificationsCollapsed, setAreNotificationsCollapsed] = useState(false)
   const [form, setForm] = useState(() => getProfileForm(user))
   const [addresses, setAddresses] = useState(() => getAddresses(user))
   const [notifications, setNotifications] = useState(() => INITIAL_NOTIFICATIONS)
   const [activeOrderTab, setActiveOrderTab] = useState('all')
   const [orderSearch, setOrderSearch] = useState('')
-  const [mockOrders, setMockOrders] = useState(() => MOCK_ORDERS)
+  const [mockOrders, setMockOrders] = useState(() => [...getCheckoutMockOrders(), ...MOCK_ORDERS])
+  const [orderActionError, setOrderActionError] = useState('')
   const [pendingCancelOrderId, setPendingCancelOrderId] = useState(null)
   const [showRefundInfo, setShowRefundInfo] = useState(false)
   const [addressForm, setAddressForm] = useState({ recipientName: '', phone: '', address: '' })
@@ -157,11 +176,14 @@ export default function AccountPage({ section = 'profile' }) {
   const name = user?.name?.trim() || 'Tài khoản NaviShop'
   const initial = name.charAt(0).toLocaleUpperCase('vi-VN')
   const role = ROLE_LABELS[user?.role] ?? 'Thành viên'
+  const defaultShippingAddress = addresses.find((address) => address.isDefault) ?? addresses[0]
   const activeSection = section
-  const isAccountSectionActive = ['profile', 'address', 'password', 'notifications'].includes(activeSection)
+  const isAccountSectionActive = ['profile', 'address', 'password'].includes(activeSection)
   const isAccountExpanded = isAccountSectionActive && !isAccountCollapsed
   const isWalletSectionActive = ['wallet', 'wallet-history'].includes(activeSection)
   const isWalletExpanded = isWalletSectionActive && !isWalletCollapsed
+  const isNotificationsSectionActive = ['notifications', 'notification-orders', 'notification-auctions'].includes(activeSection)
+  const isNotificationsExpanded = isNotificationsSectionActive && !areNotificationsCollapsed
   const activeItem = SECTIONS.flatMap(({ id, label, children = [] }) => [
     { id, label },
     ...children,
@@ -179,7 +201,7 @@ export default function AccountPage({ section = 'profile' }) {
 
   const updateField = (event) => {
     const { name: field, value } = event.target
-    setForm((current) => ({ ...current, [field]: value }))
+    setForm((current) => ({ ...current, [field]: field === 'phone' ? value.replace(/\D/g, '') : value }))
   }
 
   const handleAvatarChange = (event) => {
@@ -255,11 +277,44 @@ export default function AccountPage({ section = 'profile' }) {
     setPendingCancelOrderId(null)
   }
 
+  const buyAgain = (order) => {
+    const product = PRODUCTS.find((item) => item.id === order.productId)
+      ?? PRODUCTS.find((item) => item.name === order.productName)
+    const detail = product ? getProductDetailMock(product) : null
+    const savedVariantLabel = order.variantLabel || order.variantName?.split(': ').at(-1)
+    const variant = detail?.variants.find((item) => item.id === order.variantId)
+      ?? detail?.variants.find((item) => item.label === savedVariantLabel)
+
+    if (!product || !variant) {
+      setOrderActionError('Không thể mở lại sản phẩm này để mua. Vui lòng tìm sản phẩm trong cửa hàng.')
+      return
+    }
+    setOrderActionError('')
+
+    navigate('/checkout', {
+      state: {
+        items: [{
+          id: product.id,
+          variantId: variant.id,
+          variantName: order.variantName || `${detail.optionLabel}: ${variant.label}`,
+          variantLabel: variant.label,
+          name: product.name,
+          title: product.name,
+          image: product.images?.[0] || product.image || order.image,
+          price: variant.price,
+          quantity: order.quantity ?? 1,
+          shop: product.shop,
+          shopSlug: product.shopSlug,
+        }],
+      },
+    })
+  }
+
   const openAddressForm = (address) => {
     setEditingAddressId(address?.id ?? null)
     setAddressForm({
       recipientName: address?.recipientName ?? user?.name ?? '',
-      phone: address?.phone ?? user?.phone ?? '',
+      phone: String(address?.phone ?? user?.phone ?? '').replace(/\D/g, ''),
       address: address?.address ?? '',
     })
     setAddressMessage('')
@@ -273,7 +328,7 @@ export default function AccountPage({ section = 'profile' }) {
     const nextAddress = {
       id: editingAddressId ?? createAddressId(),
       recipientName: addressForm.recipientName.trim(),
-      phone: addressForm.phone.trim(),
+      phone: addressForm.phone,
       address: addressForm.address.trim(),
       isDefault: addresses.some((address) => address.id === editingAddressId && address.isDefault)
         || addresses.length === 0,
@@ -334,13 +389,21 @@ export default function AccountPage({ section = 'profile' }) {
             <nav aria-label="Danh mục tài khoản">
               {SECTIONS.map(({ id, label, icon: Icon, children }) => {
                 const isGroupActive = children
-                  ? children.some(({ id: childId }) => activeSection === childId)
+                  ? children.some(({ id: childId }) => activeSection === childId) || id === activeSection
                   : activeSection === id
                 const isExpanded = children
-                  ? id === 'account' ? isAccountExpanded : isWalletExpanded
+                  ? id === 'account'
+                    ? isAccountExpanded
+                    : id === 'wallet-menu'
+                      ? isWalletExpanded
+                      : isNotificationsExpanded
                   : false
-                const isSectionActive = id === 'account' ? isAccountSectionActive : isGroupActive
-                const parentPath = id === 'account' ? '/user/account/profile' : ACCOUNT_SECTION_PATHS[children?.[0]?.id]
+                const isSectionActive = id === 'account'
+                  ? isAccountSectionActive
+                  : id === 'notifications'
+                    ? isNotificationsSectionActive
+                    : isGroupActive
+                const parentPath = id === 'account' ? '/user/account/profile' : SECTIONS.find((item) => item.id === id)?.path ?? ACCOUNT_SECTION_PATHS[children?.[0]?.id]
                 return (
                   <div key={id} className="mb-1">
                     <div className={`flex items-center rounded text-sm transition-colors ${
@@ -365,7 +428,8 @@ export default function AccountPage({ section = 'profile' }) {
                             event.preventDefault()
                             event.stopPropagation()
                             if (id === 'account') setIsAccountCollapsed((collapsed) => !collapsed)
-                            else setIsWalletCollapsed((collapsed) => !collapsed)
+                            else if (id === 'wallet-menu') setIsWalletCollapsed((collapsed) => !collapsed)
+                            else setAreNotificationsCollapsed((collapsed) => !collapsed)
                           }}
                           className="rounded p-0.5 hover:bg-white/70"
                         >
@@ -459,20 +523,33 @@ export default function AccountPage({ section = 'profile' }) {
               />
             )}
 
-            {activeSection === 'notifications' && (
-              <NotificationsSection notifications={notifications} setNotifications={setNotifications} />
+            {isNotificationsSectionActive && (
+              <NotificationsSection
+                notifications={notifications}
+                setNotifications={setNotifications}
+                filter={activeSection === 'notification-orders' ? 'order' : activeSection === 'notification-auctions' ? 'auction' : 'all'}
+              />
             )}
 
             {activeSection === 'orders' && (
-              <OrdersSection
-                activeTab={activeOrderTab}
-                setActiveTab={setActiveOrderTab}
-                search={orderSearch}
-                setSearch={setOrderSearch}
-                orders={visibleOrders}
-                onCancelOrder={setPendingCancelOrderId}
-                onShowRefundInfo={() => setShowRefundInfo(true)}
-              />
+              orderId ? (
+                <OrderDetailSection
+                  order={mockOrders.find((order) => order.id === orderId)}
+                  fallbackShippingAddress={defaultShippingAddress}
+                />
+              ) : (
+                <OrdersSection
+                  activeTab={activeOrderTab}
+                  setActiveTab={setActiveOrderTab}
+                  search={orderSearch}
+                  setSearch={setOrderSearch}
+                  orders={visibleOrders}
+                  actionError={orderActionError}
+                  onCancelOrder={setPendingCancelOrderId}
+                  onBuyAgain={buyAgain}
+                  onShowRefundInfo={() => setShowRefundInfo(true)}
+                />
+              )
             )}
 
             {activeSection === 'auctions' && <AuctionsSection />}

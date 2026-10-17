@@ -18,7 +18,7 @@ export default function OnboardPage() {
   if (!email) return <Navigate to="/register" replace />
 
   const set = (field) => (e) => {
-    const value = e.target.value
+    const value = field === 'phone' ? e.target.value.replace(/\D/g, '') : e.target.value
     const nextForm = { ...form, [field]: value }
     setForm(nextForm)
     if (hasAttemptedSubmit) setErrors(validate(nextForm))
@@ -33,6 +33,7 @@ export default function OnboardPage() {
     if (!values.email.trim()) errs.email = 'Vui lòng nhập email.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errs.email = 'Email không đúng định dạng.'
     if (!values.phone.trim()) errs.phone = 'Vui lòng nhập số điện thoại.'
+    else if (!/^\d+$/.test(values.phone)) errs.phone = 'Số điện thoại chỉ được chứa chữ số.'
     if (!values.gender) errs.gender = 'Vui lòng chọn giới tính.'
     if (!values.address.trim()) errs.address = 'Vui lòng nhập địa chỉ.'
     if (!values.password) errs.password = 'Vui lòng nhập mật khẩu.'
@@ -113,9 +114,9 @@ export default function OnboardPage() {
               Số điện thoại
             </label>
             <input
-              id="reg-phone" name="phone" type="tel" required
+              id="reg-phone" name="phone" type="tel" inputMode="numeric" pattern="[0-9]*" required
               value={form.phone} onChange={set('phone')}
-              placeholder="0901 234 567"
+              placeholder="0901234567"
               aria-invalid={Boolean(errors.phone)}
               className={`${inputClass} ${errors.phone ? 'border-red-400 focus:border-red-400 focus:ring-red-400/15' : ''}`}
             />

@@ -14,6 +14,7 @@ import AuctionSessionPage from '@/features/auction/pages/AuctionSessionPage'
 import ProductDetailPage from '@/features/products/pages/ProductDetailPage'
 import CartPage from '@/features/products/pages/CartPage'
 import CheckoutPage from '@/features/products/pages/CheckoutPage'
+import OrderSuccessPage from '@/features/products/pages/OrderSuccessPage'
 import HelpPage from '@/pages/HelpPage'
 import HomePage from '@/pages/HomePage'
 import InfoPage from '@/pages/InfoPage'
@@ -36,6 +37,7 @@ export default function MainLayout() {
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/:shopSlug" element={<MockShopPage />} />
           <Route path="/auction/about" element={<AuctionAboutPage />} />
           <Route element={<RequireAuth />}>
@@ -46,10 +48,17 @@ export default function MainLayout() {
             <Route path="/user/account/profile" element={<AccountPage section="profile" />} />
             <Route path="/user/account/address" element={<AccountPage section="address" />} />
             <Route path="/user/account/password" element={<AccountPage section="password" />} />
-            <Route path="/user/account/notifications" element={<AccountPage section="notifications" />} />
+            <Route path="/user/account/notifications" element={<Navigate to="/user/notifications" replace />} />
+            <Route path="/user/notifications" element={<AccountPage section="notifications" />} />
+            <Route path="/user/notifications/orders" element={<AccountPage section="notification-orders" />} />
+            <Route path="/user/notifications/auctions" element={<AccountPage section="notification-auctions" />} />
+            <Route path="/user/naviwallet/wallet" element={<AccountPage section="wallet" />} />
+            <Route path="/user/naviwallet/history" element={<AccountPage section="wallet-history" />} />
+            <Route path="/user/payment/wallet" element={<Navigate to="/user/naviwallet/wallet" replace />} />
             <Route path="/user/wallet" element={<AccountPage section="wallet" />} />
-            <Route path="/user/wallet/history" element={<AccountPage section="wallet-history" />} />
+            <Route path="/user/wallet/history" element={<Navigate to="/user/naviwallet/history" replace />} />
             <Route path="/user/orders" element={<AccountPage section="orders" />} />
+            <Route path="/user/orders/:orderId" element={<AccountPage section="orders" />} />
             <Route path="/user/auctions" element={<AccountPage section="auctions" />} />
             <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />
             <Route path="/auction/history/:sessionId/items/:itemId" element={<AuctionHistoryItemPage />} />

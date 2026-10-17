@@ -59,6 +59,70 @@ export function reserveMockWalletAmount(amount, initialLockedBalance = 0) {
   return true
 }
 
+export function chargeMockWallet(amount, orderId, initialLockedBalance = 0) {
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new Error('Số tiền thanh toán không hợp lệ.')
+  }
+  if (!orderId) {
+    throw new Error('Thiếu mã đơn hàng cho giao dịch thanh toán.')
+  }
+
+  const currentBalance = getMockAvailableBalance(initialLockedBalance)
+  if (!Number.isSafeInteger(currentBalance) || currentBalance < 0) {
+    throw new Error('Số dư khả dụng mock không hợp lệ.')
+  }
+  if (currentBalance < amount) return false
+
+  const nextBalance = currentBalance - amount
+  const previousTransactions = localStorage.getItem(TOP_UPS_KEY)
+  const transactions = JSON.parse(previousTransactions ?? '[]')
+  if (!Array.isArray(transactions)) {
+    throw new Error('Dữ liệu lịch sử giao dịch ví không hợp lệ.')
+  }
+
+  const transaction = {
+    id: `TXN-ORDER-${orderId}`,
+    title: 'Thanh toán đơn hàng',
+    description: 'Thanh toán tiền hàng và phí vận chuyển',
+    reference: `Đơn hàng #${orderId}`,
+    amount,
+    direction: 'out',
+    date: new Date().toISOString(),
+  }
+
+  localStorage.setItem(TOP_UPS_KEY, JSON.stringify([transaction, ...transactions]))
+  try {
+    localStorage.setItem(AVAILABLE_BALANCE_KEY, String(nextBalance))
+  } catch (error) {
+    if (previousTransactions === null) localStorage.removeItem(TOP_UPS_KEY)
+    else localStorage.setItem(TOP_UPS_KEY, previousTransactions)
+    throw error
+  }
+
+  return true
+}
+
+export function rollbackMockWalletCharge(orderId, initialLockedBalance = 0) {
+  const transactionId = `TXN-ORDER-${orderId}`
+  const transactions = JSON.parse(localStorage.getItem(TOP_UPS_KEY) ?? '[]')
+  if (!Array.isArray(transactions)) {
+    throw new Error('Dữ liệu lịch sử giao dịch ví không hợp lệ.')
+  }
+  const transaction = transactions.find((entry) => entry.id === transactionId)
+  if (!transaction) return
+
+  const balance = getMockAvailableBalance(initialLockedBalance) + transaction.amount
+  if (!Number.isSafeInteger(balance)) {
+    throw new Error('Không thể khôi phục số dư ví mock sau lỗi đặt hàng.')
+  }
+
+  localStorage.setItem(AVAILABLE_BALANCE_KEY, String(balance))
+  localStorage.setItem(
+    TOP_UPS_KEY,
+    JSON.stringify(transactions.filter((entry) => entry.id !== transactionId)),
+  )
+}
+
 export function releaseMockWalletAmount(amount, initialLockedBalance = 0) {
   if (!Number.isSafeInteger(amount) || amount <= 0) return
 

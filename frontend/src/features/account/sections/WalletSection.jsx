@@ -189,6 +189,7 @@ export default function WalletSection() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
+                  autoComplete="off"
                   value={customAmount}
                   onChange={(event) => setCustomAmount(event.target.value.replace(/\D/g, ''))}
                   placeholder="Nhập số tiền (VND)"

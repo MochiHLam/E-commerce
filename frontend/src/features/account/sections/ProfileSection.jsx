@@ -57,10 +57,12 @@ export default function ProfileSection({
                 id="profile-phone"
                 name="phone"
                 type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={form.phone}
                 onChange={onChange}
                 autoComplete="tel"
-                placeholder="0901 234 567"
+                placeholder="0901234567"
                 required
                 aria-invalid={submitted && Boolean(errors.phone)}
                 className={`${inputClass} ${submitted && errors.phone ? invalidInputClass : ''}`}
