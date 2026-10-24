@@ -4,12 +4,6 @@ import { useAuth } from '@/context/AuthContext'
 import { MOCK_ACCOUNTS, MOCK_PASSWORD_RESET_PREFIX } from '@/mocks/mockAccounts'
 import { getSellerApplication } from '@/mocks/seller'
 
-function SellerDestination({ application }) {
-  if (application?.status === 'approved') return <Navigate to="/seller/dashboard" replace />
-  if (application?.status === 'pending') return <Navigate to="/seller/pending" replace />
-  return <Navigate to="/seller/onboarding" replace />
-}
-
 export default function SellerAccessPage() {
   const { user, isLoggedIn, login, logout } = useAuth()
   const [email, setEmail] = useState('')
@@ -20,7 +14,10 @@ export default function SellerAccessPage() {
   const navigate = useNavigate()
 
   if (isLoggedIn && user?.role === 'user') {
-    return <SellerDestination application={getSellerApplication(user.id)} />
+    const application = getSellerApplication(user.id)
+    if (application?.status === 'approved') return <Navigate to="/seller/dashboard" replace />
+    if (application?.status === 'pending') return <Navigate to="/seller/pending" replace />
+    if (application?.status === 'rejected') return <Navigate to="/seller/onboarding" replace />
   }
 
   const handleSubmit = (event) => {
@@ -38,7 +35,7 @@ export default function SellerAccessPage() {
       ))
       : null
     if (!account) {
-      setError('Email hoặc mật khẩu không đúng. Hãy dùng tài khoản buyer.')
+      setError('Email hoặc mật khẩu không chính xác.')
       return
     }
     const authenticatedUser = { ...account }
@@ -63,10 +60,29 @@ export default function SellerAccessPage() {
         </section>
         <section className="mx-auto w-full max-w-md rounded-2xl border border-gray-200 bg-white p-7 shadow-sm sm:p-9">
           <Link to="/" className="text-sm font-bold tracking-wide text-[#056F1C]">NAVISHOP · KÊNH NGƯỜI BÁN</Link>
-          <h1 className="mt-6 text-2xl font-bold text-gray-900">Đăng nhập người bán</h1>
-          <p className="mt-2 text-sm leading-6 text-gray-600">
-            Dùng tài khoản buyer của bạn. Nếu chưa có shop, NaviShop sẽ hướng dẫn đăng ký sau khi đăng nhập.
-          </p>
+          {isLoggedIn && user?.role === 'user' ? (
+            <>
+              <h1 className="mt-6 text-2xl font-bold text-gray-900">Tài khoản NaviShop đã tồn tại</h1>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Bạn đã đăng nhập với tài khoản người mua. Bạn có muốn đăng ký cửa hàng để bắt đầu bán hàng không?
+              </p>
+              <div className="mt-7 space-y-3">
+                <Link to="/seller/onboarding" className="flex h-11 w-full items-center justify-center rounded-lg bg-[#056F1C] text-sm font-semibold text-white hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2">
+                  Đăng ký cửa hàng
+                </Link>
+                <button type="button" onClick={logout} className="flex h-11 w-full items-center justify-center rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                  Quay lại
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="mt-6 text-2xl font-bold text-gray-900">Đăng nhập người bán</h1>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Đăng nhập bằng tài khoản NaviShop của bạn để tiếp tục.
+              </p>
+            </>
+          )}
           {isLoggedIn && user?.role !== 'user' && (
             <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               Tài khoản hiện tại không phải tài khoản buyer.
@@ -115,16 +131,17 @@ export default function SellerAccessPage() {
               </button>
             </form>
           )}
-          <div className="mt-6 border-t border-gray-100 pt-5 text-center text-xs leading-5 text-gray-500">
-            Bằng việc đăng nhập, bạn đồng ý với{' '}
-            <Link to="/info/policies/terms" className="font-medium text-[#056F1C] hover:underline">Điều khoản dịch vụ</Link>
-            {' & '}
-            <Link to="/info/policies/privacy" className="font-medium text-[#056F1C] hover:underline">Chính sách bảo mật</Link>
-            {' '}của NaviShop.
-          </div>
-          <p className="mt-5 text-center text-xs text-gray-400">
-            Bản demo: user@navishop.test · mật khẩu 12345678
-          </p>
+          {(!isLoggedIn || user?.role !== 'user') && (
+            <>
+              <div className="mt-6 border-t border-gray-100 pt-5 text-center text-xs leading-5 text-gray-500">
+                Bằng việc đăng nhập, bạn đồng ý với{' '}
+                <Link to="/info/policies/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-[#056F1C] hover:underline">Điều khoản dịch vụ</Link>
+                {' & '}
+                <Link to="/info/policies/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-[#056F1C] hover:underline">Chính sách bảo mật</Link>
+                {' '}của NaviShop.
+              </div>
+            </>
+          )}
         </section>
       </div>
     </main>

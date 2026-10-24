@@ -563,7 +563,7 @@ export default function CheckoutPage() {
                   <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
                     <p className="text-left text-sm text-gray-500">
                       Nhấn “Đặt hàng” đồng nghĩa với việc bạn đồng ý tuân theo{' '}
-                      <Link to="/info/policies/trade" className="font-medium text-[#056F1C] hover:underline">
+                      <Link to="/info/policies/trade" target="_blank" rel="noopener noreferrer" className="font-medium text-[#056F1C] hover:underline">
                         chính sách thỏa thuận mua bán
                       </Link>{' '}
                       của chúng tôi.

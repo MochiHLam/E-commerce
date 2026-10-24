@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import FloatingChatButton from '@/components/FloatingChatButton'
 import { useAuth } from '@/context/AuthContext'
 import MainLayout from '@/layouts/MainLayout'
@@ -10,6 +10,11 @@ import RegisterPage from '@/features/auth/pages/RegisterPage'
 import OtpPage from '@/features/auth/pages/OtpPage'
 import OnboardPage from '@/features/auth/pages/OnboardPage'
 import RoleLoginPage from '@/features/auth/pages/RoleLoginPage'
+
+function FloatingChatRouteGate({ isLoggedIn }) {
+  const { pathname } = useLocation()
+  return isLoggedIn && !pathname.startsWith('/seller') ? <FloatingChatButton /> : null
+}
 
 export default function App() {
   const { isLoggedIn } = useAuth()
@@ -28,7 +33,7 @@ export default function App() {
         <Route path="/moderator" element={<RoleLoginPage role="mod" />} />
         <Route path="/*" element={<MainLayout />} />
       </Routes>
-      {isLoggedIn && <FloatingChatButton />}
+      <FloatingChatRouteGate isLoggedIn={isLoggedIn} />
     </BrowserRouter>
   )
 }

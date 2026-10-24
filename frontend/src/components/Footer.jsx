@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 
 const LAYOUT = 'max-w-[1500px] mx-auto'
 
-export default function Footer() {
+export default function Footer({ showLinkGroups = true }) {
   return (
     <footer className="bg-[#f0f0f0] text-gray-500">
-      <div className={`${LAYOUT} px-0 py-10`}>
+      {showLinkGroups && <div className={`${LAYOUT} px-0 py-10`}>
         <div className="grid grid-cols-3 gap-12 pb-10">
 
           {/* Customer Service */}
@@ -14,11 +14,11 @@ export default function Footer() {
               Customer Service
             </h4>
             <ul className="space-y-2 text-xs">
-              <li><Link to="/help/shopping/find-product" className="hover:text-[#056F1C] transition-colors">How To Buy</Link></li>
-              <li><Link to="/help/selling/register-store" className="hover:text-[#056F1C] transition-colors">How To Sell</Link></li>
-              <li><Link to="/help/payment/payment-methods" className="hover:text-[#056F1C] transition-colors">Payment</Link></li>
-              <li><Link to="/help/shipping/shipping-time" className="hover:text-[#056F1C] transition-colors">Shipping</Link></li>
-              <li><Link to="/help/contact/email-support" className="hover:text-[#056F1C] transition-colors">Contact Us</Link></li>
+              <li><Link to="/help/shopping/find-product" target="_blank" rel="noopener noreferrer" className="hover:text-[#056F1C] transition-colors">How To Buy</Link></li>
+              <li><Link to="/help/selling/register-store" target="_blank" rel="noopener noreferrer" className="hover:text-[#056F1C] transition-colors">How To Sell</Link></li>
+              <li><Link to="/help/payment/payment-methods" target="_blank" rel="noopener noreferrer" className="hover:text-[#056F1C] transition-colors">Payment</Link></li>
+              <li><Link to="/help/shipping/shipping-time" target="_blank" rel="noopener noreferrer" className="hover:text-[#056F1C] transition-colors">Shipping</Link></li>
+              <li><Link to="/help/contact/email-support" target="_blank" rel="noopener noreferrer" className="hover:text-[#056F1C] transition-colors">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -28,8 +28,8 @@ export default function Footer() {
               About NaviShop
             </h4>
             <ul className="space-y-2 text-xs">
-              <li><Link to="/info/about/overview" className="hover:text-[#056F1C] transition-colors">About Us</Link></li>
-              <li><Link to="/info/policies/terms" className="hover:text-[#056F1C] transition-colors">Policies</Link></li>
+              <li><Link to="/info/about/overview" target="_blank" rel="noopener noreferrer" className="hover:text-[#056F1C] transition-colors">About Us</Link></li>
+              <li><Link to="/info/policies/terms" target="_blank" rel="noopener noreferrer" className="hover:text-[#056F1C] transition-colors">Policies</Link></li>
             </ul>
           </div>
 
@@ -40,13 +40,13 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <a href="https://www.facebook.com/nhoanglam239/?locale=vi_VN" className="flex items-center gap-2 hover:text-[#056F1C] transition-colors">
+                <a href="https://www.facebook.com/nhoanglam239/?locale=vi_VN" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-[#056F1C] transition-colors">
                   <img src="/images/facebook.png" alt="Facebook" className="h-4 w-4 object-contain" />
                   Facebook
                 </a>
               </li>
               <li>
-                <a href="https://www.instagram.com/mochi_.239/" className="flex items-center gap-2 hover:text-[#056F1C] transition-colors">
+                <a href="https://www.instagram.com/mochi_.239/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-[#056F1C] transition-colors">
                   <img src="/images/instagram.png" alt="Instagram" className="h-4 w-4 object-contain" />
                   Instagram
                 </a>
@@ -55,7 +55,7 @@ export default function Footer() {
           </div>
 
         </div>
-      </div>
+      </div>}
 
       {/* Bottom */}
       <div className="border-t border-gray-300 py-5 text-center text-xs leading-6 text-gray-500">

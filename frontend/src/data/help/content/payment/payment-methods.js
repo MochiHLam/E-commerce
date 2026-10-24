@@ -12,7 +12,7 @@ Mọi giao dịch trên NaviShop đều thực hiện qua ví NaviShop — mua h
 
 ## Nạp tiền
 
-Vào mục "Ví" trong tài khoản để nạp tiền. Hiện tại tính năng nạp tiền chỉ mang tính mô phỏng. NaviShop chưa hỗ trợ rút tiền từ ví về ngân hàng.
+Vào mục "Ví" trong tài khoản để xem các tùy chọn nạp tiền. Nạp tiền hiện chưa kết nối cổng thanh toán hoặc ngân hàng và không tạo giao dịch tiền thật. NaviShop chưa hỗ trợ rút tiền về ngân hàng.
 
 ## Tiền được bảo vệ khi đặt hàng
 

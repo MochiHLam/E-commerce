@@ -234,9 +234,9 @@ export default function OnboardPage() {
 
         <p className="text-xs text-gray-400 text-center leading-relaxed mt-4">
           Bằng cách đăng ký, bạn đồng ý với{' '}
-          <Link to="/info/policies/terms" className="text-[#056F1C] hover:underline">Điều khoản</Link>
+          <Link to="/info/policies/terms" target="_blank" rel="noopener noreferrer" className="text-[#056F1C] hover:underline">Điều khoản</Link>
           {' '}và{' '}
-          <Link to="/info/policies/privacy" className="text-[#056F1C] hover:underline">Chính sách bảo mật</Link>
+          <Link to="/info/policies/privacy" target="_blank" rel="noopener noreferrer" className="text-[#056F1C] hover:underline">Chính sách bảo mật</Link>
           {' '}của NaviShop.
         </p>
 

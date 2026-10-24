@@ -23,18 +23,32 @@ Mỗi lần thanh toán là một sản phẩm của một cửa hàng. Tổng t
 Mọi giao dịch đều dùng ví NaviShop, mỗi tài khoản một ví dùng chung cho mua và bán.
 
 - Hai loại số dư: *khả dụng* (dùng ngay) và *đang khóa* (giữ cho lượt đặt giá bạn đang dẫn đầu).
-- Nạp tiền hiện chỉ mang tính mô phỏng. Chưa hỗ trợ rút tiền về ngân hàng.
+- Nạp tiền chưa kết nối cổng thanh toán hoặc ngân hàng. NaviShop chưa hỗ trợ rút tiền về ngân hàng.
 - Tiền được giữ hộ: khi đặt hàng, tiền bị trừ khỏi ví và NaviShop giữ hộ, chỉ chuyển cho cửa hàng, NaviShop (hoa hồng) và đơn vị vận chuyển khi đơn hoàn thành. Đơn bị hủy thì hoàn lại đủ.
 - Mọi lần tiền ra vào đều có trong Lịch sử ví, chỉ thêm dòng, không sửa hay xóa.
 
 ## Dành cho người bán
 
-> Kênh người bán hiện chưa khả dụng. Các quy định dưới đây mô tả quy trình dự kiến khi tính năng được triển khai.
+### Mở và quản lý cửa hàng
 
-- Mở cửa hàng: gửi đăng ký và chờ duyệt. Bị từ chối thì nhận lý do và được sửa, gửi lại.
-- Đăng sản phẩm: bạn tự đặt giá, không cần ai duyệt. Sản phẩm có thể có nhiều phân loại, chẳng hạn màu sắc hoặc kích cỡ; giá và số lượng tồn kho được quản lý theo từng phân loại.
-- Hoa hồng: NaviShop thu theo tỉ lệ phần trăm trên tiền hàng, khác nhau theo danh mục. Phí vận chuyển không tính hoa hồng và không thuộc về cửa hàng. Bạn nhận tiền hàng trừ hoa hồng khi đơn hoàn thành, đơn bị hủy thì không có hoa hồng.
-- Gửi vật phẩm đấu giá: sản phẩm thuộc danh mục cho phép, chỉ còn 1 món trong kho. NaviShop duyệt và tự đặt giá, giá bạn đề xuất chỉ để tham khảo. Đã được duyệt thì không thể rút lại, vật phẩm không ai đặt giá sẽ quay về kho chờ phiên sau.
-- Khi cửa hàng bị khóa tạm: sản phẩm bị ẩn, không đăng thêm và không nhận đơn mới, các đơn đang xử lý tiếp tục. Khóa vĩnh viễn thì ví chủ cửa hàng bị đóng băng.
+- Người dùng gửi hồ sơ mở cửa hàng để NaviShop xem xét. Nếu hồ sơ bị từ chối, người đăng ký nhận lý do, cập nhật thông tin và gửi lại.
+- Chỉ cửa hàng đã được duyệt mới được đăng bán sản phẩm. Cửa hàng tự quyết định giá bán; mỗi sản phẩm gồm tên, danh mục, hình ảnh, mô tả, giá và số lượng tồn kho.
+- Cửa hàng có thể cập nhật thông tin và tồn kho, tạm ẩn hoặc xóa sản phẩm. Sản phẩm hết hàng không thể được đặt.
+- Sản phẩm gửi xét đấu giá phải thuộc danh mục được phép và có đúng một sản phẩm trong kho. Sản phẩm được ẩn khỏi bán thường trong thời gian xét; khi được duyệt vào kho đấu giá, cửa hàng không thể rút lại.
+- Cửa hàng bị khóa tạm hoặc khóa vĩnh viễn không thể tạo sản phẩm hoặc nhận đơn mới; các đơn đang xử lý tiếp tục theo trạng thái hiện tại.
+
+### Xử lý đơn hàng
+
+- Cửa hàng có 48 giờ để xác nhận đơn kể từ khi khách đặt.
+- Sau khi xác nhận, cửa hàng có 1 ngày để bàn giao hàng cho đơn vị vận chuyển và cập nhật trạng thái giao hàng.
+- Nếu quá hạn xác nhận hoặc giao hàng, đơn tự động hủy; khách được hoàn toàn bộ tiền hàng và phí vận chuyển, sản phẩm được cộng lại vào tồn kho.
+- Cửa hàng không thể chủ động hủy đơn. Sau khi đơn chuyển sang trạng thái đang giao, đơn không thể bị hủy. Khách có 3 ngày để xác nhận đã nhận hàng; hết thời hạn, đơn tự động hoàn thành.
+- Đơn đấu giá chuyển thẳng sang trạng thái đã xác nhận và tiếp tục theo quy trình giao hàng.
+
+### Doanh thu và hoa hồng
+
+- Hoa hồng được tính trên tiền hàng theo tỉ lệ áp dụng cho danh mục; phí vận chuyển không tính hoa hồng.
+- Khi đơn hoàn thành, cửa hàng nhận tiền hàng sau khi trừ hoa hồng. Phí vận chuyển được quyết toán riêng cho đơn vị vận chuyển.
+- Đơn đấu giá áp dụng tỉ lệ hoa hồng riêng; tiền vật phẩm được quyết toán khi kết quả đấu giá được chốt.
 `,
 }

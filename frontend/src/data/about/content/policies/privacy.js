@@ -11,7 +11,7 @@
 
 - Cửa hàng bạn mua hàng: nhận họ tên, số điện thoại và địa chỉ ghi trên đơn để giao hàng.
 - Người dùng khác: thấy tên hiển thị của bạn trên đánh giá và lịch sử đặt giá.
-- Dịch vụ bên thứ ba: ảnh lưu trên Cloudinary. Khi Trợ lý AI được kết nối, nếu bạn chọn chat với trợ lý của shop, câu hỏi của bạn cùng thông tin sản phẩm công khai thuộc shop đó và chính sách liên quan có thể được gửi tới Google Gemini để tạo câu trả lời. Bản mô phỏng hiện tại chưa gửi dữ liệu tới Gemini. Không gửi dữ liệu ví hoặc đơn hàng cho trợ lý; tránh nhập thông tin cá nhân nhạy cảm vào câu hỏi.
+- Dịch vụ bên thứ ba: ảnh lưu trên Cloudinary. Nội dung trò chuyện với Trợ lý AI hiện không được gửi tới Google Gemini. Không gửi dữ liệu ví hoặc đơn hàng cho trợ lý; tránh nhập thông tin cá nhân nhạy cảm vào câu hỏi.
 
 NaviShop không bán dữ liệu cá nhân của bạn.
 

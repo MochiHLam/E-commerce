@@ -11,11 +11,12 @@ function formatPrice(price) {
 }
 
 /**
- * variant: 'default' | 'auction' | 'auth' | 'seller'
+ * variant: 'default' | 'auction' | 'auth' | 'seller' | 'content'
  * - 'default': green bg, white text, search bar + auth buttons
  * - 'auction': green bg, white text, auth buttons only (no search)
  * - 'auth':    white/gray bg, green text, logo only (no search, no auth buttons)
  * - 'seller':  green bg, white text, seller brand only (no search or auth buttons)
+ * - 'content': green bg, white text, static brand only (no search or auth buttons)
  */
 export default function Navbar({ variant = 'default' }) {
   const [query, setQuery] = useState('')
@@ -95,14 +96,24 @@ export default function Navbar({ variant = 'default' }) {
 
   const isAuth = variant === 'auth'
   const isSeller = variant === 'seller'
+  const isContent = variant === 'content'
   const showSearch = variant === 'default'
+  const brandHref = isSeller
+    ? isLoggedIn && user?.role === 'user' ? '/seller/dashboard' : '/seller'
+    : '/'
 
   return (
     <header className={`w-full sticky top-0 z-50 ${isAuth ? 'bg-[#f5f5f5] border-b border-gray-200' : 'bg-[#056F1C]'}`}>
       <div className="max-w-[1500px] mx-auto px-0 h-[76px] flex items-center gap-6">
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
+        {isContent ? (
+          <div className="flex items-center gap-2 shrink-0">
+            <img src="/images/main_logo.png" alt="NaviShop" className="h-8 w-8 object-contain brightness-0 invert" />
+            <span className="font-bold text-lg tracking-wide text-white">NaviShop</span>
+          </div>
+        ) : (
+          <Link to={brandHref} className="flex items-center gap-2 shrink-0">
           <img
             src={isAuth ? '/images/contrast_logo.png' : '/images/main_logo.png'}
             alt="NaviShop"
@@ -112,9 +123,10 @@ export default function Navbar({ variant = 'default' }) {
             NaviShop
           </span>
           {isSeller && <span className="border-l border-white/40 pl-2 text-lg font-normal text-white">Online Shop</span>}
-        </Link>
+          </Link>
+        )}
 
-        {!isAuth && !isSeller && (
+        {!isAuth && !isSeller && !isContent && (
           <>
             {showSearch ? (
               <form onSubmit={handleSearch} className="flex-1">

@@ -10,7 +10,7 @@ export default function SellerRegisterPage() {
 
   if (isLoggedIn && user?.role === 'user') {
     const application = getSellerApplication(user.id)
-    return <Navigate to={application?.status === 'approved' ? '/seller/dashboard' : application?.status === 'pending' ? '/seller/pending' : '/seller/onboarding'} replace />
+    return <Navigate to={application?.status === 'approved' ? '/seller/dashboard' : application?.status === 'pending' ? '/seller/pending' : application?.status === 'rejected' ? '/seller/onboarding' : '/seller'} replace />
   }
 
   const continueWithGoogleMock = () => {
@@ -19,7 +19,7 @@ export default function SellerRegisterPage() {
     const authenticatedUser = { ...account }
     delete authenticatedUser.password
     login(authenticatedUser)
-    navigate('/seller/onboarding', { replace: true })
+    navigate('/seller', { replace: true })
   }
 
   return (
@@ -35,7 +35,7 @@ export default function SellerRegisterPage() {
         <div className="mt-7 grid gap-3">
           <Link
             to="/login"
-            state={{ returnTo: '/seller/onboarding' }}
+            state={{ returnTo: '/seller' }}
             className="flex min-h-12 items-center justify-center rounded-lg bg-[#056F1C] px-4 text-sm font-semibold text-white hover:bg-[#045517]"
           >
             Dùng tài khoản buyer có sẵn

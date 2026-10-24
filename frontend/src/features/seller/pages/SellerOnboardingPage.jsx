@@ -5,7 +5,6 @@ import { getSellerApplication, saveSellerApplication } from '@/mocks/seller'
 
 const EMPTY_FORM = {
   shopName: '',
-  avatar: '',
   address: '',
   description: '',
   taxCode: '',
@@ -47,33 +46,13 @@ export default function SellerOnboardingPage() {
   if (!isLoggedIn) return <Navigate to="/seller" replace />
   if (user?.role !== 'user') return <Navigate to="/" replace />
   const existingApplication = getSellerApplication(user.id)
+  const isEditingApplication = existingApplication?.status === 'pending'
   if (existingApplication?.status === 'approved') return <Navigate to="/seller/dashboard" replace />
-  if (existingApplication?.status === 'pending') return <Navigate to="/seller/pending" replace />
 
   const update = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }))
     setErrors((current) => ({ ...current, [field]: '' }))
     setFormError('')
-  }
-
-  const chooseAvatar = (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      setErrors((current) => ({ ...current, avatar: 'Vui lòng chọn tệp hình ảnh.' }))
-      return
-    }
-    if (file.size > 500 * 1024) {
-      setErrors((current) => ({ ...current, avatar: 'Ảnh đại diện tối đa 500 KB trong bản demo.' }))
-      return
-    }
-    const reader = new FileReader()
-    reader.onload = () => {
-      setForm((current) => ({ ...current, avatar: String(reader.result) }))
-      setErrors((current) => ({ ...current, avatar: '' }))
-    }
-    reader.onerror = () => setErrors((current) => ({ ...current, avatar: 'Không thể đọc tệp ảnh đã chọn.' }))
-    reader.readAsDataURL(file)
   }
 
   const validateStep = () => {
@@ -110,6 +89,10 @@ export default function SellerOnboardingPage() {
 
   const goBack = () => {
     if (step === 1) {
+      if (isEditingApplication) {
+        navigate('/seller/pending')
+        return
+      }
       logout()
       navigate('/seller', { replace: true })
       return
@@ -121,8 +104,8 @@ export default function SellerOnboardingPage() {
     <main className="flex-1 bg-gray-50 px-4 py-10 sm:px-6">
       <div className="mx-auto max-w-3xl">
         <header className="mb-7">
-          <p className="text-sm font-semibold text-[#056F1C]">ĐĂNG KÝ SHOP · BƯỚC {step}/2</p>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">Hoàn tất hồ sơ người bán</h1>
+          <p className="text-sm font-semibold text-[#056F1C]">{isEditingApplication ? 'CẬP NHẬT HỒ SƠ' : 'ĐĂNG KÝ SHOP'} · BƯỚC {step}/2</p>
+          <h1 className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">{isEditingApplication ? 'Chỉnh sửa hồ sơ cửa hàng' : 'Hoàn tất hồ sơ người bán'}</h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">Thông tin này được lưu trong trình duyệt phục vụ bản demo đồ án, không kết nối dịch vụ thuế, định danh hay ngân hàng.</p>
         </header>
         <div className="mb-6 flex gap-2" aria-label="Tiến độ đăng ký">
@@ -137,17 +120,18 @@ export default function SellerOnboardingPage() {
                 <h2 className="text-lg font-bold text-gray-900">Thông tin cửa hàng</h2>
                 <p className="mt-1 text-sm text-gray-500">Tên, ảnh đại diện và thông tin hiển thị của shop.</p>
               </div>
-              <InputField id="shop-name" label="Tên shop" value={form.shopName} onChange={update('shopName')} error={errors.shopName} maxLength={80} />
               <div>
-                <label htmlFor="shop-avatar" className="mb-1.5 block text-sm font-medium text-gray-700">Ảnh đại diện shop (không bắt buộc)</label>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-xl font-semibold text-gray-400">
-                    {form.avatar ? <img src={form.avatar} alt="Xem trước ảnh đại diện shop" className="h-full w-full object-cover" /> : (form.shopName.trim()[0] ?? 'S')}
-                  </div>
-                  <input id="shop-avatar" type="file" accept="image/*" onChange={chooseAvatar} className="min-w-0 text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-green-50 file:px-3 file:py-2 file:font-semibold file:text-[#056F1C]" />
-                </div>
-                {errors.avatar && <p role="alert" className="mt-1 text-xs text-red-600">{errors.avatar}</p>}
+                <label htmlFor="seller-account-email" className="mb-1.5 block text-sm font-medium text-gray-700">Email đăng nhập</label>
+                <input
+                  id="seller-account-email"
+                  type="email"
+                  value={user.email ?? ''}
+                  readOnly
+                  aria-readonly="true"
+                  className="h-11 w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-50 px-3 text-sm text-gray-600"
+                />
               </div>
+              <InputField id="shop-name" label="Tên shop" value={form.shopName} onChange={update('shopName')} error={errors.shopName} maxLength={80} />
               <InputField id="shop-address" label="Địa chỉ shop" value={form.address} onChange={update('address')} error={errors.address} placeholder="Phường/xã, quận/huyện, tỉnh/thành" maxLength={250} />
               <div>
                 <label htmlFor="shop-description" className="mb-1.5 block text-sm font-medium text-gray-700">Mô tả shop</label>
@@ -159,16 +143,13 @@ export default function SellerOnboardingPage() {
             <div className="space-y-5">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Thông tin xác minh</h2>
-                <p className="mt-1 text-sm text-gray-500">Dùng để admin xem xét hồ sơ trong bản demo.</p>
+                <p className="mt-1 text-sm text-gray-500">Thông tin phục vụ quá trình xét duyệt hồ sơ cửa hàng.</p>
               </div>
               <InputField id="tax-code" label="Mã số thuế" value={form.taxCode} onChange={update('taxCode')} error={errors.taxCode} maxLength={30} />
               <InputField id="identity-number" label="Số CCCD" value={form.identityNumber} onChange={update('identityNumber')} error={errors.identityNumber} inputMode="numeric" maxLength={20} />
               <InputField id="bank-name" label="Ngân hàng" value={form.bankName} onChange={update('bankName')} error={errors.bankName} maxLength={100} />
               <InputField id="bank-account-number" label="Số tài khoản" value={form.bankAccountNumber} onChange={update('bankAccountNumber')} error={errors.bankAccountNumber} inputMode="numeric" maxLength={30} />
               <InputField id="bank-account-name" label="Tên chủ tài khoản" value={form.bankAccountName} onChange={update('bankAccountName')} error={errors.bankAccountName} maxLength={100} />
-              <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-                Đây là thông tin mẫu lưu cục bộ trong trình duyệt. Không nhập thông tin thật; demo không thực hiện xác minh hay giao dịch ngân hàng.
-              </p>
             </div>
           )}
           {formError && <p role="alert" className="mt-4 text-sm text-red-600">{formError}</p>}
@@ -182,7 +163,7 @@ export default function SellerOnboardingPage() {
               </button>
             ) : (
               <button type="button" disabled={isSaving} onClick={submitApplication} className="min-h-10 rounded-lg bg-[#056F1C] px-5 text-sm font-semibold text-white hover:bg-[#045517] disabled:cursor-wait disabled:opacity-60">
-                {isSaving ? 'Đang gửi...' : 'Gửi admin duyệt'}
+                {isSaving ? 'Đang lưu...' : isEditingApplication ? 'Lưu thay đổi' : 'Gửi xét duyệt'}
               </button>
             )}
           </div>

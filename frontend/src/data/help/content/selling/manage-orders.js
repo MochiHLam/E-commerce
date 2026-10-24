@@ -1,29 +1,34 @@
 export default {
   title: 'Quản lý đơn hàng',
   body: `
-> Kênh người bán hiện chưa khả dụng. Hướng dẫn này mô tả quy trình dự kiến; bạn chưa thể thực hiện các thao tác bên dưới trong NaviShop.
+Quản lý đơn hàng giúp bạn theo dõi yêu cầu mua, xử lý giao hàng đúng hạn và nắm được trạng thái từng đơn.
 
-## Xem và xử lý đơn
+## Theo dõi đơn hàng
 
-Khi kênh người bán được triển khai, vào Bảng điều khiển → Đơn hàng để xem danh sách. Khi có đơn mới, bạn sẽ nhận thông báo trong ứng dụng.
+Trong mục **Quản lý đơn hàng**, bạn có thể xem tất cả đơn hoặc lọc theo trạng thái:
 
-## Hạn xử lý
+| Trạng thái | Việc cần làm |
+|---|---|
+| Chờ xác nhận | Xác nhận đơn trong vòng 48 giờ kể từ khi khách đặt |
+| Đã xác nhận | Chuẩn bị hàng và báo giao trong vòng 1 ngày |
+| Đang giao | Theo dõi quá trình giao hàng; khách có tối đa 3 ngày để xác nhận đã nhận |
+| Hoàn thành | Xem thông tin đơn đã kết thúc |
+| Đã hủy | Xem lý do và thông tin hoàn tiền |
 
-- Xác nhận đơn trong 48 giờ kể từ lúc người mua đặt.
-- Sau khi xác nhận, giao hàng cho đơn vị vận chuyển và bấm báo giao trong 1 ngày.
+Mỗi đơn hiển thị thông tin khách hàng, địa chỉ nhận hàng, sản phẩm, số lượng, tiền hàng, phí vận chuyển và thời hạn xử lý.
 
-Quá hạn mà chưa xử lý, đơn tự hủy và tiền hoàn về ví người mua.
+## Xác nhận và giao hàng
 
-## Quy trình
+1. Mở đơn ở trạng thái **Chờ xác nhận** và chọn **Xác nhận** để tiếp nhận.
+2. Chuẩn bị sản phẩm, bàn giao cho đơn vị vận chuyển, sau đó cập nhật trạng thái **Đang giao**.
+3. Khách hàng xác nhận đã nhận hàng; nếu chưa xác nhận trong vòng 3 ngày kể từ khi đơn chuyển sang trạng thái đang giao, đơn tự động hoàn thành.
 
-1. Bấm "Xác nhận" để nhận đơn.
-2. Đóng gói và bàn giao cho đơn vị vận chuyển.
-3. Bấm "Đã giao cho vận chuyển" và nhập mã vận đơn.
+## Thời hạn và hủy đơn
 
-Sau khi báo giao, đơn không hủy được nữa. Người mua có 3 ngày để xác nhận nhận hàng, hoặc đơn tự hoàn thành.
+Nếu bạn không xác nhận đơn trong 48 giờ, đơn sẽ tự động hủy. Sau khi xác nhận, bạn có 1 ngày để cập nhật đã giao; quá thời hạn, đơn cũng tự động hủy. Trong cả hai trường hợp, khách được hoàn toàn bộ số tiền đã thanh toán, bao gồm phí vận chuyển, và sản phẩm được cộng lại vào tồn kho.
 
-## Tiền về ví khi nào?
+Người bán không thể chủ động hủy đơn. Sau khi đã cập nhật trạng thái đang giao, đơn không thể bị hủy.
 
-Tiền về ví khi đơn hoàn thành. Bạn nhận tiền hàng trừ hoa hồng NaviShop; phí vận chuyển không thuộc về cửa hàng. Xem thêm [Nhận thanh toán](/help/selling/receive-payment).
+Đơn hàng phát sinh từ đấu giá được chuyển thẳng sang trạng thái **Đã xác nhận**; bạn thực hiện bước chuẩn bị và báo giao như các đơn hàng khác.
 `,
 }

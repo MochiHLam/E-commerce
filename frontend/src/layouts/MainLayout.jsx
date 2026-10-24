@@ -34,11 +34,12 @@ export default function MainLayout() {
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
 
   const isAuctionPage = pathname.startsWith('/auction')
-  const isSellerAccessPage = pathname === '/seller'
+  const isSellerRoute = pathname === '/seller' || pathname.startsWith('/seller/')
+  const isFooterContentRoute = pathname.startsWith('/help') || pathname.startsWith('/info')
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <Navbar variant={isSellerAccessPage ? 'seller' : isAuctionPage ? 'auction' : 'default'} />
+      <Navbar variant={isSellerRoute ? 'seller' : isFooterContentRoute ? 'content' : isAuctionPage ? 'auction' : 'default'} />
       <div className="flex flex-1 flex-col">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -103,7 +104,7 @@ export default function MainLayout() {
           <Route path="/policies" element={<Navigate to="/info/policies/terms" replace />} />
         </Routes>
       </div>
-      <Footer />
+      <Footer showLinkGroups={!isFooterContentRoute} />
     </div>
   )
 }

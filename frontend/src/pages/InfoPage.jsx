@@ -13,6 +13,8 @@ function NotFound({ defaultGroup }) {
       <span className="text-5xl">🔍</span>
       <h2 className="text-xl font-bold text-gray-800">Không tìm thấy trang này</h2>
       <Link to={`/info/${g.groupSlug}/${g.items[0].slug}`}
+        target="_blank"
+        rel="noopener noreferrer"
         className="mt-2 text-sm font-semibold text-[#056F1C] hover:underline">
         ← Quay về trang trước
       </Link>
@@ -64,6 +66,8 @@ export default function InfoPage({ defaultGroup }) {
                     <Link
                       key={item.slug}
                       to={`/info/${g.groupSlug}/${item.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={`block px-3 py-1.5 rounded text-sm transition-colors
                         ${isActive
                           ? 'text-[#056F1C] font-semibold bg-[#056F1C]/8'
@@ -96,7 +100,23 @@ export default function InfoPage({ defaultGroup }) {
               prose-table:text-sm prose-th:text-gray-700 prose-td:text-gray-600
               prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-code:text-[#056F1C]"
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.body}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a: ({ href, children, ...props }) => (
+                    <a
+                      href={href}
+                      target={href?.startsWith('/help') || href?.startsWith('/info') ? '_blank' : undefined}
+                      rel={href?.startsWith('/help') || href?.startsWith('/info') ? 'noopener noreferrer' : undefined}
+                      {...props}
+                    >
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {content.body}
+              </ReactMarkdown>
             </div>
           </div>
 

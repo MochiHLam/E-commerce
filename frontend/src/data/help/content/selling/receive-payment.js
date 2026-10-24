@@ -1,22 +1,25 @@
 export default {
   title: 'Nhận thanh toán',
   body: `
-> Kênh người bán hiện chưa khả dụng. Nội dung dưới đây mô tả chính sách thanh toán dự kiến khi tính năng được triển khai.
+Doanh thu từ đơn hàng được quyết toán vào ví cửa hàng khi đơn hoàn thành. Khoản thanh toán được giữ trong quá trình xử lý đơn để bảo đảm việc chia tiền chính xác.
 
-## Tiền về ví khi nào?
+## Cách tính doanh thu
 
-Tiền chỉ chuyển về ví sau khi đơn hoàn thành — không phải ngay lúc người mua đặt hay cửa hàng xác nhận. Đơn bị hủy thì không có tiền nào về ví cửa hàng.
+- **Tiền hàng** = giá sản phẩm × số lượng.
+- **Hoa hồng NaviShop** được tính theo tỉ lệ áp dụng cho danh mục sản phẩm.
+- **Doanh thu cửa hàng** = tiền hàng − hoa hồng.
+- Phí vận chuyển được tính riêng theo đơn, chuyển cho đơn vị vận chuyển và không tính hoa hồng.
 
-## Hoa hồng
+Ví dụ: với tiền hàng 100.000 ₫ và tỉ lệ hoa hồng 5%, doanh thu cửa hàng là 95.000 ₫; phí vận chuyển được quyết toán riêng.
 
-NaviShop thu hoa hồng theo tỉ lệ phần trăm trên tiền hàng, khác nhau theo danh mục. Ví dụ, tiền hàng 100.000đ, hoa hồng 5%: cửa hàng nhận 95.000đ. Phí vận chuyển không tính hoa hồng và không thuộc về cửa hàng.
+## Thời điểm quyết toán
 
-## Lịch sử ví
+Khi đơn hoàn thành, tiền hàng sau khi trừ hoa hồng được chuyển vào ví cửa hàng. Nếu đơn bị hủy trước khi giao, khách được hoàn lại toàn bộ khoản đã thanh toán và cửa hàng không phát sinh doanh thu hoặc hoa hồng.
 
-Mọi khoản thu đều hiển thị trong Lịch sử ví, bạn theo dõi được từng khoản đến từ đơn hàng nào.
+Đơn hàng từ đấu giá áp dụng tỉ lệ hoa hồng riêng. Tiền vật phẩm được quyết toán cho cửa hàng khi kết quả đấu giá được chốt; phí vận chuyển được thu riêng từ người mua khi cửa hàng báo giao.
 
-## Đơn từ đấu giá
+## Theo dõi doanh thu
 
-Tiền vật phẩm được chia ngay khi vật phẩm được chốt, không chờ người thắng xác nhận nhận hàng. Hoa hồng cho đấu giá có tỉ lệ riêng. Xem thêm [Đấu giá](/info/policies/auction).
+Trong mục **Doanh thu**, chủ cửa hàng có thể xem tổng tiền nhận theo ngày, tuần hoặc tháng, số đơn hoàn thành, đơn đang chờ xử lý và sản phẩm sắp hết hàng. Lịch sử ví ghi nhận từng khoản thu và tham chiếu đến đơn hàng liên quan.
 `,
 }

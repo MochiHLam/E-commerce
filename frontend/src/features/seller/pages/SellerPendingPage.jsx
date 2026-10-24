@@ -23,14 +23,32 @@ export default function SellerPendingPage() {
         <p className="mt-5 text-sm font-semibold text-amber-700">HỒ SƠ ĐANG CHỜ DUYỆT</p>
         <h1 className="mt-2 text-2xl font-bold text-gray-900">{application.shopName}</h1>
         <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-600">
-          NaviShop đã nhận hồ sơ đăng ký. Bạn có thể đăng nhập lại sau khi admin duyệt để vào trang chủ kênh người bán.
+          NaviShop đã nhận hồ sơ đăng ký. Bạn có thể xem lại thông tin bên dưới hoặc cập nhật hồ sơ trong khi chờ kết quả xét duyệt.
         </p>
-        <div className="mt-6 rounded-xl bg-gray-50 p-4 text-left text-sm text-gray-600">
-          <p className="flex items-center gap-2 font-semibold text-gray-900"><Store className="h-4 w-4 text-[#056F1C]" /> Hồ sơ cửa hàng đã gửi</p>
-          <p className="mt-2">Ngày gửi: {new Date(application.submittedAt).toLocaleString('vi-VN')}</p>
-          <p className="mt-1">Trạng thái: Đang chờ admin xem xét</p>
+        <div className="mt-6 rounded-xl bg-gray-50 p-4 text-left text-sm text-gray-600 sm:p-5">
+          <p className="flex items-center gap-2 font-semibold text-gray-900"><Store className="h-4 w-4 text-[#056F1C]" /> Thông tin hồ sơ</p>
+          {application.avatar && (
+            <img src={application.avatar} alt={`Ảnh đại diện ${application.shopName}`} className="mt-4 h-16 w-16 rounded-full object-cover" />
+          )}
+          <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+            <div><dt className="text-xs text-gray-500">Tên cửa hàng</dt><dd className="mt-0.5 break-words font-medium text-gray-900">{application.shopName}</dd></div>
+            <div><dt className="text-xs text-gray-500">Ngày gửi</dt><dd className="mt-0.5 font-medium text-gray-900">{new Date(application.submittedAt).toLocaleString('vi-VN')}</dd></div>
+            <div className="sm:col-span-2"><dt className="text-xs text-gray-500">Địa chỉ</dt><dd className="mt-0.5 break-words font-medium text-gray-900">{application.address}</dd></div>
+            <div className="sm:col-span-2"><dt className="text-xs text-gray-500">Mô tả cửa hàng</dt><dd className="mt-0.5 whitespace-pre-wrap break-words font-medium text-gray-900">{application.description}</dd></div>
+            <div><dt className="text-xs text-gray-500">Mã số thuế</dt><dd className="mt-0.5 break-words font-medium text-gray-900">{application.taxCode}</dd></div>
+            <div><dt className="text-xs text-gray-500">Số CCCD</dt><dd className="mt-0.5 break-words font-medium text-gray-900">{application.identityNumber}</dd></div>
+            <div><dt className="text-xs text-gray-500">Ngân hàng</dt><dd className="mt-0.5 break-words font-medium text-gray-900">{application.bankName}</dd></div>
+            <div><dt className="text-xs text-gray-500">Số tài khoản</dt><dd className="mt-0.5 break-words font-medium text-gray-900">{application.bankAccountNumber}</dd></div>
+            <div className="sm:col-span-2"><dt className="text-xs text-gray-500">Chủ tài khoản</dt><dd className="mt-0.5 break-words font-medium text-gray-900">{application.bankAccountName}</dd></div>
+            <div className="sm:col-span-2"><dt className="text-xs text-gray-500">Trạng thái</dt><dd className="mt-0.5 font-medium text-amber-800">Đang chờ xét duyệt</dd></div>
+          </dl>
         </div>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
+          {isLoggedIn && user?.role === 'user' && (
+            <button type="button" onClick={() => navigate('/seller/onboarding')} className="inline-flex min-h-10 items-center rounded-lg bg-[#056F1C] px-4 text-sm font-semibold text-white hover:bg-[#045517]">
+              Chỉnh sửa hồ sơ
+            </button>
+          )}
           {!isLoggedIn || loggedOutForAdmin ? (
             <button type="button" onClick={() => navigate('/admin/seller-applications')} className="inline-flex min-h-10 items-center rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">
               Tiếp tục vào trang admin demo

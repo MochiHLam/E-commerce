@@ -19,7 +19,7 @@ export const MOCK_ACCOUNTS = [
       isDefault: true,
     }],
   },
-  { id: 'usr_002', name: 'Trần Thị Bình', email: 'seller@navishop.test', password: '12345678', role: 'user', hasShop: true },
+  { id: 'usr_002', name: 'User 1', email: 'user1@navishop.test', password: '12345678', role: 'user', hasShop: false },
   { id: 'usr_google_001', name: 'Người bán Google Demo', email: 'google-buyer@navishop.test', role: 'user', hasShop: false, loginProvider: 'google' },
   { id: 'mod_001', name: 'Lê Kiểm Duyệt', email: 'mod@navishop.test', password: '12345678', role: 'mod' },
   { id: 'adm_001', name: 'Phạm Quản Trị', email: 'admin@navishop.test', password: '12345678', role: 'admin' },

@@ -214,7 +214,7 @@ function ImportantNotice() {
                 <li>• Phí vận chuyển được trừ từ ví lúc cửa hàng bấm giao. Nếu ví không đủ, cửa hàng chưa giao được, vì vậy hãy giữ đủ số dư sau khi thắng.</li>
                 <li>• Phiên đã bắt đầu thì không đăng ký được nữa, bạn sẽ phải chờ phiên kế tiếp.</li>
               </ul>
-              <Link to="/info/policies/auction" className="mt-5 inline-flex items-center text-sm font-semibold text-[#056F1C] hover:underline">
+              <Link to="/info/policies/auction" target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center text-sm font-semibold text-[#056F1C] hover:underline">
                 Xem đầy đủ thỏa thuận đấu giá →
               </Link>
             </div>
@@ -304,7 +304,7 @@ function SellerSection() {
           <p className="mt-4 leading-relaxed text-gray-600">
             Khi vật phẩm được bán, NaviShop thu hoa hồng riêng cho đấu giá, phần còn lại chuyển cho cửa hàng của bạn. Một đơn hàng được tạo sẵn để bạn giao cho người thắng.
           </p>
-          <Link to="/help/selling/list-product" className="mt-6 inline-flex items-center text-sm font-semibold text-[#056F1C] hover:underline">
+          <Link to="/help/selling/list-product" target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center text-sm font-semibold text-[#056F1C] hover:underline">
             Xem hướng dẫn gửi vật phẩm →
           </Link>
         </div>
