@@ -1,12 +1,36 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { MOCK_ACCOUNTS } from '@/mocks/mockAccounts'
 
 const STORAGE_KEY = 'auth_user'
 const AuthContext = createContext(null)
 
+function applyMockAccountDefaults(user) {
+  if (!import.meta.env.DEV || !user) return user
+  const mockAccount = MOCK_ACCOUNTS.find((account) => account.id === user.id)
+  if (!mockAccount) return user
+
+  const mockAddress = mockAccount.shippingAddresses?.find((address) => address.isDefault)
+  const addresses = Array.isArray(user.shippingAddresses) && user.shippingAddresses.length > 0
+    ? user.shippingAddresses.map((address) => address.isDefault && mockAddress ? {
+        ...address,
+        recipientName: address.recipientName || mockAddress.recipientName,
+        phone: address.phone || mockAddress.phone,
+        address: address.address || mockAddress.address,
+      } : address)
+    : mockAccount.shippingAddresses
+
+  return {
+    ...user,
+    phone: user.phone || mockAccount.phone,
+    address: user.address || mockAccount.address,
+    ...(addresses ? { shippingAddresses: addresses } : {}),
+  }
+}
+
 function readUser() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
+    return raw ? applyMockAccountDefaults(JSON.parse(raw)) : null
   } catch {
     return null
   }

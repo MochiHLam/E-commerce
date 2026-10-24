@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeft, CheckCircle2, Clock3, CreditCard, Eye, EyeOff, Landmark, Wallet } from 'lucide-react'
 import { formatVND } from '@/lib/format'
 import { getMockAvailableBalance, recordMockTopUp } from '@/mocks/wallet'
@@ -23,6 +23,18 @@ export default function WalletSection() {
   const [completedAmount, setCompletedAmount] = useState(0)
   const [isAvailableBalanceVisible, setIsAvailableBalanceVisible] = useState(false)
   const [isLockedBalanceVisible, setIsLockedBalanceVisible] = useState(false)
+
+  useEffect(() => {
+    const syncBalance = () => {
+      setAvailableBalance(getMockAvailableBalance(getMockAuctionLockedBalance()))
+    }
+    window.addEventListener('navishop:wallet-updated', syncBalance)
+    window.addEventListener('storage', syncBalance)
+    return () => {
+      window.removeEventListener('navishop:wallet-updated', syncBalance)
+      window.removeEventListener('storage', syncBalance)
+    }
+  }, [])
 
   const amountToTopUp = customAmount ? Number(customAmount) : selectedAmount
   const selectedPayment = PAYMENT_METHODS.find((method) => method.id === selectedPaymentMethod)

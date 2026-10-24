@@ -46,7 +46,36 @@ const REVIEW_TEXTS = [
   'Rất hài lòng với lần mua này, giao đúng mẫu và đúng thời gian.',
 ]
 
-export function getProductDetailMock(product) {
+const MOCK_PRODUCT_REVIEWS_KEY = 'navishop.mockProductReviews'
+
+export function getMockProductReviews() {
+  const storedReviews = window.localStorage.getItem(MOCK_PRODUCT_REVIEWS_KEY)
+  if (!storedReviews) return []
+
+  const reviews = JSON.parse(storedReviews)
+  if (!Array.isArray(reviews)) {
+    throw new Error('Dữ liệu đánh giá sản phẩm mô phỏng không hợp lệ.')
+  }
+  return reviews
+}
+
+export function saveMockProductReview(review) {
+  if (!review?.id || !review.productId || !review.orderId) {
+    throw new Error('Thiếu thông tin đơn hàng hoặc sản phẩm để lưu đánh giá.')
+  }
+  const existingReviews = getMockProductReviews()
+  if (existingReviews.some((existingReview) => (
+    existingReview.orderId === review.orderId && existingReview.productId === review.productId
+  ))) {
+    throw new Error('Sản phẩm này trong đơn hàng đã được đánh giá.')
+  }
+  window.localStorage.setItem(
+    MOCK_PRODUCT_REVIEWS_KEY,
+    JSON.stringify([review, ...existingReviews]),
+  )
+}
+
+export function getProductDetailMock(product, savedReviews = getMockProductReviews()) {
   const options = OPTION_SETS[product.category] ?? {
     label: 'Màu sắc',
     values: ['Đen', 'Trắng', 'Xám'],
@@ -62,7 +91,7 @@ export function getProductDetailMock(product) {
     price: product.price + options.priceSteps[index],
     stock: options.stocks[(index + productIndex) % options.stocks.length],
   }))
-  const reviews = REVIEW_RATINGS.map((_, index) => ({
+  const mockReviews = REVIEW_RATINGS.map((_, index) => ({
     id: `${product.id}-review-${index + 1}`,
     name: REVIEW_NAMES[(index + productIndex) % REVIEW_NAMES.length],
     rating: (index * 7 + productIndex) % REVIEW_RATINGS.length < higherRatingCount
@@ -73,16 +102,22 @@ export function getProductDetailMock(product) {
     hasPhotos: index % 3 === 0,
     helpful: (index * 7 + productIndex) % 23,
   }))
+  const productReviews = savedReviews.filter((review) => review.productId === product.id)
+  const reviews = [...productReviews, ...mockReviews]
   const ratingCounts = Object.fromEntries(RATING_VALUES.map((rating) => [
     rating,
     reviews.filter((review) => review.rating === rating).length,
   ]))
+  const ratingAverage = reviews.length
+    ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
+    : 0
 
   return {
     optionLabel: options.label,
     variants,
     description: `${product.name} được tuyển chọn kỹ lưỡng, phù hợp cho nhu cầu sử dụng hằng ngày. Sản phẩm có thiết kế tiện dụng, chất liệu bền bỉ và dễ bảo quản. Vui lòng chọn đúng phân loại trước khi đặt hàng; liên hệ shop nếu bạn cần tư vấn thêm về cách sử dụng hoặc chính sách đổi trả.`,
     reviewCount: reviews.length,
+    ratingAverage,
     ratingCounts,
     reviews,
   }

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { MessageCircle, Search, Send, X } from 'lucide-react'
+import { Bot, MessageCircle, Package, Search, Send, Store, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
+import { formatVND } from '@/lib/format'
+import { getShopAssistantReply } from '@/features/chat/lib/shopAssistant'
 
 function getCurrentTime() {
   return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(new Date())
@@ -13,8 +15,21 @@ export default function FloatingChatButton() {
   const [selectedShopId, setSelectedShopId] = useState(MOCK_SHOPS[0].id)
   const [shopSearch, setShopSearch] = useState('')
   const [draft, setDraft] = useState('')
+  const [activeThreads, setActiveThreads] = useState(() => Object.fromEntries(
+    MOCK_SHOPS.map((shop) => [shop.id, shop.aiAssistantEnabled ? 'ai' : 'human']),
+  ))
+  const [conversations, setConversations] = useState(() => Object.fromEntries(
+    MOCK_SHOPS.map((shop) => [shop.id, {
+      ai: [],
+      human: shop.messages.map((message) => ({ ...message, timestamp: 0 })),
+    }]),
+  ))
   const messagesListRef = useRef(null)
   const selectedShop = shops.find((shop) => shop.id === selectedShopId)
+  const chatMode = selectedShop?.aiAssistantEnabled ? activeThreads[selectedShop.id] : 'human'
+  const selectedMessages = selectedShop ? conversations[selectedShop.id]?.[chatMode] ?? [] : []
+  const unreadCount = shops.reduce((total, shop) => total + (shop.unread ?? 0), 0)
+  const unreadBadge = unreadCount > 9 ? '9+' : unreadCount
   const visibleShops = shops.filter((shop) =>
     shop.name.toLocaleLowerCase('vi-VN').includes(shopSearch.trim().toLocaleLowerCase('vi-VN')),
   )
@@ -23,7 +38,7 @@ export default function FloatingChatButton() {
     if (isOpen && messagesListRef.current) {
       messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight
     }
-  }, [isOpen, selectedShopId, selectedShop?.messages.length])
+  }, [isOpen, selectedShopId, chatMode, selectedMessages.length])
 
   useEffect(() => {
     const openShopChat = (event) => {
@@ -52,18 +67,40 @@ export default function FloatingChatButton() {
     const text = draft.trim()
     if (!text || !selectedShop) return
 
-    setShops((current) => current.map((shop) => (
-      shop.id === selectedShop.id
-        ? {
-            ...shop,
-            messages: [
-              ...shop.messages,
-              { id: `buyer-${Date.now()}`, from: 'buyer', text, time: getCurrentTime() },
-            ],
-          }
-        : shop
-    )))
+    const time = getCurrentTime()
+    const timestamp = Date.now()
+    const buyerMessage = { id: `buyer-${timestamp}`, from: 'buyer', text, time, timestamp }
+    const reply = chatMode === 'ai' && selectedShop.aiAssistantEnabled
+      ? getShopAssistantReply({ shop: selectedShop, text })
+      : null
+    const assistantMessage = reply
+      ? { id: `assistant-${timestamp}`, from: 'assistant', ...reply, time, timestamp: timestamp + 1 }
+      : null
+
+    setConversations((current) => ({
+      ...current,
+      [selectedShop.id]: {
+        ...current[selectedShop.id],
+        [chatMode]: [
+          ...(current[selectedShop.id]?.[chatMode] ?? []),
+          buyerMessage,
+          ...(assistantMessage ? [assistantMessage] : []),
+        ],
+      },
+    }))
     setDraft('')
+  }
+
+  const setMode = (mode) => {
+    setActiveThreads((current) => ({ ...current, [selectedShop.id]: mode }))
+    setDraft('')
+  }
+
+  const openChat = () => {
+    setIsOpen(true)
+    setShops((current) => current.map((shop) =>
+      shop.id === selectedShopId ? { ...shop, unread: 0 } : shop,
+    ))
   }
 
   return (
@@ -83,8 +120,12 @@ export default function FloatingChatButton() {
         >
           <header className="flex shrink-0 items-center justify-between bg-[#056F1C] px-4 py-3 text-white">
             <div>
-              <h2 id="floating-chat-title" className="text-sm font-semibold">Tin nhắn với shop</h2>
-              <p className="mt-0.5 text-xs text-white/75">Bản xem trước · Chưa kết nối real-time</p>
+              <h2 id="floating-chat-title" className="text-sm font-semibold">
+                {chatMode === 'ai' ? 'Chat với Trợ lý AI' : `Chat với ${selectedShop?.name ?? 'shop'}`}
+              </h2>
+              <p className="mt-0.5 text-xs text-white/75">
+                {chatMode === 'ai' ? 'Trợ lý AI mô phỏng · Chưa kết nối Gemini' : 'Chat với shop · Chưa kết nối real-time'}
+              </p>
             </div>
             <button
               type="button"
@@ -118,7 +159,11 @@ export default function FloatingChatButton() {
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" style={{ flex: '1 1 0%', height: 0, minHeight: 0 }}>
                 {visibleShops.map((shop) => {
-                  const lastMessage = shop.messages[shop.messages.length - 1]
+                  const threads = conversations[shop.id]
+                  const lastMessage = [
+                    ...(threads?.ai ?? []),
+                    ...(threads?.human ?? []),
+                  ].sort((left, right) => (right.timestamp ?? 0) - (left.timestamp ?? 0))[0]
                   const isSelected = shop.id === selectedShopId
                   return (
                     <button
@@ -161,7 +206,7 @@ export default function FloatingChatButton() {
                 className="flex min-h-0 min-w-0 flex-col overflow-hidden"
                 style={{ flex: '0 0 70%', height: '100%', minHeight: 0 }}
               >
-                <div className="flex h-16 shrink-0 items-center gap-2 border-b border-gray-100 px-3 sm:px-4">
+                <div className="flex shrink-0 flex-col justify-center gap-1 border-b border-gray-100 px-3 py-2 sm:min-h-16 sm:flex-row sm:items-center sm:px-4">
                   <Link
                     to={`/${selectedShop.slug}`}
                     onClick={() => setIsOpen(false)}
@@ -173,6 +218,32 @@ export default function FloatingChatButton() {
                     </span>
                     <span className="truncate text-xs font-semibold text-gray-900">{selectedShop.name}</span>
                   </Link>
+                  {selectedShop.aiAssistantEnabled && (
+                    <div className="flex shrink-0 rounded-lg bg-gray-100 p-1 sm:ml-auto" aria-label="Chọn chế độ chat">
+                      <button
+                        type="button"
+                        aria-pressed={chatMode === 'ai'}
+                        onClick={() => setMode('ai')}
+                        className={`flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] disabled:cursor-not-allowed disabled:opacity-50 sm:text-xs ${
+                          chatMode === 'ai' ? 'bg-white text-[#056F1C] shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        <Bot className="h-3.5 w-3.5" />
+                        Trợ lý AI
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={chatMode === 'human'}
+                        onClick={() => setMode('human')}
+                        className={`flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] sm:text-xs ${
+                          chatMode === 'human' ? 'bg-white text-[#056F1C] shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        <Store className="h-3.5 w-3.5" />
+                        Người thật
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div
@@ -181,7 +252,7 @@ export default function FloatingChatButton() {
                   className="min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-3 py-4 sm:px-4"
                   style={{ flex: '1 1 0%', height: 0, minHeight: 0 }}
                 >
-                  {selectedShop.messages.map((message) => (
+                  {selectedMessages.map((message) => (
                     <div
                       key={message.id}
                       className={`flex ${message.from === 'buyer' ? 'justify-end' : 'justify-start'}`}
@@ -191,7 +262,33 @@ export default function FloatingChatButton() {
                           ? 'rounded-br-md bg-[#056F1C] text-white'
                           : 'rounded-bl-md border border-gray-100 bg-white text-gray-800'
                       }`}>
+                        {message.from === 'assistant' && (
+                          <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold text-[#056F1C]">
+                            <Bot aria-hidden="true" className="h-3 w-3" />
+                            Trợ lý AI
+                          </p>
+                        )}
                         <p className="break-words text-xs">{message.text}</p>
+                        {message.products?.length > 0 && (
+                          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                            {message.products.map((product) => (
+                              <Link
+                                key={product.id}
+                                to={product.href}
+                                onClick={() => setIsOpen(false)}
+                                className="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 text-gray-800 transition hover:border-[#056F1C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C]"
+                              >
+                                {product.image
+                                  ? <img src={product.image} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+                                  : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-500"><Package className="h-5 w-5" /></span>}
+                                <span className="min-w-0">
+                                  <span className="block truncate text-[10px] font-medium">{product.name}</span>
+                                  <span className="mt-0.5 block text-[10px] font-semibold text-[#056F1C]">{formatVND(product.price)}</span>
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
                         <time className={`mt-1 block text-right text-[10px] ${
                           message.from === 'buyer' ? 'text-white/70' : 'text-gray-400'
                         }`}>
@@ -207,7 +304,7 @@ export default function FloatingChatButton() {
                     type="text"
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    placeholder="Nhập tin nhắn..."
+                    placeholder={chatMode === 'ai' ? 'Hỏi trợ lý về sản phẩm hoặc chính sách...' : 'Nhập tin nhắn cho shop...'}
                     aria-label="Nhập tin nhắn"
                     className="h-10 min-w-0 flex-1 rounded-full border border-gray-300 px-4 text-xs outline-none focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15"
                   />
@@ -227,14 +324,22 @@ export default function FloatingChatButton() {
       ) : (
         <button
           type="button"
-          aria-label="Mở chat với shop"
-          aria-expanded={false}
+          aria-label={unreadCount > 0 ? `Mở chat với shop, ${unreadCount} tin nhắn chưa đọc` : 'Mở chat với shop'}
+          aria-expanded={isOpen}
           aria-controls="floating-chat-panel"
-          onClick={() => setIsOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-[#056F1C] px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2"
+          onClick={openChat}
+          className="relative inline-flex items-center gap-2 rounded-full bg-[#056F1C] px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2"
         >
           <MessageCircle className="h-5 w-5" />
           <span>Chat</span>
+          {unreadCount > 0 && (
+            <span
+              aria-hidden="true"
+              className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-bold leading-none text-white"
+            >
+              {unreadBadge}
+            </span>
+          )}
         </button>
       )}
     </div>

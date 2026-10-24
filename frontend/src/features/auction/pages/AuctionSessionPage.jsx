@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Clock, ImageIcon } from 'lucide-react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import useAuctionSession from '@/features/auction/hooks/useAuctionSession'
+import AuctionRegistrationConfirmDialog from '@/features/auction/components/AuctionRegistrationConfirmDialog'
 import { formatVND } from '@/lib/format'
 import { SESSION_ITEM_STATUS, formatHourMinute, formatShortDateTime } from '@/features/auction/lib/auction'
+import {
+  cancelMockAuctionRegistration,
+  MAX_AUCTION_REGISTRATION_CANCELLATIONS,
+  registerMockAuctionSession,
+} from '@/mocks/auction/sessionMock'
 
 const LAYOUT = 'mx-auto w-full max-w-[1500px] px-4 sm:px-6 xl:px-0'
 
@@ -23,6 +29,20 @@ function useCountdown(endTime) {
   const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0')
   const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0')
   return { h, m, s, done: diff === 0 }
+}
+
+function SessionEndedNotice() {
+  return (
+    <main className="bg-gray-50 py-24">
+      <div className={`${LAYOUT} text-center`}>
+        <h1 className="text-2xl font-bold text-gray-900">Phiên đấu giá đã kết thúc</h1>
+        <p className="mt-2 text-gray-500">Phiên đấu giá mock đã hoàn tất, hiện không nhận thêm lượt đấu giá.</p>
+        <Link to="/auction/about" className="mt-6 inline-block font-semibold text-[#056F1C] hover:underline">
+          Quay lại trang đấu giá
+        </Link>
+      </div>
+    </main>
+  )
 }
 
 function CountdownBadge({ endTime }) {
@@ -204,14 +224,35 @@ function CancelledNotice() {
 
 function RegistrationPanel({ session, onChange }) {
   const [confirm, setConfirm] = useState(null)
+  const [error, setError] = useState('')
   const fee = session.registrationFee
   const balance = session.walletAvailable ?? 0
   const short = Math.max(0, fee - balance)
 
   const handleConfirm = () => {
-    // TODO: POST /auction/sessions/:id/register hoặc /cancel-registration
-    onChange(confirm === 'register')
-    setConfirm(null)
+    try {
+      const result = confirm === 'register'
+        ? registerMockAuctionSession(session.id, fee)
+        : cancelMockAuctionRegistration(session.id)
+      if (!result.success) {
+        setError(confirm === 'register'
+          ? result.reason === 'cancellation_limit'
+            ? 'Bạn đã hủy đăng ký 3 lần nên không thể đăng ký lại phiên đấu giá này.'
+            : 'Số dư khả dụng không đủ để thanh toán phí đăng ký.'
+          : 'Không thể hủy đăng ký phiên đấu giá.')
+        return
+      }
+      onChange(confirm === 'register', result.balance, {
+        cancellationCount: result.cancellationCount,
+        registrationBlocked: result.registrationBlocked,
+      })
+      setError('')
+      setConfirm(null)
+    } catch (registrationError) {
+      setError(registrationError instanceof Error
+        ? registrationError.message
+        : 'Không thể cập nhật đăng ký đấu giá.')
+    }
   }
 
   return (
@@ -221,6 +262,9 @@ function RegistrationPanel({ session, onChange }) {
           <p>Phí đăng ký: <strong className="text-gray-900">{fee > 0 ? formatVND(fee) : 'Miễn phí'}</strong></p>
           {short > 0 && !session.isRegistered && (
             <p className="mt-1 text-red-600">Còn thiếu {formatVND(short)}. Nạp thêm để đăng ký.</p>
+          )}
+          {session.registrationBlocked && (
+            <p className="mt-1 text-red-600">Bạn đã hủy đăng ký 3 lần và không thể đăng ký lại phiên đấu giá này.</p>
           )}
         </div>
         {session.isRegistered ? (
@@ -233,7 +277,7 @@ function RegistrationPanel({ session, onChange }) {
         ) : (
           <button
             type="button"
-            disabled={short > 0}
+            disabled={short > 0 || session.registrationBlocked}
             onClick={() => setConfirm('register')}
             className="rounded-lg bg-[#056F1C] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#045517] disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -241,24 +285,34 @@ function RegistrationPanel({ session, onChange }) {
           </button>
         )}
       </div>
+      {error && <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>}
 
-      {confirm && (
+      {confirm === 'register' && (
+        <AuctionRegistrationConfirmDialog
+          session={session}
+          onCancel={() => setConfirm(null)}
+          onConfirm={handleConfirm}
+        />
+      )}
+
+      {confirm === 'cancel' && (
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6">
-            <h3 className="text-lg font-bold text-gray-900">
-              {confirm === 'register' ? 'Xác nhận đăng ký' : 'Xác nhận hủy đăng ký'}
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900">Xác nhận hủy đăng ký</h3>
             <p className="mt-3 text-sm leading-relaxed text-gray-600">
-              {confirm === 'register'
-                ? `Phí ${formatVND(fee)} sẽ được trừ ngay vào ví. Bạn hủy được trong thời gian xem trước và được hoàn đủ. Phiên bắt đầu thì không hủy và không hoàn.`
-                : `Bạn sẽ được hoàn đủ ${formatVND(fee)} vào ví.`}
+              Bạn có chắc muốn hủy đăng ký và không tham gia phiên đấu giá này không? Phí đăng ký sẽ được hoàn lại vào số dư khả dụng.
+            </p>
+            <p role="alert" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-900">
+              Đây là lần hủy thứ {(session.cancellationCount ?? 0) + 1} trên tối đa {MAX_AUCTION_REGISTRATION_CANCELLATIONS} lần. {(session.cancellationCount ?? 0) + 1 >= MAX_AUCTION_REGISTRATION_CANCELLATIONS
+                ? 'Sau lần hủy này, bạn sẽ không thể đăng ký lại phiên đấu giá này.'
+                : `Nếu hủy thêm ${MAX_AUCTION_REGISTRATION_CANCELLATIONS - (session.cancellationCount ?? 0) - 1} lần nữa, bạn sẽ không thể đăng ký lại phiên đấu giá này.`}
             </p>
             <div className="mt-5 flex justify-end gap-3">
               <button type="button" onClick={() => setConfirm(null)} className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-600">
-                Đóng
+                Quay lại
               </button>
               <button type="button" onClick={handleConfirm} className="rounded-lg bg-[#056F1C] px-4 py-2 text-sm font-semibold text-white">
-                Xác nhận
+                Hủy đăng ký
               </button>
             </div>
           </div>
@@ -285,7 +339,7 @@ export default function AuctionSessionPage() {
   if (session.status === 'closed') {
     return session.closedReason === 'cancelled_pending'
       ? <CancelledNotice />
-      : <Navigate to={`/auction/history/${sessionId}`} replace />
+      : <SessionEndedNotice />
   }
   if (session.status === 'active' && !session.isRegistered) return <NotRegistered />
 

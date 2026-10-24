@@ -94,12 +94,21 @@ export default function RoleLoginPage({ role }) {
         {isLoggedIn && user?.role !== role && (
           <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <p>Tài khoản hiện tại không có quyền truy cập khu vực này.</p>
-            <button type="button" onClick={logout} className="mt-2 font-semibold underline">
-              Đăng xuất để đổi tài khoản
+            <button
+              type="button"
+              onClick={() => {
+                logout()
+                setEmail('')
+                setPassword('')
+              }}
+              className="mt-2 font-semibold underline"
+            >
+              Đăng xuất để tiếp tục
             </button>
           </div>
         )}
 
+        {!isLoggedIn && (
         <form noValidate onSubmit={handleSubmit} className="mt-7 space-y-5">
           <div>
             <label htmlFor="role-login-email" className="mb-1.5 block text-sm font-medium text-gray-700">
@@ -164,6 +173,7 @@ export default function RoleLoginPage({ role }) {
             Đăng nhập
           </button>
         </form>
+        )}
 
       </section>
     </main>

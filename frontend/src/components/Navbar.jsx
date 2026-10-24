@@ -11,10 +11,11 @@ function formatPrice(price) {
 }
 
 /**
- * variant: 'default' | 'auction' | 'auth'
+ * variant: 'default' | 'auction' | 'auth' | 'seller'
  * - 'default': green bg, white text, search bar + auth buttons
  * - 'auction': green bg, white text, auth buttons only (no search)
  * - 'auth':    white/gray bg, green text, logo only (no search, no auth buttons)
+ * - 'seller':  green bg, white text, seller brand only (no search or auth buttons)
  */
 export default function Navbar({ variant = 'default' }) {
   const [query, setQuery] = useState('')
@@ -93,6 +94,7 @@ export default function Navbar({ variant = 'default' }) {
   }
 
   const isAuth = variant === 'auth'
+  const isSeller = variant === 'seller'
   const showSearch = variant === 'default'
 
   return (
@@ -109,9 +111,10 @@ export default function Navbar({ variant = 'default' }) {
           <span className={`font-bold text-lg tracking-wide ${isAuth ? 'text-[#056F1C]' : 'text-white'}`}>
             NaviShop
           </span>
+          {isSeller && <span className="border-l border-white/40 pl-2 text-lg font-normal text-white">Online Shop</span>}
         </Link>
 
-        {!isAuth && (
+        {!isAuth && !isSeller && (
           <>
             {showSearch ? (
               <form onSubmit={handleSearch} className="flex-1">

@@ -24,6 +24,13 @@ const RAW_ITEMS = [
 
 const BIDDERS = ['usr•••5e07', 'usr•••91c2', 'usr•••c2a9']
 const CATEGORIES = ['Đồng hồ & Trang sức', 'Máy ảnh & Quang học', 'Tem & Tiền xu', 'Âm nhạc & Giải trí', 'Văn phòng phẩm', 'Nghệ thuật', 'Điện tử cổ', 'Trò chơi & Bộ sưu tập', 'Gốm sứ & Thủ công', 'Máy móc cổ', 'Tiền xu & Huy chương', 'Đèn & Nội thất']
+const SOURCE_SHOPS = [
+  { name: 'Phụ Kiện Xinh', slug: 'phu-kien-xinh' },
+  { name: 'Công Nghệ Mới', slug: 'cong-nghe-moi' },
+  { name: 'Nhà Sách Tri Thức', slug: 'nha-sach-tri-thuc' },
+  { name: 'Âm Thanh Việt', slug: 'am-thanh-viet' },
+  { name: 'Nhà Sách Tri Thức', slug: 'nha-sach-tri-thuc' },
+]
 
 function buildItem([title, startingPrice, baseBidIncrement, finalPrice, bidCount, extensionCount, durationOverride], index) {
   const durationSec = durationOverride ?? ITEM_DURATION_SEC
@@ -47,6 +54,7 @@ function buildItem([title, startingPrice, baseBidIncrement, finalPrice, bidCount
     title,
     description: 'Mô tả ngắn của vật phẩm: tình trạng, xuất xứ, ghi chú từ người bán.',
     images: [], // TODO: URL ảnh thật từ API
+    sourceShop: SOURCE_SHOPS[index % SOURCE_SHOPS.length],
     startingPrice,
     baseBidIncrement,
     state: sold ? 'sold' : 'unsold',
@@ -81,4 +89,23 @@ export function getMockItem(sessionId, itemId) {
   const session = getMockSession(sessionId)
   const index = session ? session.items.findIndex((i) => i.itemId === itemId) : -1
   return index === -1 ? null : { session, item: session.items[index], index }
+}
+
+const MOCK_PARTICIPATED_SESSION_IDS = ['ses_004']
+
+export function getMockParticipatedSessions() {
+  return MOCK_PARTICIPATED_SESSION_IDS
+    .map((sessionId) => {
+      const session = getMockSession(sessionId)
+      if (!session) return null
+      const wonItems = session.items.filter((item) => item.isMe)
+      return { ...session, wonItems }
+    })
+    .filter(Boolean)
+}
+
+export function getMockWonAuctionItems() {
+  return getMockParticipatedSessions().flatMap((session) =>
+    session.wonItems.map((item) => ({ session, item })),
+  )
 }

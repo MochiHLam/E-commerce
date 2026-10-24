@@ -18,7 +18,7 @@
 
 - Giá khởi điểm: mức thấp nhất của lượt đầu. Có một lượt hợp lệ là vật phẩm được bán, không có giá sàn nào được giấu.
 - Bước giá: mức tăng tối thiểu mỗi lượt. Giá khởi điểm và bước giá do NaviShop quyết định khi duyệt vật phẩm.
-- Bạn không đặt giá khi đang dẫn đầu. Khi đặt giá, hệ thống khóa đúng số tiền bạn đặt và trả lại khi có người đặt cao hơn.
+- Bạn vẫn có thể tiếp tục đặt giá khi đang dẫn đầu. Số tiền đang khóa cho lượt dẫn đầu trước được dùng để bù trừ; ví chỉ khóa thêm phần chênh lệch của lượt giá mới. Khi có người đặt cao hơn, khoản đang khóa cho bạn được trả lại vào số dư khả dụng.
 - Nhiều người đặt cùng lúc thì chỉ một lượt hợp lệ được chấp nhận, bạn cần đặt lại. Giá đã đặt không rút lại được.
 
 ## Gia hạn
@@ -28,7 +28,7 @@
 ## Kết thúc vật phẩm
 
 - Hết giờ, người dẫn đầu thắng. Không ai đặt giá thì vật phẩm về kho chờ phiên sau.
-- NaviShop có thể hủy phiên khi còn chờ, và kết thúc sớm phiên trong lúc giải lao. Vật phẩm đã đấu xong giữ nguyên kết quả, vật phẩm chưa tới lượt về kho.
+- NaviShop chỉ có thể hủy phiên trước khi phiên bắt đầu. Khi phiên đã diễn ra, phiên không thể bị kết thúc sớm trong lúc giải lao; từng vật phẩm tiếp tục theo lịch và kết thúc vào thời điểm đã quy định. Vật phẩm đã đấu xong giữ nguyên kết quả, vật phẩm chưa tới lượt vẫn chờ đến lượt trong phiên.
 
 ## Khi bạn thắng
 

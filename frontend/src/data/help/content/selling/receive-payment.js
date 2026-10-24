@@ -1,6 +1,8 @@
 export default {
   title: 'Nhận thanh toán',
   body: `
+> Kênh người bán hiện chưa khả dụng. Nội dung dưới đây mô tả chính sách thanh toán dự kiến khi tính năng được triển khai.
+
 ## Tiền về ví khi nào?
 
 Tiền chỉ chuyển về ví sau khi đơn hoàn thành — không phải ngay lúc người mua đặt hay cửa hàng xác nhận. Đơn bị hủy thì không có tiền nào về ví cửa hàng.

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, X } from 'lucide-react'
 import { formatVND } from '@/lib/format'
 import { getMockAvailableBalance, getMockTopUps } from '@/mocks/wallet'
@@ -170,6 +170,16 @@ const MOCK_TRANSACTIONS = [
 export default function WalletHistorySection() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [selectedTransaction, setSelectedTransaction] = useState(null)
+  const [, setWalletVersion] = useState(0)
+  useEffect(() => {
+    const refreshTransactions = () => setWalletVersion((version) => version + 1)
+    window.addEventListener('navishop:wallet-updated', refreshTransactions)
+    window.addEventListener('storage', refreshTransactions)
+    return () => {
+      window.removeEventListener('navishop:wallet-updated', refreshTransactions)
+      window.removeEventListener('storage', refreshTransactions)
+    }
+  }, [])
   let balanceAfterTransaction = getMockAvailableBalance(getMockAuctionLockedBalance())
   const transactions = [...getMockTopUps(), ...MOCK_TRANSACTIONS]
     .sort((a, b) => new Date(b.date) - new Date(a.date))

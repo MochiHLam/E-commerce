@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom'
 import Pagination from '@/components/Pagination'
 import AuctionCTAButton from '@/features/auction/components/AuctionCTAButton'
 import { useAuth } from '@/context/AuthContext'
+import useAuctionSession from '@/features/auction/hooks/useAuctionSession'
 import steps from '@/features/auction/data/steps'
 import rules from '@/features/auction/data/rules'
 import faq from '@/features/auction/data/faq'
-import { MOCK_SESSION } from '@/mocks/auction/sessionMock'
 
 const LAYOUT = 'mx-auto w-full max-w-[1500px] px-4 sm:px-6 xl:px-0'
 
@@ -108,7 +108,11 @@ function HeroSection({ session, isRegistered }) {
               <p className="text-sm font-medium text-white/75">Phiên hiện đang diễn ra.</p>
             )}
             {status === 'closed' && (
-              <p className="text-sm font-medium text-white/75">Hiện chưa có phiên đấu giá nào đang mở.</p>
+              <p className="text-sm font-medium text-white/75">
+                {session?.closedReason === 'completed'
+                  ? 'Phiên đấu giá đã kết thúc.'
+                  : 'Hiện chưa có phiên đấu giá nào đang mở.'}
+              </p>
             )}
             <div className="flex flex-wrap gap-3">
               <Link
@@ -374,20 +378,11 @@ function FaqSection() {
 
 export default function AuctionAboutPage() {
   const { isLoggedIn } = useAuth()
-
-  // MOCK: đổi các giá trị này để test UI
-  const mockSession = {
-    id: 'ses_mock',
-    status: 'pending',    // 'pending' | 'active' | 'closed'
-    startTime: MOCK_SESSION.startTime,
-    isRegistered: false,  // TODO: lấy từ API Boolean(session.myRegistration)
-    registrationFee: 50000,
-    walletAvailable: 100000,
-  }
+  const { session: mockSession } = useAuctionSession('ses_mock')
 
   return (
     <main className="bg-white">
-      <HeroSection session={mockSession} isRegistered={mockSession.isRegistered} />
+      <HeroSection session={mockSession} isRegistered={Boolean(mockSession?.isRegistered)} />
       <StepsSection />
       <RulesSection />
       <ImportantNotice />

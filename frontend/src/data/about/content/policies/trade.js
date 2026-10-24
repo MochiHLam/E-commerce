@@ -29,8 +29,10 @@ Mọi giao dịch đều dùng ví NaviShop, mỗi tài khoản một ví dùng 
 
 ## Dành cho người bán
 
+> Kênh người bán hiện chưa khả dụng. Các quy định dưới đây mô tả quy trình dự kiến khi tính năng được triển khai.
+
 - Mở cửa hàng: gửi đăng ký và chờ duyệt. Bị từ chối thì nhận lý do và được sửa, gửi lại.
-- Đăng sản phẩm: bạn tự đặt giá, không cần ai duyệt. Mỗi sản phẩm một mức giá, một số lượng tồn kho, không có biến thể; hàng nhiều màu hoặc kích cỡ thì đăng thành sản phẩm riêng.
+- Đăng sản phẩm: bạn tự đặt giá, không cần ai duyệt. Sản phẩm có thể có nhiều phân loại, chẳng hạn màu sắc hoặc kích cỡ; giá và số lượng tồn kho được quản lý theo từng phân loại.
 - Hoa hồng: NaviShop thu theo tỉ lệ phần trăm trên tiền hàng, khác nhau theo danh mục. Phí vận chuyển không tính hoa hồng và không thuộc về cửa hàng. Bạn nhận tiền hàng trừ hoa hồng khi đơn hoàn thành, đơn bị hủy thì không có hoa hồng.
 - Gửi vật phẩm đấu giá: sản phẩm thuộc danh mục cho phép, chỉ còn 1 món trong kho. NaviShop duyệt và tự đặt giá, giá bạn đề xuất chỉ để tham khảo. Đã được duyệt thì không thể rút lại, vật phẩm không ai đặt giá sẽ quay về kho chờ phiên sau.
 - Khi cửa hàng bị khóa tạm: sản phẩm bị ẩn, không đăng thêm và không nhận đơn mới, các đơn đang xử lý tiếp tục. Khóa vĩnh viễn thì ví chủ cửa hàng bị đóng băng.

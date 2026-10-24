@@ -11,6 +11,8 @@ export default function ReportEvidenceFields({
   onImagesChange,
   idPrefix,
   allowImages = true,
+  detailsRequired = false,
+  detailsError = '',
 }) {
   const [previews, setPreviews] = useState([])
   const [imageError, setImageError] = useState('')
@@ -59,18 +61,23 @@ export default function ReportEvidenceFields({
     <div className="mt-4 space-y-4">
       <div>
         <label htmlFor={detailsId} className="text-sm font-semibold text-gray-800">
-          Mô tả chi tiết
+          Mô tả chi tiết{detailsRequired ? ' (bắt buộc)' : ' (không bắt buộc)'}
         </label>
         <textarea
           id={detailsId}
-          required
+          aria-required={detailsRequired}
           rows={4}
           maxLength={1000}
           value={details}
+          aria-invalid={Boolean(detailsError)}
+          aria-describedby={detailsError ? `${detailsId}-error` : undefined}
           onChange={(event) => onDetailsChange(event.target.value)}
-          placeholder="Mô tả lý do báo cáo"
-          className="mt-2 w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#056F1C]"
+          placeholder={detailsRequired ? 'Vui lòng mô tả lý do báo cáo' : 'Bạn có thể bổ sung thông tin'}
+          className={`mt-2 w-full resize-y rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-[#056F1C] ${
+            detailsError ? 'border-red-500' : 'border-gray-300'
+          }`}
         />
+        {detailsError && <p id={`${detailsId}-error`} role="alert" className="mt-1 text-xs text-red-600">{detailsError}</p>}
         <p className="mt-1 text-right text-xs text-gray-500">{details.length}/1000</p>
       </div>
 

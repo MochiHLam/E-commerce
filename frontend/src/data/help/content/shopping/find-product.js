@@ -9,9 +9,9 @@ Nhập từ khóa vào ô tìm kiếm trên và nhấn Enter để xem kết qu�
 
 Tại trang kết quả, dùng sidebar trái để lọc theo khoảng giá, số sao và danh mục. Dùng dropdown để sắp xếp theo mới nhất, bán chạy, giá tăng hoặc giảm dần. Trạng thái lọc được giữ lại khi reload trang.
 
-## Tìm bằng mô tả (AI)
+## Hỏi trợ lý của shop
 
-Bạn cũng có thể mô tả thứ cần tìm bằng lời tự nhiên thay vì từ khóa chính xác, trí tuệ nhân tạo sẽ dựa vào mô tả của bạn để gợi ý sản phẩm. Tính năng này dành cho tài khoản đã đăng nhập.
+Mở khung chat với một shop để hỏi về sản phẩm của shop đó, chẳng hạn giá, tình trạng còn hàng hoặc mô tả. Khi shop bật trợ lý AI, cuộc trò chuyện với trợ lý và cuộc trò chuyện với người thật có lịch sử riêng. Nếu muốn hỏi shop về sản phẩm trợ lý vừa gợi ý, hãy tự chuyển sang cuộc trò chuyện với người thật; tin nhắn trong đoạn chat AI không được gửi cho shop. Trợ lý chỉ gợi ý và cung cấp thông tin, không đặt hàng hay thay đổi đơn hàng.
 
 ## Xem sản phẩm
 

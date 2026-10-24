@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import AuctionCTAButton from '@/features/auction/components/AuctionCTAButton'
-import { MOCK_SESSION } from '@/mocks/auction/sessionMock'
+import useAuctionSession from '@/features/auction/hooks/useAuctionSession'
 import { CATEGORIES } from '@/mocks/categories'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -32,8 +32,8 @@ const WHY_ITEMS = [
     desc: 'Xem nhận xét và sao số từ những người đã mua sản phẩm trước khi quyết định. Thấy shop, sản phẩm hay đánh giá có vấn đề? Bạn có thể báo cáo, đội ngũ kiểm duyệt sẽ xem xét và xử lý để sàn luôn đáng tin cậy.',
   },
   {
-    title: 'GỢI Ý SẢN PHẨM THÔNG MINH',
-    desc: 'Đăng nhập để nhận gợi ý những sản phẩm phù hợp, hoặc mô tả thứ bạn cần bằng lời tự nhiên. NaviShop sẽ giúp bạn tìm ra.',
+    title: 'TRỢ LÝ CỦA SHOP NGAY TRONG KHUNG CHAT',
+    desc: 'Hỏi về sản phẩm, giá, tình trạng còn hàng hoặc chính sách giao hàng. Muốn hỏi trực tiếp shop, hãy chuyển sang cuộc trò chuyện riêng với người thật.',
   },
 ]
 
@@ -76,7 +76,11 @@ function AuctionBanner({ session, isRegistered }) {
   const [popup, setPopup] = useState('')
 
   let subText = ''
-  if (status === 'closed') subText = 'Hiện chưa có phiên đấu giá nào sắp diễn ra'
+  if (status === 'closed') {
+    subText = session?.closedReason === 'completed'
+      ? 'Phiên đấu giá đã kết thúc'
+      : 'Hiện chưa có phiên đấu giá nào sắp diễn ra'
+  }
   if (status === 'active') subText = 'Buổi đấu giá đang được diễn ra'
 
   return (
@@ -260,16 +264,8 @@ function CategoryCarousel({ categories, isLoggedIn }) {
 // ─── HomePage ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const { isLoggedIn } = useAuth()
-  // TODO: thay bằng API call
-  const mockSession = {
-    status: 'pending', // 'pending' | 'active' | 'closed'
-    startTime: MOCK_SESSION.startTime,
-    id: 'ses_mock',
-    isRegistered: false, // TODO: lấy từ API
-    registrationFee: 50000,
-    walletAvailable: 100000,
-  }
-  const isRegistered = Boolean(mockSession.isRegistered)
+  const { session: mockSession } = useAuctionSession('ses_mock')
+  const isRegistered = Boolean(mockSession?.isRegistered)
 
   return (
     <main className="bg-white">

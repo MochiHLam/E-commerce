@@ -5,20 +5,14 @@ export default function useAuctionSession(sessionId) {
   const [session, setSession] = useState(() => getMockLiveSession(sessionId))
 
   useEffect(() => {
-    const initialSession = getMockLiveSession(sessionId)
-    setSession(initialSession)
-    if (!initialSession || initialSession.status !== 'pending' || !initialSession.pendingEndTime) return undefined
-
-    const updateStatus = () => {
-      if (Date.now() >= new Date(initialSession.pendingEndTime).getTime()) {
-        setSession((current) => current ? { ...current, status: 'active' } : current)
-      }
+    const refreshSession = () => {
+      setSession(getMockLiveSession(sessionId))
     }
 
-    updateStatus()
-    const timer = setInterval(updateStatus, 1000)
+    refreshSession()
+    const timer = setInterval(refreshSession, 1000)
     const updateOnVisibility = () => {
-      if (document.visibilityState === 'visible') updateStatus()
+      if (document.visibilityState === 'visible') refreshSession()
     }
     document.addEventListener('visibilitychange', updateOnVisibility)
 
@@ -28,8 +22,13 @@ export default function useAuctionSession(sessionId) {
     }
   }, [sessionId])
 
-  const setRegistered = useCallback((isRegistered) => {
-    setSession((current) => current ? { ...current, isRegistered } : current)
+  const setRegistered = useCallback((isRegistered, walletAvailable, registrationLimits) => {
+    setSession((current) => current ? {
+      ...current,
+      isRegistered,
+      walletAvailable: walletAvailable ?? current.walletAvailable,
+      ...registrationLimits,
+    } : current)
   }, [])
 
   return { session, setRegistered }

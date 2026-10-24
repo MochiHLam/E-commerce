@@ -19,9 +19,9 @@ export default [
   },
   {
     icon: '🚫',
-    title: 'Những lúc bạn không đặt được giá',
+    title: 'Lưu ý khi đặt giá',
     description:
-      'Khi bạn đang dẫn đầu thì không cần và không thể đặt thêm. Chủ cửa hàng không được đặt giá món của mình. Bạn cũng không đặt được nếu chưa đăng ký phiên. Nếu nhiều người đặt cùng lúc, chỉ một lượt hợp lệ được nhận, những người còn lại cần đặt lại. Giá đã đặt thì không rút lại được.',
+      'Bạn vẫn có thể tiếp tục đặt giá khi đang dẫn đầu; số tiền đã khóa được bù trừ và ví chỉ khóa thêm phần chênh lệch. Chủ cửa hàng không được đặt giá món của mình. Bạn cũng không đặt được nếu chưa đăng ký phiên. Nếu nhiều người đặt cùng lúc, chỉ một lượt hợp lệ được nhận, những người còn lại cần đặt lại. Giá đã đặt thì không rút lại được.',
   },
   {
     icon: '🎟️',

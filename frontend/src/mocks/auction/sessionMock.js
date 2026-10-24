@@ -1,6 +1,11 @@
 // MOCK cho trang phiên đấu giá đang diễn ra / xem trước.
 // Khi có API: GET /api/auction/sessions/:sessionId (pending → preview, active → phòng đấu giá)
-import { releaseMockWalletAmount, reserveMockWalletAmount } from '@/mocks/wallet'
+import {
+  applyMockWalletTransaction,
+  getMockAvailableBalance,
+  releaseMockWalletAmount,
+  reserveMockWalletAmount,
+} from '@/mocks/wallet'
 
 const now = Date.now()
 const MIN = 60 * 1000
@@ -11,8 +16,12 @@ const SESSION_CONFIGURATION = {
   minimumItemsPerSession: 10,
 }
 const ITEM_GAP = SESSION_CONFIGURATION.itemDurationMinutes * MIN
-const PENDING_END = now + 5 * MIN
+const MOCK_AUCTION_PENDING_DURATION_MS = 5 * MIN
+const MOCK_AUCTION_ACTIVE_DURATION_MS = 5 * MIN
 const LIVE_BID_STORAGE_KEY = 'navishop.mockAuction.liveBids'
+const REGISTRATIONS_STORAGE_KEY = 'navishop.mockAuction.registrations'
+const SESSION_TIMELINE_STORAGE_KEY = 'navishop.mockAuction.sessionTimeline'
+export const MAX_AUCTION_REGISTRATION_CANCELLATIONS = 3
 const MOCK_USER_ID = 'usr_001'
 const MOCK_USER_DISPLAY = 'usr•••c2a9'
 const MOCK_OTHER_BIDDER_ID = 'usr_002'
@@ -95,34 +104,196 @@ export const MOCK_SESSION = {
   status: 'pending',   // 'pending' | 'active' | 'closed'
   configuration: SESSION_CONFIGURATION,
   registrationFee: 50000,
-  walletAvailable: 100000,
-  isRegistered: true,
-  startTime: new Date(PENDING_END).toISOString(),
-  pendingEndTime: new Date(PENDING_END).toISOString(),
+  walletAvailable: getMockAvailableBalance(getMockAuctionLockedBalance()),
+  isRegistered: false,
+  startTime: null,
+  pendingEndTime: null,
+  endTime: null,
   itemCount: RAW.length,
   items: MOCK_SESSION_ITEMS,
+}
+
+function getMockSessionTimeline() {
+  const storedTimeline = localStorage.getItem(SESSION_TIMELINE_STORAGE_KEY)
+  if (storedTimeline) {
+    const timeline = JSON.parse(storedTimeline)
+    if (!Number.isFinite(timeline?.startsAt) || !Number.isFinite(timeline?.endsAt)) {
+      throw new Error('Thời gian phiên đấu giá mock không hợp lệ.')
+    }
+    return timeline
+  }
+
+  const startsAt = now + MOCK_AUCTION_PENDING_DURATION_MS
+  const timeline = {
+    startsAt,
+    endsAt: startsAt + MOCK_AUCTION_ACTIVE_DURATION_MS,
+  }
+  localStorage.setItem(SESSION_TIMELINE_STORAGE_KEY, JSON.stringify(timeline))
+  return timeline
+}
+
+function getSessionStatus(timeline, currentTime = Date.now()) {
+  if (currentTime < timeline.startsAt) return 'pending'
+  if (currentTime < timeline.endsAt) return 'active'
+  return 'closed'
+}
+
+function readRegistrations() {
+  const registrations = JSON.parse(localStorage.getItem(REGISTRATIONS_STORAGE_KEY) ?? '{}')
+  if (!registrations || Array.isArray(registrations) || typeof registrations !== 'object') {
+    throw new Error('Dữ liệu đăng ký đấu giá mock không hợp lệ.')
+  }
+  return registrations
+}
+
+export function getMockAuctionRegistration(sessionId) {
+  return readRegistrations()[sessionId]?.status === 'registered'
+}
+
+export function getMockAuctionRegistrationLimits(sessionId) {
+  const registration = readRegistrations()[sessionId]
+  const cancellationCount = registration?.cancellationCount ?? 0
+  return {
+    cancellationCount,
+    registrationBlocked: cancellationCount >= MAX_AUCTION_REGISTRATION_CANCELLATIONS,
+  }
+}
+
+export function registerMockAuctionSession(sessionId, fee) {
+  if (!sessionId || !Number.isSafeInteger(fee) || fee < 0) {
+    throw new Error('Thông tin đăng ký đấu giá không hợp lệ.')
+  }
+  const registrations = readRegistrations()
+  if (registrations[sessionId]?.status === 'registered') {
+    return {
+      success: true,
+      balance: getMockAvailableBalance(getMockAuctionLockedBalance()),
+      ...getMockAuctionRegistrationLimits(sessionId),
+    }
+  }
+  const cancellationCount = registrations[sessionId]?.cancellationCount ?? 0
+  if (cancellationCount >= MAX_AUCTION_REGISTRATION_CANCELLATIONS) {
+    return {
+      success: false,
+      reason: 'cancellation_limit',
+      cancellationCount,
+      balance: getMockAvailableBalance(getMockAuctionLockedBalance()),
+    }
+  }
+
+  const registeredAt = new Date().toISOString()
+  const registrationId = globalThis.crypto?.randomUUID?.() ?? `registration-${Date.now()}`
+  let balance = getMockAvailableBalance(getMockAuctionLockedBalance())
+  if (fee > 0) {
+    const transaction = applyMockWalletTransaction({
+      id: `TXN-AUCTION-REG-${sessionId}-${registrationId}`,
+      title: 'Đăng ký đấu giá',
+      description: 'Phí đăng ký tham gia phiên đấu giá',
+      reference: `Phiên đấu giá #${sessionId}`,
+      amount: fee,
+      direction: 'out',
+      date: registeredAt,
+    }, getMockAuctionLockedBalance())
+    if (!transaction.success) return transaction
+    balance = transaction.balance
+  }
+
+  localStorage.setItem(REGISTRATIONS_STORAGE_KEY, JSON.stringify({
+    ...registrations,
+    [sessionId]: { ...registrations[sessionId], status: 'registered', fee, registrationId, registeredAt },
+  }))
+  window.dispatchEvent(new CustomEvent('navishop:auction-registration-updated', {
+    detail: { sessionId, isRegistered: true, cancellationCount },
+  }))
+  return {
+    success: true,
+    balance,
+    ...getMockAuctionRegistrationLimits(sessionId),
+  }
+}
+
+export function cancelMockAuctionRegistration(sessionId) {
+  const registrations = readRegistrations()
+  const registration = registrations[sessionId]
+  if (!registration || registration.status !== 'registered') {
+    return { success: false, balance: getMockAvailableBalance(getMockAuctionLockedBalance()) }
+  }
+
+  const cancelledAt = new Date().toISOString()
+  let balance = getMockAvailableBalance(getMockAuctionLockedBalance())
+  if (registration.fee > 0) {
+    const transaction = applyMockWalletTransaction({
+      id: `TXN-AUCTION-REFUND-${sessionId}-${registration.registrationId}`,
+      title: 'Hoàn phí đăng ký đấu giá',
+      description: 'Hoàn phí khi hủy đăng ký trước khi phiên bắt đầu',
+      reference: `Phiên đấu giá #${sessionId}`,
+      amount: registration.fee,
+      direction: 'in',
+      date: cancelledAt,
+    }, getMockAuctionLockedBalance())
+    if (!transaction.success) return transaction
+    balance = transaction.balance
+  }
+
+  localStorage.setItem(REGISTRATIONS_STORAGE_KEY, JSON.stringify({
+    ...registrations,
+    [sessionId]: {
+      ...registration,
+      status: 'cancelled',
+      cancelledAt,
+      cancellationCount: (registration.cancellationCount ?? 0) + 1,
+    },
+  }))
+  const cancellationCount = (registration.cancellationCount ?? 0) + 1
+  window.dispatchEvent(new CustomEvent('navishop:auction-registration-updated', {
+    detail: {
+      sessionId,
+      isRegistered: false,
+      cancellationCount,
+      registrationBlocked: cancellationCount >= MAX_AUCTION_REGISTRATION_CANCELLATIONS,
+    },
+  }))
+  return {
+    success: true,
+    balance,
+    cancellationCount,
+    registrationBlocked: cancellationCount >= MAX_AUCTION_REGISTRATION_CANCELLATIONS,
+  }
 }
 
 export function getMockLiveSession(sessionId) {
   if (!sessionId.startsWith('ses_')) return null
 
+  const timeline = getMockSessionTimeline()
+  const status = getSessionStatus(timeline)
   const storedBids = readStoredLiveBids()
   const activeItem = MOCK_SESSION_ITEMS.find((item) => item.state === 'bidding')
-  if (activeItem && !storedBids[activeItem.itemId]) {
+  if (activeItem && (!storedBids[activeItem.itemId]
+    || new Date(storedBids[activeItem.itemId].endTime).getTime() < timeline.startsAt)) {
     storedBids[activeItem.itemId] = {
       currentPrice: activeItem.currentPrice,
       highestBidder: activeItem.highestBidder,
       highestBidderId: activeItem.highestBidderId,
       bidCount: activeItem.bidCount,
       bids: activeItem.bids,
-      endTime: new Date(Date.now() + TEST_ITEM_DURATION_MS).toISOString(),
+      endTime: new Date(timeline.startsAt + TEST_ITEM_DURATION_MS).toISOString(),
       state: activeItem.state,
     }
     localStorage.setItem(LIVE_BID_STORAGE_KEY, JSON.stringify(storedBids))
   }
+  const registrationLimits = getMockAuctionRegistrationLimits(sessionId)
   return {
     ...MOCK_SESSION,
     id: sessionId,
+    status,
+    startTime: new Date(timeline.startsAt).toISOString(),
+    pendingEndTime: new Date(timeline.startsAt).toISOString(),
+    endTime: new Date(timeline.endsAt).toISOString(),
+    closedAt: status === 'closed' ? new Date(timeline.endsAt).toISOString() : null,
+    closedReason: status === 'closed' ? 'completed' : null,
+    walletAvailable: getMockAvailableBalance(getMockAuctionLockedBalance()),
+    isRegistered: getMockAuctionRegistration(sessionId),
+    ...registrationLimits,
     items: MOCK_SESSION_ITEMS.map((item) => (
       storedBids[item.itemId] ? { ...item, ...storedBids[item.itemId] } : item
     )),

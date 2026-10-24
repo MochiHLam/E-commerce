@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { Bell, ChevronDown, CircleDollarSign, Gavel, Package, UserRound } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { getProductDetailMock } from '@/mocks/productDetails'
+import { getMockProductReviews, getProductDetailMock } from '@/mocks/productDetails'
 import { PRODUCTS } from '@/mocks/products'
 import { INITIAL_NOTIFICATIONS } from '@/mocks/mockNotifications'
 import AuctionsSection from '@/features/account/sections/AuctionsSection'
+import AuctionWonItemsSection from '@/features/account/sections/AuctionWonItemsSection'
 import AddressSection from '@/features/account/sections/AddressSection'
 import NotificationsSection from '@/features/account/sections/NotificationsSection'
 import OrdersSection from '@/features/account/sections/OrdersSection'
@@ -14,9 +15,18 @@ import PasswordSection from '@/features/account/sections/PasswordSection'
 import ProfileSection from '@/features/account/sections/ProfileSection'
 import WalletSection from '@/features/account/sections/WalletSection'
 import WalletHistorySection from '@/features/account/sections/WalletHistorySection'
-import { getCheckoutMockOrders, MOCK_ORDERS } from '@/mocks/account/orders'
+import { getCheckoutMockOrders, getMockOrderStatusOverrides, getOrderItems, MOCK_ORDERS, saveMockOrderStatus } from '@/mocks/account/orders'
+import { getMockAuctionLockedBalance } from '@/mocks/auction/sessionMock'
+import { refundMockWalletOrder } from '@/mocks/wallet'
 
 const LAYOUT = 'mx-auto max-w-[1500px]'
+const DELIVERED_AUTO_COMPLETE_DELAY = 3 * 24 * 60 * 60 * 1000
+
+function getDeliveredTimestamp(order) {
+  const timestamp = order.statusTimestamps?.delivered ?? order.deliveredAt
+  const parsedTimestamp = timestamp ? new Date(timestamp).getTime() : Number.NaN
+  return Number.isFinite(parsedTimestamp) ? parsedTimestamp : null
+}
 
 const ROLE_LABELS = {
   user: 'Khách hàng',
@@ -54,7 +64,15 @@ const SECTIONS = [
     ],
   },
   { id: 'orders', label: 'Đơn hàng', icon: Package },
-  { id: 'auctions', label: 'Lịch sử đấu giá', icon: Gavel },
+  {
+    id: 'auctions',
+    label: 'Đấu giá',
+    icon: Gavel,
+    children: [
+      { id: 'auction-history', label: 'Lịch sử tham gia' },
+      { id: 'auction-items', label: 'Vật đấu thành' },
+    ],
+  },
 ]
 
 function getProfileForm(user) {
@@ -131,6 +149,8 @@ const ACCOUNT_SECTION_PATHS = {
   'notification-auctions': '/user/notifications/auctions',
   wallet: '/user/naviwallet/wallet',
   'wallet-history': '/user/naviwallet/history',
+  'auction-history': '/user/auctions/history',
+  'auction-items': '/user/auctions/items',
 }
 
 export default function AccountPage({ section = 'profile' }) {
@@ -140,14 +160,39 @@ export default function AccountPage({ section = 'profile' }) {
   const [isAccountCollapsed, setIsAccountCollapsed] = useState(false)
   const [isWalletCollapsed, setIsWalletCollapsed] = useState(false)
   const [areNotificationsCollapsed, setAreNotificationsCollapsed] = useState(false)
+  const [areAuctionsCollapsed, setAreAuctionsCollapsed] = useState(false)
   const [form, setForm] = useState(() => getProfileForm(user))
   const [addresses, setAddresses] = useState(() => getAddresses(user))
   const [notifications, setNotifications] = useState(() => INITIAL_NOTIFICATIONS)
   const [activeOrderTab, setActiveOrderTab] = useState('all')
   const [orderSearch, setOrderSearch] = useState('')
-  const [mockOrders, setMockOrders] = useState(() => [...getCheckoutMockOrders(), ...MOCK_ORDERS])
+  const [mockOrders, setMockOrders] = useState(() => {
+    const reviews = getMockProductReviews()
+    const statusOverrides = getMockOrderStatusOverrides()
+    return [...getCheckoutMockOrders(), ...MOCK_ORDERS].map((order) => ({
+      ...order,
+      ...(statusOverrides[order.id] ? {
+        status: statusOverrides[order.id].status,
+        statusUpdatedAt: statusOverrides[order.id].updatedAt,
+        statusTimestamps: {
+          ...order.statusTimestamps,
+          ...statusOverrides[order.id].statusTimestamps,
+        },
+      } : {}),
+      items: getOrderItems(order).map((item) => ({
+        ...item,
+        hasReviewed: Boolean(item.hasReviewed)
+          || Boolean(order.hasReviewed && !item.productId)
+          || reviews.some((review) => (
+            (review.orderId === order.id || order.legacyOrderIds?.includes(review.orderId))
+              && review.productId === item.productId
+          )),
+      })),
+    }))
+  })
   const [orderActionError, setOrderActionError] = useState('')
   const [pendingCancelOrderId, setPendingCancelOrderId] = useState(null)
+  const [pendingReceiveOrderId, setPendingReceiveOrderId] = useState(null)
   const [showRefundInfo, setShowRefundInfo] = useState(false)
   const [addressForm, setAddressForm] = useState({ recipientName: '', phone: '', address: '' })
   const [editingAddressId, setEditingAddressId] = useState(null)
@@ -184,6 +229,8 @@ export default function AccountPage({ section = 'profile' }) {
   const isWalletExpanded = isWalletSectionActive && !isWalletCollapsed
   const isNotificationsSectionActive = ['notifications', 'notification-orders', 'notification-auctions'].includes(activeSection)
   const isNotificationsExpanded = isNotificationsSectionActive && !areNotificationsCollapsed
+  const isAuctionSectionActive = ['auctions', 'auction-history', 'auction-items'].includes(activeSection)
+  const isAuctionExpanded = isAuctionSectionActive && !areAuctionsCollapsed
   const activeItem = SECTIONS.flatMap(({ id, label, children = [] }) => [
     { id, label },
     ...children,
@@ -191,7 +238,9 @@ export default function AccountPage({ section = 'profile' }) {
   const visibleOrders = mockOrders.filter((order) => {
     const matchesTab = activeOrderTab === 'all' || order.status === activeOrderTab
     const matchesSearch = activeOrderTab !== 'all'
-      || order.productName.toLocaleLowerCase('vi-VN').includes(orderSearch.trim().toLocaleLowerCase('vi-VN'))
+      || getOrderItems(order).some((item) => (
+        item.productName.toLocaleLowerCase('vi-VN').includes(orderSearch.trim().toLocaleLowerCase('vi-VN'))
+      ))
     return matchesTab && matchesSearch
   })
 
@@ -270,22 +319,157 @@ export default function AccountPage({ section = 'profile' }) {
     setPasswordSubmitted(false)
   }
 
+  const updateOrderStatus = (orderId, nextStatus) => {
+    const order = mockOrders.find((entry) => entry.id === orderId)
+    const allowedNextStatuses = {
+      pending: ['shipping', 'cancelled'],
+      shipping: ['delivered'],
+      delivered: ['completed'],
+    }
+    if (!order || !allowedNextStatuses[order.status]?.includes(nextStatus)) {
+      setOrderActionError('Trạng thái đơn hàng vừa thay đổi. Vui lòng tải lại danh sách đơn hàng.')
+      return
+    }
+
+    const statusUpdatedAt = new Date().toISOString()
+    try {
+      saveMockOrderStatus(orderId, nextStatus, statusUpdatedAt)
+      setMockOrders((current) => current.map((entry) => (
+        entry.id === orderId
+          ? {
+              ...entry,
+              status: nextStatus,
+              statusUpdatedAt,
+              statusTimestamps: {
+                ...entry.statusTimestamps,
+                [nextStatus]: statusUpdatedAt,
+              },
+            }
+          : entry
+      )))
+      setOrderActionError('')
+      setPendingReceiveOrderId(null)
+    } catch (error) {
+      setOrderActionError(error instanceof Error ? error.message : 'Không thể cập nhật trạng thái đơn hàng.')
+      setPendingReceiveOrderId(null)
+    }
+  }
+
+  const requestOrderStatusChange = (orderId, nextStatus) => {
+    if (nextStatus === 'completed') {
+      setPendingReceiveOrderId(orderId)
+      return
+    }
+    updateOrderStatus(orderId, nextStatus)
+  }
+
+  useEffect(() => {
+    const completeExpiredOrders = () => {
+      const now = Date.now()
+      const expiredOrders = mockOrders.filter((order) => {
+        const deliveredAt = getDeliveredTimestamp(order)
+        return order.status === 'delivered'
+          && deliveredAt !== null
+          && now >= deliveredAt + DELIVERED_AUTO_COMPLETE_DELAY
+      })
+      const completedAt = new Date(now).toISOString()
+      const completedOrderIds = new Set()
+
+      for (const order of expiredOrders) {
+        try {
+          saveMockOrderStatus(order.id, 'completed', completedAt)
+          completedOrderIds.add(order.id)
+        } catch (error) {
+          setOrderActionError(error instanceof Error ? error.message : 'Không thể tự động hoàn thành đơn hàng.')
+        }
+      }
+
+      if (completedOrderIds.size > 0) {
+        setMockOrders((current) => current.map((order) => (
+          completedOrderIds.has(order.id)
+            ? {
+                ...order,
+                status: 'completed',
+                statusUpdatedAt: completedAt,
+                statusTimestamps: {
+                  ...order.statusTimestamps,
+                  completed: completedAt,
+                },
+              }
+            : order
+        )))
+      }
+    }
+
+    completeExpiredOrders()
+    const nextExpiry = mockOrders
+      .filter((order) => order.status === 'delivered')
+      .map((order) => getDeliveredTimestamp(order))
+      .filter((timestamp) => timestamp !== null)
+      .reduce((earliest, timestamp) => Math.min(earliest, timestamp + DELIVERED_AUTO_COMPLETE_DELAY), Infinity)
+    const timeoutId = Number.isFinite(nextExpiry)
+      ? window.setTimeout(completeExpiredOrders, Math.max(0, nextExpiry - Date.now()))
+      : null
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') completeExpiredOrders()
+    }
+    window.addEventListener('focus', completeExpiredOrders)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
+      window.removeEventListener('focus', completeExpiredOrders)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [mockOrders])
+
   const confirmCancelOrder = () => {
-    setMockOrders((current) => current.map((order) =>
-      order.id === pendingCancelOrderId ? { ...order, status: 'cancelled' } : order,
-    ))
-    setPendingCancelOrderId(null)
+    const order = mockOrders.find((entry) => entry.id === pendingCancelOrderId)
+    if (!order || order.status !== 'pending') {
+      setPendingCancelOrderId(null)
+      return
+    }
+
+    try {
+      refundMockWalletOrder(order, getMockAuctionLockedBalance())
+      const statusUpdatedAt = new Date().toISOString()
+      saveMockOrderStatus(order.id, 'cancelled', statusUpdatedAt)
+      setMockOrders((current) => current.map((entry) => (
+        entry.id === order.id ? { ...entry, status: 'cancelled', statusUpdatedAt } : entry
+      )))
+      setOrderActionError('')
+      setPendingCancelOrderId(null)
+    } catch (error) {
+      setOrderActionError(error instanceof Error ? error.message : 'Không thể hủy đơn hàng và hoàn tiền. Vui lòng thử lại.')
+      setPendingCancelOrderId(null)
+    }
   }
 
   const buyAgain = (order) => {
-    const product = PRODUCTS.find((item) => item.id === order.productId)
-      ?? PRODUCTS.find((item) => item.name === order.productName)
-    const detail = product ? getProductDetailMock(product) : null
-    const savedVariantLabel = order.variantLabel || order.variantName?.split(': ').at(-1)
-    const variant = detail?.variants.find((item) => item.id === order.variantId)
-      ?? detail?.variants.find((item) => item.label === savedVariantLabel)
+    const checkoutItems = getOrderItems(order).map((orderItem) => {
+      const product = PRODUCTS.find((item) => item.id === orderItem.productId)
+        ?? PRODUCTS.find((item) => item.name === orderItem.productName)
+      const detail = product ? getProductDetailMock(product) : null
+      const savedVariantLabel = orderItem.variantLabel || orderItem.variantName?.split(': ').at(-1)
+      const variant = detail?.variants.find((item) => item.id === orderItem.variantId)
+        ?? detail?.variants.find((item) => item.label === savedVariantLabel)
+      if (!product || !variant) return null
+      return {
+        id: product.id,
+        variantId: variant.id,
+        variantName: orderItem.variantName || `${detail.optionLabel}: ${variant.label}`,
+        variantLabel: variant.label,
+        name: product.name,
+        title: product.name,
+        image: product.images?.[0] || product.image || orderItem.image,
+        price: variant.price,
+        quantity: orderItem.quantity ?? 1,
+        shop: product.shop,
+        shopSlug: product.shopSlug,
+      }
+    })
 
-    if (!product || !variant) {
+    if (checkoutItems.length === 0 || checkoutItems.some((item) => !item)) {
       setOrderActionError('Không thể mở lại sản phẩm này để mua. Vui lòng tìm sản phẩm trong cửa hàng.')
       return
     }
@@ -293,19 +477,7 @@ export default function AccountPage({ section = 'profile' }) {
 
     navigate('/checkout', {
       state: {
-        items: [{
-          id: product.id,
-          variantId: variant.id,
-          variantName: order.variantName || `${detail.optionLabel}: ${variant.label}`,
-          variantLabel: variant.label,
-          name: product.name,
-          title: product.name,
-          image: product.images?.[0] || product.image || order.image,
-          price: variant.price,
-          quantity: order.quantity ?? 1,
-          shop: product.shop,
-          shopSlug: product.shopSlug,
-        }],
+        items: checkoutItems,
       },
     })
   }
@@ -396,12 +568,16 @@ export default function AccountPage({ section = 'profile' }) {
                     ? isAccountExpanded
                     : id === 'wallet-menu'
                       ? isWalletExpanded
-                      : isNotificationsExpanded
+                      : id === 'notifications'
+                        ? isNotificationsExpanded
+                        : isAuctionExpanded
                   : false
                 const isSectionActive = id === 'account'
                   ? isAccountSectionActive
                   : id === 'notifications'
                     ? isNotificationsSectionActive
+                    : id === 'auctions'
+                      ? isAuctionSectionActive
                     : isGroupActive
                 const parentPath = id === 'account' ? '/user/account/profile' : SECTIONS.find((item) => item.id === id)?.path ?? ACCOUNT_SECTION_PATHS[children?.[0]?.id]
                 return (
@@ -429,7 +605,8 @@ export default function AccountPage({ section = 'profile' }) {
                             event.stopPropagation()
                             if (id === 'account') setIsAccountCollapsed((collapsed) => !collapsed)
                             else if (id === 'wallet-menu') setIsWalletCollapsed((collapsed) => !collapsed)
-                            else setAreNotificationsCollapsed((collapsed) => !collapsed)
+                            else if (id === 'notifications') setAreNotificationsCollapsed((collapsed) => !collapsed)
+                            else setAreAuctionsCollapsed((collapsed) => !collapsed)
                           }}
                           className="rounded p-0.5 hover:bg-white/70"
                         >
@@ -534,8 +711,11 @@ export default function AccountPage({ section = 'profile' }) {
             {activeSection === 'orders' && (
               orderId ? (
                 <OrderDetailSection
-                  order={mockOrders.find((order) => order.id === orderId)}
+                  order={mockOrders.find((order) => (
+                    order.id === orderId || order.legacyOrderIds?.includes(orderId)
+                  ))}
                   fallbackShippingAddress={defaultShippingAddress}
+                  onAdvanceOrder={requestOrderStatusChange}
                 />
               ) : (
                 <OrdersSection
@@ -546,13 +726,15 @@ export default function AccountPage({ section = 'profile' }) {
                   orders={visibleOrders}
                   actionError={orderActionError}
                   onCancelOrder={setPendingCancelOrderId}
+                  onAdvanceOrder={requestOrderStatusChange}
                   onBuyAgain={buyAgain}
                   onShowRefundInfo={() => setShowRefundInfo(true)}
                 />
               )
             )}
 
-            {activeSection === 'auctions' && <AuctionsSection />}
+            {activeSection === 'auction-history' && <AuctionsSection />}
+            {activeSection === 'auction-items' && <AuctionWonItemsSection />}
 
             {activeSection === 'wallet' && <WalletSection />}
             {activeSection === 'wallet-history' && <WalletHistorySection />}
@@ -626,6 +808,42 @@ export default function AccountPage({ section = 'profile' }) {
                 className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
               >
                 Xác nhận hủy
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {pendingReceiveOrderId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          onClick={() => setPendingReceiveOrderId(null)}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="receive-order-title"
+            aria-describedby="receive-order-description"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="receive-order-title" className="text-lg font-bold text-gray-900">Xác nhận đã nhận hàng?</h2>
+            <p id="receive-order-description" className="mt-2 text-sm leading-relaxed text-gray-600">
+              Chỉ xác nhận khi bạn đã nhận được hàng. Đơn sẽ chuyển sang Hoàn thành và bạn có thể đánh giá sản phẩm.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingReceiveOrderId(null)}
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Chưa nhận được
+              </button>
+              <button
+                type="button"
+                onClick={() => updateOrderStatus(pendingReceiveOrderId, 'completed')}
+                className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
+              >
+                Xác nhận đã nhận
               </button>
             </div>
           </section>

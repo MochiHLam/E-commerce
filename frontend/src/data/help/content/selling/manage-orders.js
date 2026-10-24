@@ -1,9 +1,11 @@
 export default {
   title: 'Quản lý đơn hàng',
   body: `
+> Kênh người bán hiện chưa khả dụng. Hướng dẫn này mô tả quy trình dự kiến; bạn chưa thể thực hiện các thao tác bên dưới trong NaviShop.
+
 ## Xem và xử lý đơn
 
-Vào Bảng điều khiển → Đơn hàng để xem danh sách. Khi có đơn mới, bạn nhận thông báo trong ứng dụng.
+Khi kênh người bán được triển khai, vào Bảng điều khiển → Đơn hàng để xem danh sách. Khi có đơn mới, bạn sẽ nhận thông báo trong ứng dụng.
 
 ## Hạn xử lý
 

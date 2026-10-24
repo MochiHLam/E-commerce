@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { CalendarDays, CheckCircle2, Flag, MapPin, MessageCircle, Package, Star, Store } from 'lucide-react'
 import Pagination from '@/components/Pagination'
 import ReportEvidenceFields from '@/components/ReportEvidenceFields'
+import { useAuth } from '@/context/AuthContext'
 import ProductCard from '@/features/search/components/ProductCard'
 import { SORT_OPTIONS, sortProducts } from '@/lib/searchFilters'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
@@ -19,11 +20,15 @@ const SHOP_REPORT_REASONS = [
 
 export default function MockShopPage() {
   const { shopSlug } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState('newest')
   const [isReportOpen, setIsReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reportDetails, setReportDetails] = useState('')
+  const [reportValidationErrors, setReportValidationErrors] = useState({})
   const [reportImages, setReportImages] = useState([])
   const [reportSubmitted, setReportSubmitted] = useState(false)
   const shop = MOCK_SHOPS.find((item) => item.slug === shopSlug)
@@ -37,14 +42,27 @@ export default function MockShopPage() {
   }, [shopSlug])
 
   const openShopChat = () => {
+    if (!isLoggedIn) {
+      navigate('/login', {
+        state: { returnTo: `${location.pathname}${location.search}${location.hash}` },
+      })
+      return
+    }
     window.dispatchEvent(new CustomEvent('navishop:open-shop-chat', {
       detail: { shopId: shop.id },
     }))
   }
 
   const openReportDialog = () => {
+    if (!isLoggedIn) {
+      navigate('/login', {
+        state: { returnTo: `${location.pathname}${location.search}${location.hash}` },
+      })
+      return
+    }
     setReportReason('')
     setReportDetails('')
+    setReportValidationErrors({})
     setReportImages([])
     setReportSubmitted(false)
     setIsReportOpen(true)
@@ -52,7 +70,13 @@ export default function MockShopPage() {
 
   const submitReport = (event) => {
     event.preventDefault()
-    if (!reportReason) return
+    const errors = {}
+    if (!reportReason) errors.reason = 'Vui lòng chọn lý do báo cáo.'
+    if (reportReason === 'other' && !reportDetails.trim()) {
+      errors.details = 'Vui lòng mô tả chi tiết khi chọn lý do khác.'
+    }
+    setReportValidationErrors(errors)
+    if (Object.keys(errors).length) return
     setReportSubmitted(true)
   }
 
@@ -227,22 +251,38 @@ export default function MockShopPage() {
                   <label htmlFor="shop-report-reason" className="text-sm font-semibold text-gray-800">Lý do báo cáo</label>
                   <select
                     id="shop-report-reason"
-                    required
                     value={reportReason}
-                    onChange={(event) => setReportReason(event.target.value)}
-                    className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none focus:border-[#056F1C]"
+                    aria-invalid={Boolean(reportValidationErrors.reason)}
+                    aria-describedby={reportValidationErrors.reason ? 'shop-report-reason-error' : undefined}
+                    onChange={(event) => {
+                      setReportReason(event.target.value)
+                      setReportValidationErrors((current) => ({ ...current, reason: '', details: '' }))
+                    }}
+                    className={`mt-2 h-11 w-full rounded-lg border bg-white px-3 text-sm outline-none focus:border-[#056F1C] ${
+                      reportValidationErrors.reason ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   >
                     <option value="" disabled>Chọn lý do</option>
                     {SHOP_REPORT_REASONS.map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
+                  {reportValidationErrors.reason && (
+                    <p id="shop-report-reason-error" role="alert" className="mt-1 text-xs text-red-600">
+                      {reportValidationErrors.reason}
+                    </p>
+                  )}
                   <ReportEvidenceFields
                     details={reportDetails}
-                    onDetailsChange={setReportDetails}
+                    onDetailsChange={(value) => {
+                      setReportDetails(value)
+                      setReportValidationErrors((current) => ({ ...current, details: '' }))
+                    }}
                     images={reportImages}
                     onImagesChange={setReportImages}
                     idPrefix="shop-report"
+                    detailsRequired={reportReason === 'other'}
+                    detailsError={reportValidationErrors.details}
                   />
                   <div className="mt-5 flex justify-end gap-2">
                     <button type="button" onClick={() => setIsReportOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Hủy</button>

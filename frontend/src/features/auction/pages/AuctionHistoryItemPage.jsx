@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, Hash, Tag, Trophy } from 'lucide-react'
+import { ArrowLeft, Hash, Tag, Trophy } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { AuctionItemCardGroup, AuctionItemDataCard, AuctionItemDetails, AuctionItemLayout } from '@/features/auction/components/AuctionItemLayout'
 import { getMockItem } from '@/mocks/auction/historyMock'
@@ -7,13 +7,13 @@ import { ITEM_STATUS, getItemStatus } from '@/features/auction/lib/auction'
 
 const LAYOUT = 'mx-auto w-full max-w-[1500px] px-4 sm:px-6 xl:px-0'
 
-function NotFoundState({ sessionId }) {
+function NotFoundState() {
   return (
     <main className="bg-gray-50 py-24">
       <div className={`${LAYOUT} text-center`}>
         <h1 className="text-2xl font-bold text-gray-900">Không tìm thấy vật phẩm</h1>
-        <Link to={`/auction/history/${sessionId}`} className="mt-6 inline-block font-semibold text-[#056F1C] hover:underline">
-          Quay lại danh sách
+        <Link to="/user/auctions/items" className="mt-6 inline-block font-semibold text-[#056F1C] hover:underline">
+          Quay lại vật đấu thành
         </Link>
       </div>
     </main>
@@ -25,42 +25,18 @@ export default function AuctionHistoryItemPage() {
 
   // TODO: thay bằng API (có thể dùng lại GET /api/auction/sessions/:sessionId/result rồi lọc theo itemId)
   const found = getMockItem(sessionId, itemId)
-  if (!found) return <NotFoundState sessionId={sessionId} />
+  if (!found) return <NotFoundState />
 
-  const { session, item, index } = found
+  const { item } = found
   const status = getItemStatus(item)
   const meta = ITEM_STATUS[status]
-  const prev = session.items[index - 1]
-  const next = session.items[index + 1]
-  const sessionPath = `/auction/history/${sessionId}`
-  const itemPath = (i) => `${sessionPath}/items/${i.itemId}`
 
   return (
     <main className="bg-gray-50 py-12">
       <div className={LAYOUT}>
-        {/* Breadcrumb + nav */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link to={sessionPath} className="inline-flex items-center gap-2 text-sm font-semibold text-[#056F1C] hover:underline">
-            <ArrowLeft className="h-4 w-4" /> Quay lại danh sách
-          </Link>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Món {index + 1}/{session.items.length}</span>
-            {prev ? (
-              <Link to={itemPath(prev)} aria-label="Món trước" className="rounded border border-gray-300 bg-white p-1.5 hover:border-[#056F1C]">
-                <ChevronLeft className="h-4 w-4" />
-              </Link>
-            ) : (
-              <span className="rounded border border-gray-200 p-1.5 text-gray-300"><ChevronLeft className="h-4 w-4" /></span>
-            )}
-            {next ? (
-              <Link to={itemPath(next)} aria-label="Món sau" className="rounded border border-gray-300 bg-white p-1.5 hover:border-[#056F1C]">
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            ) : (
-              <span className="rounded border border-gray-200 p-1.5 text-gray-300"><ChevronRight className="h-4 w-4" /></span>
-            )}
-          </div>
-        </div>
+        <Link to="/user/auctions/items" className="inline-flex items-center gap-2 text-sm font-semibold text-[#056F1C] hover:underline">
+          <ArrowLeft className="h-4 w-4" /> Quay lại vật đấu thành
+        </Link>
 
         <AuctionItemLayout
           details={

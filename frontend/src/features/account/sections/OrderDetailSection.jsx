@@ -1,6 +1,7 @@
 import { ArrowLeft, CalendarDays, CircleDollarSign, MapPin, MessageCircle, Package, Store } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { ORDER_STATUS_LABELS } from '@/mocks/account/orders'
+import { getOrderItems, ORDER_STATUS_LABELS } from '@/mocks/account/orders'
+import { getMockItem } from '@/mocks/auction/historyMock'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
 
 function formatPrice(value) {
@@ -21,7 +22,21 @@ function formatOrderDate(value) {
   }).format(date)
 }
 
-export default function OrderDetailSection({ order, fallbackShippingAddress }) {
+function getStatusDate(order, status) {
+  const recordedDate = order.statusTimestamps?.[status]
+    ?? order[`${status}At`]
+    ?? (status === 'pending' ? order.createdAt : null)
+  return recordedDate ?? null
+}
+
+function formatStatusDate(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  const pad = (part) => String(part).padStart(2, '0')
+  return `${pad(date.getHours())}:${pad(date.getMinutes())} ${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()}`
+}
+
+export default function OrderDetailSection({ order, fallbackShippingAddress, onAdvanceOrder }) {
   if (!order) {
     return (
       <section>
@@ -37,8 +52,15 @@ export default function OrderDetailSection({ order, fallbackShippingAddress }) {
     )
   }
 
-  const quantity = order.quantity ?? 1
-  const subtotal = order.merchandiseTotal ?? order.price * quantity
+  const items = getOrderItems(order)
+  const isAuctionOrder = order.source === 'auction'
+  const auctionItem = isAuctionOrder && order.auctionSessionId && order.auctionItemId
+    ? getMockItem(order.auctionSessionId, order.auctionItemId)
+    : null
+  const subtotal = order.merchandiseTotal ?? items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  )
   const shippingFee = order.shippingFee ?? 30000
   const total = order.totalAmount ?? subtotal + shippingFee
   const orderDate = formatOrderDate(order.createdAt)
@@ -47,14 +69,16 @@ export default function OrderDetailSection({ order, fallbackShippingAddress }) {
     : 'bg-green-50 text-[#056F1C]'
   const orderStatusCopy = {
     pending: 'Đơn hàng đang chờ cửa hàng xác nhận.',
-    shipping: 'Đơn hàng đang được giao đến bạn.',
+    shipping: 'Cửa hàng đã xác nhận và đơn hàng đang được vận chuyển.',
+    delivered: 'Hàng đã đến nơi. Vui lòng xác nhận khi bạn đã nhận được hàng. Nếu bạn chưa xác nhận, đơn sẽ tự động hoàn thành sau 3 ngày.',
     completed: 'Đơn hàng đã được giao thành công.',
     cancelled: 'Đơn hàng đã bị hủy.',
   }
   const shippingSteps = [
     { status: 'pending', label: 'Chờ xác nhận' },
-    { status: 'shipping', label: 'Đang giao hàng' },
-    { status: 'completed', label: 'Đã giao thành công' },
+    { status: 'shipping', label: 'Vận chuyển' },
+    { status: 'delivered', label: 'Chờ giao hàng' },
+    { status: 'completed', label: 'Hoàn thành' },
   ]
   const currentStep = shippingSteps.findIndex((step) => step.status === order.status)
   const isCancelled = order.status === 'cancelled'
@@ -99,9 +123,11 @@ export default function OrderDetailSection({ order, fallbackShippingAddress }) {
           {isCancelled ? (
             <p className="mt-4 border-l-2 border-red-500 pl-3 text-sm font-medium text-red-700">Đơn hàng đã hủy, quá trình giao hàng không tiếp tục.</p>
           ) : (
-            <ol aria-label="Tiến trình giao hàng" className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <ol aria-label="Tiến trình giao hàng" className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {shippingSteps.map((step, index) => {
                 const isComplete = currentStep >= 0 && index <= currentStep
+                const statusDate = getStatusDate(order, step.status)
+                const formattedStatusDate = statusDate ? formatStatusDate(statusDate) : null
                 return (
                   <li key={step.status} className="flex items-center gap-3 text-sm">
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
@@ -109,11 +135,45 @@ export default function OrderDetailSection({ order, fallbackShippingAddress }) {
                     }`}>
                       {index + 1}
                     </span>
-                    <span className={isComplete ? 'font-medium text-gray-900' : 'text-gray-500'}>{step.label}</span>
+                    <span className="min-w-0">
+                      <span className={isComplete ? 'font-medium text-gray-900' : 'text-gray-500'}>{step.label}</span>
+                      {formattedStatusDate && (
+                        <span className="mt-1 block text-xs font-normal text-gray-500">
+                          {formattedStatusDate}
+                        </span>
+                      )}
+                    </span>
                   </li>
                 )
               })}
             </ol>
+          )}
+          {import.meta.env.DEV && order.status === 'pending' && (
+            <button
+              type="button"
+              onClick={() => onAdvanceOrder?.(order.id, 'shipping')}
+              className="mt-5 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Mô phỏng shop xác nhận
+            </button>
+          )}
+          {import.meta.env.DEV && order.status === 'shipping' && (
+            <button
+              type="button"
+              onClick={() => onAdvanceOrder?.(order.id, 'delivered')}
+              className="mt-5 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Mô phỏng hàng đã đến nơi
+            </button>
+          )}
+          {order.status === 'delivered' && (
+            <button
+              type="button"
+              onClick={() => onAdvanceOrder?.(order.id, 'completed')}
+              className="mt-5 rounded-md bg-[#056F1C] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#045517]"
+            >
+              Đã nhận hàng
+            </button>
           )}
         </section>
 
@@ -181,54 +241,85 @@ export default function OrderDetailSection({ order, fallbackShippingAddress }) {
             )}
           </div>
 
-          <div className="flex flex-wrap items-start gap-4 py-5">
-            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
-              <Package className="h-7 w-7 text-gray-400" />
-              {order.image && (
-                <img
-                  src={order.image}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                  onError={(event) => { event.currentTarget.style.display = 'none' }}
-                />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="font-semibold text-gray-900">{order.productName}</h2>
-              {order.variantName && <p className="mt-1 text-sm text-gray-600">{order.variantName}</p>}
-              <p className="mt-1 text-sm text-gray-600">Số lượng: {quantity}</p>
-              <p className="mt-2 text-sm font-semibold text-[#056F1C]">{formatPrice(order.price)} / sản phẩm</p>
-            </div>
+          <div className="divide-y divide-gray-100">
+            {items.map((item) => (
+              <div key={item.id} className="flex flex-wrap items-start gap-4 py-5">
+                <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+                  <Package className="h-7 w-7 text-gray-400" />
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onError={(event) => { event.currentTarget.style.display = 'none' }}
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-gray-900">{item.productName}</h2>
+                  {item.variantName && <p className="mt-1 text-sm text-gray-600">{item.variantName}</p>}
+                  <p className="mt-1 text-sm text-gray-600">Số lượng: {item.quantity ?? 1}</p>
+                  {!isAuctionOrder && (
+                    <p className="mt-2 text-sm font-semibold text-[#056F1C]">
+                      {formatPrice(item.price)} / sản phẩm
+                      <span className="ml-2 font-normal text-gray-600">
+                        · Thành tiền {formatPrice(item.merchandiseTotal ?? item.price * (item.quantity ?? 1))}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
         </section>
 
-        <section className="rounded-xl border border-gray-200 bg-white p-5">
-          <h2 className="flex items-center gap-2 font-semibold text-gray-900">
-            <CircleDollarSign className="h-4 w-4 text-[#056F1C]" />
-            Thanh toán
-          </h2>
-          <div className="mt-4 space-y-3 text-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-gray-600">Tổng tiền hàng</span>
-              <span className="font-medium text-gray-900">{formatPrice(subtotal)}</span>
+        {auctionItem && (
+          <section className="rounded-xl border border-gray-200 bg-white p-5">
+            <h2 className="font-semibold text-gray-900">Thông tin đấu giá</h2>
+            <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="rounded-lg bg-gray-50 p-4">
+                <dt className="text-sm text-gray-600">Phiên đấu giá</dt>
+                <dd className="mt-1 font-medium text-gray-900">{auctionItem.session.name}</dd>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-4">
+                <dt className="text-sm text-gray-600">Giá đấu thành</dt>
+                <dd className="mt-1 font-semibold text-[#056F1C]">{formatPrice(auctionItem.item.finalPrice)}</dd>
+              </div>
+            </dl>
+          </section>
+        )}
+
+        {!isAuctionOrder && (
+          <section className="rounded-xl border border-gray-200 bg-white p-5">
+            <h2 className="flex items-center gap-2 font-semibold text-gray-900">
+              <CircleDollarSign className="h-4 w-4 text-[#056F1C]" />
+              Thanh toán
+            </h2>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-gray-600">Tổng tiền hàng</span>
+                <span className="font-medium text-gray-900">{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-gray-600">Phí vận chuyển</span>
+                <span className="font-medium text-gray-900">{formatPrice(shippingFee)}</span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                <span className="font-semibold text-gray-900">Thành tiền</span>
+                <span className="text-base font-bold text-[#056F1C]">{formatPrice(total)}</span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                <span className="text-gray-600">Phương thức thanh toán</span>
+                <span className="font-medium text-gray-900">
+                  {order.paymentMethod === 'navishop-wallet'
+                    ? 'NaviWallet'
+                    : order.paymentMethod || 'Chưa có dữ liệu'}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-gray-600">Phí vận chuyển</span>
-              <span className="font-medium text-gray-900">{formatPrice(shippingFee)}</span>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
-              <span className="font-semibold text-gray-900">Thành tiền</span>
-              <span className="text-base font-bold text-[#056F1C]">{formatPrice(total)}</span>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
-              <span className="text-gray-600">Phương thức thanh toán</span>
-              <span className="font-medium text-gray-900">
-                {order.paymentMethod === 'navishop-wallet' ? 'NaviWallet' : order.paymentMethod || 'Chưa có dữ liệu'}
-              </span>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
       </div>
     </section>
   )

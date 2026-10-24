@@ -46,7 +46,7 @@ export default function CartPage() {
         ) : (
           <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <div className="flex items-center gap-4 border-b border-gray-100 bg-gray-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:grid sm:grid-cols-[minmax(0,1fr)_8rem_8rem_2.5rem] sm:px-5">
+              <div className="flex items-center gap-4 border-b border-gray-100 bg-gray-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:grid sm:grid-cols-[minmax(0,1fr)_8rem_8rem_8rem_2.5rem] sm:px-5">
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -61,8 +61,9 @@ export default function CartPage() {
                   />
                   <span>Sản phẩm</span>
                 </label>
-                <span className="hidden text-right sm:block">Đơn giá</span>
+                <span className="hidden text-center sm:block">Đơn giá</span>
                 <span className="hidden text-center sm:block">Số lượng</span>
+                <span className="hidden text-center sm:block">Số tiền</span>
                 <span className="hidden sm:block" />
               </div>
               <ul className="divide-y divide-gray-100">
@@ -71,7 +72,7 @@ export default function CartPage() {
                   const canIncrease = item.quantity < stock
                   const name = `${item.name || item.title || 'Sản phẩm'}${item.variantLabel ? ` (${item.variantLabel})` : ''}`
                   return (
-                    <li key={getItemKey(item)} className="grid gap-4 px-4 py-5 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_2.5rem] sm:items-center sm:px-5">
+                    <li key={getItemKey(item)} className="grid gap-4 px-4 py-5 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_8rem_2.5rem] sm:items-center sm:px-5">
                       <div className="flex min-w-0 items-center gap-3">
                         <input
                           type="checkbox"
@@ -106,9 +107,12 @@ export default function CartPage() {
                             </p>
                           )}
                           <p className="mt-2 text-sm font-semibold text-[#056F1C] sm:hidden">{formatVND(item.price)}</p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900 sm:hidden">
+                            Số tiền: {formatVND(item.price * item.quantity)}
+                          </p>
                         </div>
                       </div>
-                      <p className="hidden text-right text-sm font-medium text-gray-700 sm:block">{formatVND(item.price)}</p>
+                      <p className="hidden text-center text-sm font-medium text-gray-700 sm:block">{formatVND(item.price)}</p>
                       <div className="flex items-center justify-between gap-3 sm:justify-center">
                         <span className="text-xs text-gray-500 sm:hidden">Số lượng</span>
                         <div className="inline-flex h-9 items-center rounded-lg border border-gray-300">
@@ -133,6 +137,9 @@ export default function CartPage() {
                           </button>
                         </div>
                       </div>
+                      <p className="hidden text-center text-sm font-semibold text-gray-900 sm:block">
+                        {formatVND(item.price * item.quantity)}
+                      </p>
                       <button
                         type="button"
                         aria-label={`Xóa ${name} khỏi giỏ hàng`}

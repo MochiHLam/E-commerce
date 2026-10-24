@@ -26,6 +26,49 @@ export function getMockAvailableBalance(initialLockedBalance = 0) {
   return Number(storedBalance)
 }
 
+export function applyMockWalletTransaction(transaction, initialLockedBalance = 0) {
+  if (
+    !transaction?.id
+    || !Number.isSafeInteger(transaction.amount)
+    || transaction.amount < 0
+    || !['in', 'out'].includes(transaction.direction)
+  ) {
+    throw new Error('Thông tin giao dịch ví không hợp lệ.')
+  }
+
+  const previousTransactions = localStorage.getItem(TOP_UPS_KEY)
+  const transactions = JSON.parse(previousTransactions ?? '[]')
+  if (!Array.isArray(transactions)) {
+    throw new Error('Dữ liệu lịch sử giao dịch ví không hợp lệ.')
+  }
+  if (transactions.some((entry) => entry.id === transaction.id)) {
+    return { success: true, balance: getMockAvailableBalance(initialLockedBalance) }
+  }
+
+  const currentBalance = getMockAvailableBalance(initialLockedBalance)
+  const nextBalance = transaction.direction === 'in'
+    ? currentBalance + transaction.amount
+    : currentBalance - transaction.amount
+  if (!Number.isSafeInteger(currentBalance) || currentBalance < 0 || !Number.isSafeInteger(nextBalance)) {
+    throw new Error('Số dư ví mock không hợp lệ.')
+  }
+  if (nextBalance < 0) return { success: false, balance: currentBalance }
+
+  localStorage.setItem(TOP_UPS_KEY, JSON.stringify([transaction, ...transactions]))
+  try {
+    localStorage.setItem(AVAILABLE_BALANCE_KEY, String(nextBalance))
+  } catch (error) {
+    if (previousTransactions === null) localStorage.removeItem(TOP_UPS_KEY)
+    else localStorage.setItem(TOP_UPS_KEY, previousTransactions)
+    throw error
+  }
+
+  window.dispatchEvent(new CustomEvent('navishop:wallet-updated', {
+    detail: { balance: nextBalance, transaction },
+  }))
+  return { success: true, balance: nextBalance }
+}
+
 export function recordMockTopUp(amount, initialLockedBalance = 0) {
   const balance = getMockAvailableBalance(initialLockedBalance) + amount
   if (!Number.isSafeInteger(balance)) {
@@ -121,6 +164,54 @@ export function rollbackMockWalletCharge(orderId, initialLockedBalance = 0) {
     TOP_UPS_KEY,
     JSON.stringify(transactions.filter((entry) => entry.id !== transactionId)),
   )
+}
+
+export function refundMockWalletOrder(order, initialLockedBalance = 0) {
+  if (order.paymentMethod !== 'navishop-wallet') return 0
+
+  const itemsTotal = Array.isArray(order.items)
+    ? order.items.reduce((sum, item) => sum + (item.merchandiseTotal ?? item.price * (item.quantity ?? 1)), 0)
+    : (order.price ?? 0) * (order.quantity ?? 1)
+  const amount = order.totalAmount ?? (order.merchandiseTotal ?? itemsTotal) + (order.shippingFee ?? 0)
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new Error('Không thể hoàn tiền vì tổng tiền đơn hàng không hợp lệ.')
+  }
+
+  const previousTransactions = localStorage.getItem(TOP_UPS_KEY)
+  const transactions = JSON.parse(previousTransactions ?? '[]')
+  if (!Array.isArray(transactions)) {
+    throw new Error('Dữ liệu lịch sử giao dịch ví không hợp lệ.')
+  }
+
+  const transactionId = `TXN-REFUND-${order.id}`
+  if (transactions.some((transaction) => transaction.id === transactionId)) return 0
+
+  const currentBalance = getMockAvailableBalance(initialLockedBalance)
+  const nextBalance = currentBalance + amount
+  if (!Number.isSafeInteger(currentBalance) || currentBalance < 0 || !Number.isSafeInteger(nextBalance)) {
+    throw new Error('Số dư ví mock không hợp lệ để hoàn tiền.')
+  }
+
+  const transaction = {
+    id: transactionId,
+    title: 'Hoàn tiền đơn hàng',
+    description: 'Hoàn tiền sau khi bạn hủy đơn hàng',
+    reference: `${order.source === 'auction' ? 'Đơn đấu giá' : 'Đơn hàng'} #${order.id}`,
+    amount,
+    direction: 'in',
+    date: new Date().toISOString(),
+  }
+
+  localStorage.setItem(TOP_UPS_KEY, JSON.stringify([transaction, ...transactions]))
+  try {
+    localStorage.setItem(AVAILABLE_BALANCE_KEY, String(nextBalance))
+  } catch (error) {
+    if (previousTransactions === null) localStorage.removeItem(TOP_UPS_KEY)
+    else localStorage.setItem(TOP_UPS_KEY, previousTransactions)
+    throw error
+  }
+
+  return amount
 }
 
 export function releaseMockWalletAmount(amount, initialLockedBalance = 0) {

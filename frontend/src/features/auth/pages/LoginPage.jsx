@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { MOCK_ACCOUNTS } from '@/mocks/mockAccounts'
+import { MOCK_ACCOUNTS, MOCK_PASSWORD_RESET_PREFIX } from '@/mocks/mockAccounts'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [email, setEmail] = useState(location.state?.resetPasswordEmail ?? '')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [credentialsError, setCredentialsError] = useState('')
-  const navigate = useNavigate()
-  const location = useLocation()
   const { login } = useAuth()
 
   const handleSubmit = (e) => {
@@ -31,7 +31,7 @@ export default function LoginPage() {
       ? MOCK_ACCOUNTS.find((candidate) =>
           candidate.role === 'user'
           && candidate.email === normalizedEmail.toLowerCase()
-          && candidate.password === password)
+          && (localStorage.getItem(`${MOCK_PASSWORD_RESET_PREFIX}${normalizedEmail.toLowerCase()}`) ?? candidate.password) === password)
       : null
 
     if (!account) {
@@ -87,6 +87,11 @@ export default function LoginPage() {
                 Đăng ký ngay
               </Link>
             </p>
+            {location.state?.resetPasswordEmail && (
+              <p role="status" className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
+                Đổi mật khẩu thành công. Hãy đăng nhập bằng mật khẩu mới.
+              </p>
+            )}
 
             <form noValidate onSubmit={handleSubmit} className="space-y-4">
               {/* Email */}
@@ -121,13 +126,9 @@ export default function LoginPage() {
                   <label className="text-sm font-medium text-gray-700" htmlFor="login-password">
                     Mật khẩu
                   </label>
-                  <button
-                    type="button"
-                    className="text-xs text-[#056F1C] hover:underline"
-                    onClick={() => {/* TODO: forgot password */ }}
-                  >
+                  <Link to="/forgot-password" className="text-xs text-[#056F1C] hover:underline">
                     Quên mật khẩu?
-                  </button>
+                  </Link>
                 </div>
                 <div className="relative">
                   <input

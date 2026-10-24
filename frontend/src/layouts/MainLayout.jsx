@@ -4,6 +4,8 @@ import ComingSoon from '@/components/ComingSoon'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import AccountPage from '@/features/account/AccountPage'
+import ReportNotificationPage from '@/features/account/pages/ReportNotificationPage'
+import AuctionOrderCreationPage from '@/features/account/pages/AuctionOrderCreationPage'
 import RequireAuth from '@/components/RequireAuth'
 import RequireRole from '@/components/RequireRole'
 import AuctionAboutPage from '@/features/auction/pages/AuctionAboutPage'
@@ -20,28 +22,42 @@ import HomePage from '@/pages/HomePage'
 import InfoPage from '@/pages/InfoPage'
 import MockShopPage from '@/pages/MockShopPage'
 import SearchPage from '@/features/search/pages/SearchPage'
+import SellerAccessPage from '@/features/seller/pages/SellerAccessPage'
+import SellerRegisterPage from '@/features/seller/pages/SellerRegisterPage'
+import SellerOnboardingPage from '@/features/seller/pages/SellerOnboardingPage'
+import SellerPendingPage from '@/features/seller/pages/SellerPendingPage'
+import SellerDashboardPage from '@/features/seller/pages/SellerDashboardPage'
+import SellerApplicationsReviewPage from '@/features/seller/pages/SellerApplicationsReviewPage'
 
 export default function MainLayout() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
 
   const isAuctionPage = pathname.startsWith('/auction')
+  const isSellerAccessPage = pathname === '/seller'
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <Navbar variant={isAuctionPage ? 'auction' : 'default'} />
+      <Navbar variant={isSellerAccessPage ? 'seller' : isAuctionPage ? 'auction' : 'default'} />
       <div className="flex flex-1 flex-col">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/products" element={<ComingSoon title="Danh sách sản phẩm" />} />
+          <Route path="/seller" element={<SellerAccessPage />} />
+          <Route path="/seller/register" element={<SellerRegisterPage />} />
+          <Route path="/seller/pending" element={<SellerPendingPage />} />
+          <Route path="/products" element={<Navigate to="/search" replace />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/:shopSlug" element={<MockShopPage />} />
           <Route path="/auction/about" element={<AuctionAboutPage />} />
           <Route element={<RequireAuth />}>
             <Route path="/search" element={<SearchPage />} />
+          </Route>
+          <Route element={<RequireRole roles={['user']} />}>
+            <Route path="/seller/onboarding" element={<SellerOnboardingPage />} />
+            <Route path="/seller/dashboard" element={<SellerDashboardPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/order-success" element={<OrderSuccessPage />} />
             <Route path="/account" element={<Navigate to="/user/account/profile" replace />} />
             <Route path="/user" element={<Navigate to="/user/account/profile" replace />} />
             <Route path="/user/account" element={<Navigate to="/user/account/profile" replace />} />
@@ -59,7 +75,11 @@ export default function MainLayout() {
             <Route path="/user/wallet/history" element={<Navigate to="/user/naviwallet/history" replace />} />
             <Route path="/user/orders" element={<AccountPage section="orders" />} />
             <Route path="/user/orders/:orderId" element={<AccountPage section="orders" />} />
-            <Route path="/user/auctions" element={<AccountPage section="auctions" />} />
+            <Route path="/user/auctions" element={<Navigate to="/user/auctions/history" replace />} />
+            <Route path="/user/auctions/history" element={<AccountPage section="auction-history" />} />
+            <Route path="/user/auctions/items" element={<AccountPage section="auction-items" />} />
+            <Route path="/user/auctions/order/:itemId" element={<AuctionOrderCreationPage />} />
+            <Route path="/user/reports/:reportId" element={<ReportNotificationPage />} />
             <Route path="/auction/history/:sessionId" element={<AuctionHistoryDetailPage />} />
             <Route path="/auction/history/:sessionId/items/:itemId" element={<AuctionHistoryItemPage />} />
             <Route path="/auction/:id" element={<AuctionSessionPage />} />
@@ -70,6 +90,7 @@ export default function MainLayout() {
             <Route path="/mod/*" element={<Navigate to="/moderator/dashboard" replace />} />
           </Route>
           <Route element={<RequireRole roles={['admin']} />}>
+            <Route path="/admin/seller-applications" element={<SellerApplicationsReviewPage />} />
             <Route path="/admin/*" element={<ComingSoon title="Dashboard quản trị" />} />
           </Route>
           <Route path="/help" element={<HelpPage />} />

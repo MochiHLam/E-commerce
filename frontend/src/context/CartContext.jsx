@@ -1,9 +1,40 @@
-import React, { createContext, useCallback, useContext, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
 const CartContext = createContext(null)
+const CART_STORAGE_KEY = 'navishop.mockCart.items'
+
+function readStoredCart() {
+  try {
+    const storedItems = localStorage.getItem(CART_STORAGE_KEY)
+    if (!storedItems) return []
+
+    const items = JSON.parse(storedItems)
+    if (!Array.isArray(items)) {
+      throw new Error('Dữ liệu giỏ hàng mô phỏng không hợp lệ.')
+    }
+    return items.filter((item) => (
+      item
+      && typeof item.id === 'string'
+      && Number.isFinite(item.price)
+      && Number.isFinite(item.quantity)
+      && item.quantity > 0
+    ))
+  } catch (error) {
+    console.error('Không thể đọc giỏ hàng đã lưu.', error)
+    return []
+  }
+}
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([])
+  const [items, setItems] = useState(readStoredCart)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+    } catch (error) {
+      console.error('Không thể lưu giỏ hàng trên thiết bị này.', error)
+    }
+  }, [items])
 
   const addToCart = useCallback((product) => {
     setItems((prev) => {

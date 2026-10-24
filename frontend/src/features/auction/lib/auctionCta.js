@@ -8,21 +8,27 @@
 
 const LOGIN = { type: 'login' }
 
-export function getAuctionCta({ session, isLoggedIn, isRegistered }) {
+export function getAuctionCta({ session, isLoggedIn, isRegistered, registrationBlocked = false }) {
   const status = session?.status ?? 'closed'
   const to = session?.id ? `/auction/${session.id}` : null
 
   if (status === 'closed') {
+    if (session?.closedReason === 'completed') {
+      return { label: 'Phiên đã kết thúc', variant: 'muted', disabled: true, action: { type: 'none' } }
+    }
     return { label: 'Đăng ký', variant: 'muted', disabled: true, action: { type: 'none' } }
   }
 
   if (status === 'pending') {
+    if (registrationBlocked && !isRegistered) {
+      return { label: 'Hết lượt đăng ký', variant: 'muted', disabled: true, action: { type: 'none' } }
+    }
     return {
-      label: isRegistered ? 'Tham gia' : 'Đăng ký',
-      variant: isRegistered ? 'muted' : 'primary',
-      disabled: Boolean(isRegistered),
+      label: isRegistered ? 'Hủy đăng ký' : 'Đăng ký',
+      variant: 'primary',
+      disabled: false,
       action: isRegistered
-        ? { type: 'none' }
+        ? isLoggedIn ? { type: 'cancel' } : LOGIN
         : isLoggedIn ? { type: 'register' } : LOGIN,
     }
   }

@@ -1,18 +1,20 @@
 export default {
   title: 'Đăng ký cửa hàng',
   body: `
+> Quy trình người bán hiện là bản demo: hồ sơ và thông tin chỉ lưu trên trình duyệt, không kết nối dịch vụ xác minh thật. Không nhập thông tin thuế, CCCD hoặc ngân hàng thật.
+
 ## Ai có thể mở cửa hàng?
 
-Bất kỳ tài khoản NaviShop nào cũng có thể đăng ký. Bạn không cần tạo tài khoản riêng — một tài khoản dùng chung cho cả mua và bán.
+Bản demo dùng tài khoản buyer hiện có, không tạo tài khoản người bán riêng. Bạn cũng có thể chọn tài khoản Google demo; thao tác này không kết nối Google OAuth.
 
 ## Cách đăng ký
 
-Đăng nhập, vào mục "Mở cửa hàng" và điền thông tin. Cửa hàng sẽ ở trạng thái chờ cho đến khi NaviShop duyệt. Nếu bị từ chối, bạn nhận được lý do và có thể sửa rồi gửi lại.
+Mở trang /seller, đăng nhập bằng tài khoản buyer, rồi điền thông tin cửa hàng và thông tin xác minh trong biểu mẫu. Hồ sơ sẽ ở trạng thái chờ duyệt. Admin demo có thể duyệt hoặc từ chối hồ sơ; nếu bị từ chối, bạn sẽ thấy lý do và có thể cập nhật rồi gửi lại.
 
-Sau khi được duyệt, bạn có thêm quyền đăng sản phẩm, nhận đơn và gửi vật phẩm đấu giá.
+Sau khi được duyệt, đăng nhập lại bằng tài khoản buyer để vào dashboard người bán. Các tính năng nhận đơn và gửi vật phẩm đấu giá chưa được triển khai trong bản demo.
 
 ## Khi cửa hàng bị khóa tạm
 
-Sản phẩm bị ẩn khỏi người mua, bạn không đăng thêm và không nhận đơn mới. Các đơn đang xử lý vẫn tiếp tục bình thường. Cửa hàng hoạt động lại sau khi NaviShop mở khóa.
+Trạng thái khóa cửa hàng chưa được mô phỏng.
 `,
 }
