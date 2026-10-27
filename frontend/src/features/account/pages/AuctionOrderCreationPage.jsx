@@ -84,7 +84,6 @@ export default function AuctionOrderCreationPage() {
     submissionInProgress.current = true
     setError('')
     const orderId = `AU-${sessionId}-${itemId}`
-    const itemPrice = item.finalPrice ?? 0
     const order = {
       id: orderId,
       checkoutId: orderId,
@@ -99,15 +98,15 @@ export default function AuctionOrderCreationPage() {
         productName: item.title,
         image: item.images?.[0] ?? '',
         variantName: item.variantName ?? item.variantLabel ?? '',
-        price: itemPrice,
+        price: 0,
         quantity: 1,
-        merchandiseTotal: itemPrice,
+        merchandiseTotal: 0,
       }],
       createdAt: new Date().toISOString(),
       paymentMethod: 'navishop-wallet',
-      merchandiseTotal: itemPrice,
+      merchandiseTotal: 0,
       shippingFee: 0,
-      totalAmount: itemPrice,
+      totalAmount: 0,
       shippingAddress: {
         recipientName: selectedAddress.recipientName,
         phone: selectedAddress.phone,
@@ -119,7 +118,7 @@ export default function AuctionOrderCreationPage() {
       saveCheckoutMockOrders([order])
       navigate('/order-success', {
         replace: true,
-        state: { orderId, total: itemPrice, source: 'auction' },
+        state: { orderId, total: 0, source: 'auction' },
       })
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'Không thể tạo đơn hàng. Vui lòng thử lại.')

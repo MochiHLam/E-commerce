@@ -11,17 +11,16 @@ Khi đặt thành công, tiền bị trừ khỏi ví ngay và NaviShop giữ h�
 
 | Trạng thái | Ý nghĩa |
 |---|---|
-| Chờ xác nhận | Chờ cửa hàng nhận đơn |
-| Đã xác nhận | Cửa hàng đang chuẩn bị hàng |
-| Đang giao | Hàng đã bàn giao cho đơn vị vận chuyển |
+| Chờ xác nhận | Cửa hàng đang tiếp nhận đơn |
+| Đang giao | Cửa hàng đã bắt đầu giao hàng |
 | Đã nhận hàng | Đơn hoàn thành, tiền chuyển cho cửa hàng |
 
 ## Hủy đơn
 
-Bạn có thể hủy khi đơn còn "Chờ xác nhận". Sau khi cửa hàng báo giao thì không hủy được nữa. Xem thêm [Hoàn tiền](/help/payment/refund).
+Bạn có thể hủy khi đơn còn "Chờ xác nhận". Sau khi cửa hàng bắt đầu giao thì không hủy được nữa. Xem thêm [Hoàn tiền](/help/payment/refund).
 
 ## Xác nhận đã nhận hàng
 
-Nhận được hàng thì bấm "Đã nhận hàng". Nếu bạn không bấm trong 3 ngày kể từ lúc cửa hàng báo giao, đơn tự hoàn thành. Chỉ bấm khi đã nhận đúng hàng — NaviShop chưa hỗ trợ khiếu nại hay trả hàng sau khi đơn hoàn thành.
+Nhận được hàng thì bấm "Đã nhận hàng". Nếu bạn không bấm trong 3 ngày kể từ lúc cửa hàng bắt đầu giao, đơn tự hoàn thành. Chỉ bấm khi đã nhận đúng hàng — NaviShop chưa hỗ trợ khiếu nại hay trả hàng sau khi đơn hoàn thành.
 `,
 }

@@ -5,18 +5,17 @@
 
 Mỗi lần thanh toán là một sản phẩm của một cửa hàng. Tổng thanh toán gồm tiền hàng và phí vận chuyển cố định mỗi đơn.
 
-Đơn đi qua 4 trạng thái: Chờ xác nhận, Đã xác nhận, Đang giao, Đã nhận hàng.
+Đơn lần lượt ở các trạng thái Chờ xác nhận, Đang giao, Đã nhận hàng; đơn có thể kết thúc ở trạng thái Đã hủy.
 
-- Cửa hàng xác nhận đơn trong 48 giờ.
-- Sau khi xác nhận, cửa hàng giao cho đơn vị vận chuyển trong 1 ngày.
-- Sau khi báo giao, bạn có 3 ngày để bấm "Đã nhận hàng". Hết hạn mà bạn không bấm, đơn tự hoàn thành và tiền chuyển cho cửa hàng.
+- Cửa hàng xác nhận và bắt đầu giao đơn trong 48 giờ.
+- Sau khi cửa hàng bắt đầu giao, bạn có 3 ngày để bấm "Đã nhận hàng". Hết hạn mà bạn không bấm, đơn tự hoàn thành và tiền chuyển cho cửa hàng.
 
 ## Hủy đơn và hoàn tiền
 
 - Bạn hủy tự do khi đơn còn "Chờ xác nhận".
-- Đơn tự hủy nếu cửa hàng không xác nhận trong 48 giờ, hoặc không giao hàng trong 1 ngày sau khi xác nhận.
+- Đơn tự hủy nếu cửa hàng không xác nhận và bắt đầu giao trong 48 giờ.
 - Mọi trường hợp hủy được hoàn 100% (gồm phí vận chuyển) về ví, hàng được cộng lại vào kho.
-- Sau khi cửa hàng báo giao, đơn không thể hủy. NaviShop hiện không hỗ trợ trả hàng hay khiếu nại sau khi giao, hãy kiểm tra kỹ trước khi đặt hàng.
+- Sau khi cửa hàng chuyển đơn sang trạng thái đang giao, đơn không thể hủy. NaviShop hiện không hỗ trợ trả hàng hay khiếu nại sau khi giao, hãy kiểm tra kỹ trước khi đặt hàng.
 
 ## Ví NaviShop
 
@@ -39,11 +38,10 @@ Mọi giao dịch đều dùng ví NaviShop, mỗi tài khoản một ví dùng 
 
 ### Xử lý đơn hàng
 
-- Cửa hàng có 48 giờ để xác nhận đơn kể từ khi khách đặt.
-- Sau khi xác nhận, cửa hàng có 1 ngày để bàn giao hàng cho đơn vị vận chuyển và cập nhật trạng thái giao hàng.
-- Nếu quá hạn xác nhận hoặc giao hàng, đơn tự động hủy; khách được hoàn toàn bộ tiền hàng và phí vận chuyển, sản phẩm được cộng lại vào tồn kho.
+- Cửa hàng có 48 giờ để xác nhận và bắt đầu giao đơn kể từ khi khách đặt.
+- Nếu quá hạn, đơn tự động hủy; khách được hoàn toàn bộ tiền hàng và phí vận chuyển, sản phẩm được cộng lại vào tồn kho.
 - Cửa hàng không thể chủ động hủy đơn. Sau khi đơn chuyển sang trạng thái đang giao, đơn không thể bị hủy. Khách có 3 ngày để xác nhận đã nhận hàng; hết thời hạn, đơn tự động hoàn thành.
-- Đơn đấu giá chuyển thẳng sang trạng thái đã xác nhận và tiếp tục theo quy trình giao hàng.
+- Đơn đấu giá xử lý theo quy trình riêng, không dùng bước xác nhận đơn thường.
 
 ### Doanh thu và hoa hồng
 

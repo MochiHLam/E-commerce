@@ -105,8 +105,8 @@ export const INITIAL_NOTIFICATIONS = import.meta.env.DEV ? [
   {
     id: 'noti-5',
     type: 'order',
-    title: 'Đơn hàng đã được bàn giao cho đơn vị vận chuyển',
-    body: 'Cửa hàng đã bàn giao đơn hàng order-shipping cho đơn vị vận chuyển. Vui lòng theo dõi hành trình kiện hàng trong Đơn hàng.',
+    title: 'Cửa hàng đã bắt đầu giao đơn',
+    body: 'Cửa hàng đã bắt đầu giao đơn order-shipping. Bạn có thể theo dõi trạng thái đơn trong mục Đơn hàng.',
     image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=240&q=80',
     createdAt: Date.now() - 24 * 60 * 60_000,
     href: '/user/orders/order-shipping',

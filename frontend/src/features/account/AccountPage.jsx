@@ -140,6 +140,28 @@ function getPasswordErrors(form) {
   return errors
 }
 
+function AccountDialog({ titleId, descriptionId, title, description, role = 'alertdialog', onClose, children }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      onClick={onClose}
+    >
+      <section
+        role={role}
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 id={titleId} className="text-lg font-bold text-gray-900">{title}</h2>
+        <p id={descriptionId} className="mt-2 text-sm leading-relaxed text-gray-600">{description}</p>
+        {children}
+      </section>
+    </div>
+  )
+}
+
 const ACCOUNT_SECTION_PATHS = {
   profile: '/user/account/profile',
   address: '/user/account/address',
@@ -742,213 +764,154 @@ export default function AccountPage({ section = 'profile' }) {
         </div>
       </div>
       {pendingDeleteAddressId && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          onClick={() => setPendingDeleteAddressId(null)}
+        <AccountDialog
+          titleId="delete-address-title"
+          descriptionId="delete-address-description"
+          title="Xóa địa chỉ?"
+          description="Bạn có chắc chắn muốn xóa địa chỉ này không? Thao tác này không thể hoàn tác."
+          onClose={() => setPendingDeleteAddressId(null)}
         >
-          <section
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="delete-address-title"
-            aria-describedby="delete-address-description"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="delete-address-title" className="text-lg font-bold text-gray-900">Xóa địa chỉ?</h2>
-            <p id="delete-address-description" className="mt-2 text-sm leading-relaxed text-gray-600">
-              Bạn có chắc chắn muốn xóa địa chỉ này không? Thao tác này không thể hoàn tác.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setPendingDeleteAddressId(null)}
-                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteAddress}
-                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
-              >
-                Xóa địa chỉ
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setPendingDeleteAddressId(null)}
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={confirmDeleteAddress}
+              className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Xóa địa chỉ
+            </button>
+          </div>
+        </AccountDialog>
       )}
       {pendingCancelOrderId && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          onClick={() => setPendingCancelOrderId(null)}
+        <AccountDialog
+          titleId="cancel-order-title"
+          descriptionId="cancel-order-description"
+          title="Hủy đơn hàng?"
+          description="Bạn có chắc chắn muốn hủy đơn hàng này không?"
+          onClose={() => setPendingCancelOrderId(null)}
         >
-          <section
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="cancel-order-title"
-            aria-describedby="cancel-order-description"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="cancel-order-title" className="text-lg font-bold text-gray-900">Hủy đơn hàng?</h2>
-            <p id="cancel-order-description" className="mt-2 text-sm leading-relaxed text-gray-600">
-              Bạn có chắc chắn muốn hủy đơn hàng này không?
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setPendingCancelOrderId(null)}
-                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Giữ đơn hàng
-              </button>
-              <button
-                type="button"
-                onClick={confirmCancelOrder}
-                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
-              >
-                Xác nhận hủy
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setPendingCancelOrderId(null)}
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Giữ đơn hàng
+            </button>
+            <button
+              type="button"
+              onClick={confirmCancelOrder}
+              className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Xác nhận hủy
+            </button>
+          </div>
+        </AccountDialog>
       )}
       {pendingReceiveOrderId && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          onClick={() => setPendingReceiveOrderId(null)}
+        <AccountDialog
+          titleId="receive-order-title"
+          descriptionId="receive-order-description"
+          title="Xác nhận đã nhận hàng?"
+          description="Chỉ xác nhận khi bạn đã nhận được hàng. Đơn sẽ chuyển sang Hoàn thành và bạn có thể đánh giá sản phẩm."
+          onClose={() => setPendingReceiveOrderId(null)}
         >
-          <section
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="receive-order-title"
-            aria-describedby="receive-order-description"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="receive-order-title" className="text-lg font-bold text-gray-900">Xác nhận đã nhận hàng?</h2>
-            <p id="receive-order-description" className="mt-2 text-sm leading-relaxed text-gray-600">
-              Chỉ xác nhận khi bạn đã nhận được hàng. Đơn sẽ chuyển sang Hoàn thành và bạn có thể đánh giá sản phẩm.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setPendingReceiveOrderId(null)}
-                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Chưa nhận được
-              </button>
-              <button
-                type="button"
-                onClick={() => updateOrderStatus(pendingReceiveOrderId, 'completed')}
-                className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
-              >
-                Xác nhận đã nhận
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setPendingReceiveOrderId(null)}
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Chưa nhận được
+            </button>
+            <button
+              type="button"
+              onClick={() => updateOrderStatus(pendingReceiveOrderId, 'completed')}
+              className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
+            >
+              Xác nhận đã nhận
+            </button>
+          </div>
+        </AccountDialog>
       )}
       {showRefundInfo && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          onClick={() => setShowRefundInfo(false)}
+        <AccountDialog
+          role="dialog"
+          titleId="refund-info-title"
+          descriptionId="refund-info-description"
+          title="Thông tin hoàn tiền"
+          description="Đơn hàng đã hủy được hoàn 100% giá trị, bao gồm phí vận chuyển, về ví NaviShop."
+          onClose={() => setShowRefundInfo(false)}
         >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="refund-info-title"
-            aria-describedby="refund-info-description"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="refund-info-title" className="text-lg font-bold text-gray-900">Thông tin hoàn tiền</h2>
-            <p id="refund-info-description" className="mt-2 text-sm leading-relaxed text-gray-600">
-              Đơn hàng đã hủy được hoàn 100% giá trị, bao gồm phí vận chuyển, về ví NaviShop.
-            </p>
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowRefundInfo(false)}
-                className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
-              >
-                Đã hiểu
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="mt-6 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowRefundInfo(false)}
+              className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
+            >
+              Đã hiểu
+            </button>
+          </div>
+        </AccountDialog>
       )}
       {showSaveProfileConfirmation && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          onClick={() => setShowSaveProfileConfirmation(false)}
+        <AccountDialog
+          titleId="save-profile-title"
+          descriptionId="save-profile-description"
+          title="Lưu thay đổi hồ sơ?"
+          description="Bạn có muốn lưu các thay đổi thông tin hồ sơ này không?"
+          onClose={() => setShowSaveProfileConfirmation(false)}
         >
-          <section
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="save-profile-title"
-            aria-describedby="save-profile-description"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="save-profile-title" className="text-lg font-bold text-gray-900">Lưu thay đổi hồ sơ?</h2>
-            <p id="save-profile-description" className="mt-2 text-sm leading-relaxed text-gray-600">
-              Bạn có muốn lưu các thay đổi thông tin hồ sơ này không?
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowSaveProfileConfirmation(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={confirmSaveProfile}
-                className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
-              >
-                Xác nhận lưu
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setShowSaveProfileConfirmation(false)}
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={confirmSaveProfile}
+              className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
+            >
+              Xác nhận lưu
+            </button>
+          </div>
+        </AccountDialog>
       )}
       {showPasswordConfirmation && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-          onClick={() => setShowPasswordConfirmation(false)}
+        <AccountDialog
+          titleId="change-password-title"
+          descriptionId="change-password-description"
+          title="Xác nhận đổi mật khẩu?"
+          description="Chức năng hiện chưa kết nối với hệ thống tài khoản, nên mật khẩu sẽ chưa được thay đổi."
+          onClose={() => setShowPasswordConfirmation(false)}
         >
-          <section
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="change-password-title"
-            aria-describedby="change-password-description"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="change-password-title" className="text-lg font-bold text-gray-900">Xác nhận đổi mật khẩu?</h2>
-            <p id="change-password-description" className="mt-2 text-sm leading-relaxed text-gray-600">
-              Chức năng hiện chưa kết nối với hệ thống tài khoản, nên mật khẩu sẽ chưa được thay đổi.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowPasswordConfirmation(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Quay lại
-              </button>
-              <button
-                type="button"
-                onClick={confirmPasswordChange}
-                className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
-              >
-                Xác nhận
-              </button>
-            </div>
-          </section>
-        </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setShowPasswordConfirmation(false)}
+              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Quay lại
+            </button>
+            <button
+              type="button"
+              onClick={confirmPasswordChange}
+              className="rounded-lg bg-[#056F1C] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#045517]"
+            >
+              Xác nhận
+            </button>
+          </div>
+        </AccountDialog>
       )}
     </main>
   )

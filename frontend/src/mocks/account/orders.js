@@ -164,6 +164,24 @@ function normalizeCheckoutOrders(orders) {
   return normalized
 }
 
+function normalizeAuctionOrders(orders) {
+  return orders.map((order) => {
+    if (order.source !== 'auction') return order
+
+    return {
+      ...order,
+      items: getOrderItems(order).map((item) => ({
+        ...item,
+        price: 0,
+        merchandiseTotal: 0,
+      })),
+      merchandiseTotal: 0,
+      shippingFee: 0,
+      totalAmount: 0,
+    }
+  })
+}
+
 export function getCheckoutMockOrders() {
   const storedOrders = window.localStorage.getItem(CHECKOUT_MOCK_ORDERS_KEY)
   if (!storedOrders) return []
@@ -172,7 +190,7 @@ export function getCheckoutMockOrders() {
   if (!Array.isArray(orders)) {
     throw new Error('Dữ liệu đơn hàng mô phỏng không hợp lệ.')
   }
-  return normalizeCheckoutOrders(orders)
+  return normalizeAuctionOrders(normalizeCheckoutOrders(orders))
 }
 
 export function getMockOrderStatusOverrides() {

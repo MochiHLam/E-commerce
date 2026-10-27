@@ -42,7 +42,7 @@ const MOCK_TRANSACTIONS = [
   {
     id: 'TXN-20261014-007',
     title: 'Phí vận chuyển đơn đấu giá',
-    description: 'Phí ship được trừ khi shop bàn giao sản phẩm',
+    description: 'Phí ship được trừ khi shop bắt đầu giao sản phẩm',
     reference: 'Đơn đấu giá #AU-1052',
     amount: 30000,
     direction: 'out',

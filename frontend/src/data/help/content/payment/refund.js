@@ -6,14 +6,13 @@ export default {
 Tiền hoàn về ví khi đơn bị hủy. Có ba trường hợp:
 
 - Bạn tự hủy khi đơn còn "Chờ xác nhận".
-- Cửa hàng không xác nhận đơn trong 48 giờ.
-- Cửa hàng đã xác nhận nhưng không báo giao trong 1 ngày.
+- Cửa hàng không xác nhận và bắt đầu giao đơn trong 48 giờ.
 
 Cả ba trường hợp đều hoàn 100% về ví, gồm cả phí vận chuyển.
 
 ## Khi nào không hoàn?
 
-Sau khi cửa hàng báo giao, đơn không thể hủy và không hoàn tiền. NaviShop hiện chưa hỗ trợ trả hàng hay khiếu nại sau khi hàng đã giao.
+Sau khi cửa hàng chuyển đơn sang trạng thái đang giao, đơn không thể hủy và không hoàn tiền. NaviShop hiện chưa hỗ trợ trả hàng hay khiếu nại sau khi hàng đã giao.
 
 Đơn từ đấu giá không áp dụng hoàn tiền. Khi bạn thắng và vật phẩm được chốt, kết quả là cuối cùng.
 

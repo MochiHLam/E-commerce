@@ -37,7 +37,7 @@ export default [
   {
     question: 'Thắng rồi tôi có hủy hoặc trả hàng được không, và phí ship thế nào?',
     answer:
-      'Không. Đấu giá là miễn hủy, miễn trả: kết quả không thể hủy và không hoàn tiền. Đơn hàng tự tạo, và khi cửa hàng bấm giao thì phí vận chuyển được trừ từ ví của bạn. Nếu ví chưa đủ, cửa hàng chưa giao được và bạn sẽ nhận thông báo nạp thêm. Khi nhận hàng bạn bấm xác nhận, hoặc đơn tự hoàn thành sau thời hạn quy định kể từ lúc cửa hàng báo giao.',
+      'Không. Đấu giá là miễn hủy, miễn trả: kết quả không thể hủy và không hoàn tiền. Đơn hàng tự tạo, và khi cửa hàng bắt đầu giao thì phí vận chuyển được trừ từ ví của bạn. Nếu ví chưa đủ, cửa hàng chưa giao được và bạn sẽ nhận thông báo nạp thêm. Khi nhận hàng bạn bấm xác nhận, hoặc đơn tự hoàn thành sau thời hạn quy định kể từ lúc cửa hàng bắt đầu giao.',
   },
   {
     question: 'Khi nào phiên kết thúc, và xem kết quả ở đâu?',

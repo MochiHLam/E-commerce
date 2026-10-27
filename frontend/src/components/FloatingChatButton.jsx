@@ -1,17 +1,27 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bot, MessageCircle, Package, Search, Send, Store, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
+import { getSellerApplication, getSellerMockChatSettings } from '@/mocks/seller'
+import { getSellerDashboardMock } from '@/mocks/sellerDashboard'
 import { formatVND } from '@/lib/format'
 import { getShopAssistantReply } from '@/features/chat/lib/shopAssistant'
+
+function getConfiguredShops() {
+  return MOCK_SHOPS.map((shop) => ({
+    ...shop,
+    ...getSellerMockChatSettings(shop.slug),
+  }))
+}
 
 function getCurrentTime() {
   return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(new Date())
 }
 
-export default function FloatingChatButton() {
+function BuyerFloatingChat() {
   const [isOpen, setIsOpen] = useState(false)
-  const [shops, setShops] = useState(MOCK_SHOPS)
+  const [shops, setShops] = useState(getConfiguredShops)
   const [selectedShopId, setSelectedShopId] = useState(MOCK_SHOPS[0].id)
   const [shopSearch, setShopSearch] = useState('')
   const [draft, setDraft] = useState('')
@@ -53,6 +63,25 @@ export default function FloatingChatButton() {
 
     window.addEventListener('navishop:open-shop-chat', openShopChat)
     return () => window.removeEventListener('navishop:open-shop-chat', openShopChat)
+  }, [])
+
+  useEffect(() => {
+    const refreshShopAssistant = (event) => {
+      const { shopSlug, aiAssistantEnabled } = event.detail ?? {}
+      if (!shopSlug || typeof aiAssistantEnabled !== 'boolean') return
+      setShops((current) => current.map((shop) => (
+        shop.slug === shopSlug ? { ...shop, aiAssistantEnabled } : shop
+      )))
+      if (!aiAssistantEnabled) {
+        const matchingShop = MOCK_SHOPS.find((shop) => shop.slug === shopSlug)
+        if (matchingShop) {
+          setActiveThreads((current) => ({ ...current, [matchingShop.id]: 'human' }))
+        }
+      }
+    }
+
+    window.addEventListener('navishop:seller-settings-updated', refreshShopAssistant)
+    return () => window.removeEventListener('navishop:seller-settings-updated', refreshShopAssistant)
   }, [])
 
   const selectShop = (shopId) => {
@@ -344,4 +373,276 @@ export default function FloatingChatButton() {
       )}
     </div>
   )
+}
+
+function createSellerCustomers(orders) {
+  const latestOrdersByBuyer = new Map()
+  const sortedOrders = [...orders].sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
+
+  sortedOrders.forEach((order) => {
+    const buyerName = order.buyer?.name?.trim()
+    if (!buyerName) return
+    const id = order.buyer?.phone || buyerName
+    if (!latestOrdersByBuyer.has(id)) latestOrdersByBuyer.set(id, { id, name: buyerName, order })
+  })
+
+  return Array.from(latestOrdersByBuyer.values()).map((customer) => {
+    const statusText = {
+      pending_confirm: 'đang chờ shop xác nhận',
+      shipping: 'đang được giao',
+      completed: 'đã hoàn thành',
+      cancelled: 'đã bị hủy',
+    }[customer.order.status] ?? 'đang được xử lý'
+    const timestamp = new Date(customer.order.createdAt).getTime()
+    return {
+      ...customer,
+      initial: customer.name.charAt(0).toLocaleUpperCase('vi-VN'),
+      messages: [
+        {
+          id: `${customer.id}-buyer-seed`,
+          from: 'buyer',
+          text: `Shop ơi, đơn ${customer.order.id} của mình ${statusText} rồi ạ?`,
+          time: '10:24',
+          timestamp,
+        },
+        {
+          id: `${customer.id}-seller-seed`,
+          from: 'seller',
+          text: `Shop đã nhận được tin nhắn về đơn ${customer.order.id}. Đây là đoạn chat mô phỏng.`,
+          time: '10:26',
+          timestamp: timestamp + 1,
+        },
+      ],
+    }
+  })
+}
+
+function SellerFloatingChat({ userId }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [buyerSearch, setBuyerSearch] = useState('')
+  const [draft, setDraft] = useState('')
+  const [selectedBuyerId, setSelectedBuyerId] = useState('')
+  const [conversationReplies, setConversationReplies] = useState({})
+  const messagesListRef = useRef(null)
+  const application = useMemo(() => getSellerApplication(userId), [userId])
+  const orders = useMemo(
+    () => application?.slug ? getSellerDashboardMock(userId, application.slug).orders : [],
+    [userId, application?.slug],
+  )
+  const customers = useMemo(() => createSellerCustomers(orders), [orders])
+  const selectedBuyer = customers.find((customer) => customer.id === selectedBuyerId) ?? customers[0]
+  const visibleCustomers = customers.filter((customer) => (
+    customer.name.toLocaleLowerCase('vi-VN').includes(buyerSearch.trim().toLocaleLowerCase('vi-VN'))
+  ))
+  const selectedMessages = selectedBuyer
+    ? [...selectedBuyer.messages, ...(conversationReplies[selectedBuyer.id] ?? [])]
+    : []
+
+  useEffect(() => {
+    if (isOpen && messagesListRef.current) {
+      messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight
+    }
+  }, [isOpen, selectedBuyer?.id, selectedMessages.length])
+
+  const sendMessage = (event) => {
+    event.preventDefault()
+    const text = draft.trim()
+    if (!text || !selectedBuyer) return
+
+    const timestamp = Date.now()
+    const message = {
+      id: `seller-${timestamp}`,
+      from: 'seller',
+      text,
+      time: getCurrentTime(),
+      timestamp,
+    }
+    setConversationReplies((current) => ({
+      ...current,
+      [selectedBuyer.id]: [...(current[selectedBuyer.id] ?? []), message],
+    }))
+    setDraft('')
+  }
+
+  return (
+    <div className="fixed bottom-5 right-5 z-[60]">
+      {isOpen ? (
+        <section
+          id="floating-chat-panel"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="floating-chat-title"
+          className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white text-gray-800 shadow-2xl"
+          style={{
+            height: 'min(35rem, calc(100dvh - 2.5rem))',
+            width: 'min(45rem, calc(100vw - 1.5rem))',
+            minHeight: 0,
+          }}
+        >
+          <header className="flex shrink-0 items-center justify-between bg-[#056F1C] px-4 py-3 text-white">
+            <div>
+              <h2 id="floating-chat-title" className="text-sm font-semibold">
+                Chat với {selectedBuyer?.name ?? 'người mua'}
+              </h2>
+              <p className="mt-0.5 text-xs text-white/75">Đoạn chat mô phỏng · Chưa kết nối real-time</p>
+            </div>
+            <button
+              type="button"
+              aria-label="Đóng khung chat"
+              onClick={() => setIsOpen(false)}
+              className="rounded p-1 transition hover:bg-white/10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </header>
+
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <aside
+              aria-label="Danh sách người mua"
+              className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-gray-200"
+              style={{ flex: '0 0 30%', minHeight: 0 }}
+            >
+              <div className="flex h-16 shrink-0 items-center border-b border-gray-100 px-2">
+                <label className="relative block w-full">
+                  <Search aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 bg-white text-gray-400" />
+                  <input
+                    type="search"
+                    role="searchbox"
+                    value={buyerSearch}
+                    onChange={(event) => setBuyerSearch(event.target.value)}
+                    placeholder="Tìm người mua"
+                    aria-label="Tìm người mua"
+                    className="h-8 w-full rounded-md border border-gray-300 pl-3 pr-9 text-xs outline-none focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15"
+                  />
+                </label>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                {visibleCustomers.map((customer) => {
+                  const messages = [...customer.messages, ...(conversationReplies[customer.id] ?? [])]
+                  const lastMessage = messages[messages.length - 1]
+                  const isSelected = customer.id === selectedBuyer?.id
+                  return (
+                    <button
+                      key={customer.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedBuyerId(customer.id)
+                        setDraft('')
+                      }}
+                      aria-current={isSelected ? 'true' : undefined}
+                      className={`flex w-full items-start gap-2 px-3 py-3 text-left transition ${
+                        isSelected ? 'bg-green-50' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+                        {customer.initial}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[11px] font-semibold sm:text-xs">{customer.name}</span>
+                        <span className="mt-1 block truncate text-[10px] text-gray-500">
+                          {lastMessage?.from === 'seller' ? 'Bạn: ' : ''}{lastMessage?.text}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+                {visibleCustomers.length === 0 && (
+                  <p className="px-3 py-5 text-center text-[11px] text-gray-500">
+                    {customers.length ? 'Không tìm thấy người mua.' : 'Chưa có người mua để chat.'}
+                  </p>
+                )}
+              </div>
+            </aside>
+
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden" style={{ flex: '0 0 70%', height: '100%' }}>
+              {selectedBuyer ? (
+                <>
+                  <div className="flex min-h-16 shrink-0 items-center gap-2 border-b border-gray-100 px-3 py-2 sm:px-4">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+                      {selectedBuyer.initial}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-semibold text-gray-900">{selectedBuyer.name}</span>
+                      <span className="mt-0.5 block truncate text-[10px] text-gray-500">
+                        {selectedBuyer.order.buyer?.phone || 'Người mua'}
+                      </span>
+                    </span>
+                  </div>
+                  <div
+                    ref={messagesListRef}
+                    aria-live="polite"
+                    className="min-h-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-3 py-4 sm:px-4"
+                  >
+                    {selectedMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.from === 'seller' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${
+                          message.from === 'seller'
+                            ? 'rounded-br-md bg-[#056F1C] text-white'
+                            : 'rounded-bl-md border border-gray-100 bg-white text-gray-800'
+                        }`}>
+                          <p className="break-words text-xs">{message.text}</p>
+                          <time className={`mt-1 block text-right text-[10px] ${
+                            message.from === 'seller' ? 'text-white/70' : 'text-gray-400'
+                          }`}>
+                            {message.time}
+                          </time>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <form onSubmit={sendMessage} className="flex shrink-0 items-center gap-2 border-t border-gray-200 p-3">
+                    <input
+                      type="text"
+                      value={draft}
+                      onChange={(event) => setDraft(event.target.value)}
+                      placeholder="Nhắn tin cho người mua..."
+                      aria-label="Nhắn tin cho người mua"
+                      className="h-10 min-w-0 flex-1 rounded-full border border-gray-300 px-4 text-xs outline-none focus:border-[#056F1C] focus:ring-2 focus:ring-[#056F1C]/15"
+                    />
+                    <button
+                      type="submit"
+                      aria-label="Gửi tin nhắn"
+                      disabled={!draft.trim()}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#056F1C] text-white transition hover:bg-[#045517] disabled:cursor-not-allowed disabled:bg-gray-300"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div className="flex flex-1 items-center justify-center px-5 text-center text-sm text-gray-500">
+                  Danh sách người mua sẽ hiển thị tại đây.
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      ) : (
+        <button
+          type="button"
+          aria-label="Mở chat với người mua"
+          aria-expanded={isOpen}
+          aria-controls="floating-chat-panel"
+          onClick={() => setIsOpen(true)}
+          className="inline-flex items-center gap-2 rounded-full bg-[#056F1C] px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span>Chat người mua</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
+export default function FloatingChatButton() {
+  const { pathname } = useLocation()
+  const { user } = useAuth()
+  const isSellerRoute = pathname.startsWith('/seller/')
+
+  return isSellerRoute
+    ? <SellerFloatingChat userId={user?.id} />
+    : <BuyerFloatingChat />
 }

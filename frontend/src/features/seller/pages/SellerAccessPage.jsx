@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { MOCK_ACCOUNTS, MOCK_PASSWORD_RESET_PREFIX } from '@/mocks/mockAccounts'
-import { getSellerApplication } from '@/mocks/seller'
+import { getSellerHome } from '@/features/seller/lib/sellerState'
 
 export default function SellerAccessPage() {
   const { user, isLoggedIn, login, logout } = useAuth()
@@ -14,10 +14,7 @@ export default function SellerAccessPage() {
   const navigate = useNavigate()
 
   if (isLoggedIn && user?.role === 'user') {
-    const application = getSellerApplication(user.id)
-    if (application?.status === 'approved') return <Navigate to="/seller/dashboard" replace />
-    if (application?.status === 'pending') return <Navigate to="/seller/pending" replace />
-    if (application?.status === 'rejected') return <Navigate to="/seller/onboarding" replace />
+    return <Navigate to={getSellerHome(user.id)} replace />
   }
 
   const handleSubmit = (event) => {
@@ -129,6 +126,10 @@ export default function SellerAccessPage() {
               <button type="submit" className="h-11 w-full rounded-lg bg-[#056F1C] text-sm font-semibold text-white hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2">
                 Đăng nhập
               </button>
+              <p className="text-center text-sm text-gray-600">
+                Chưa có tài khoản?{' '}
+                <Link to="/register" state={{ returnTo: '/seller' }} className="font-semibold text-[#056F1C] hover:underline">Đăng ký NaviShop</Link>
+              </p>
             </form>
           )}
           {(!isLoggedIn || user?.role !== 'user') && (

@@ -9,19 +9,18 @@ Vào mục "Đơn mua" trong tài khoản để xem danh sách và bấm vào t�
 
 | Trạng thái | Ý nghĩa |
 |---|---|
-| Chờ xác nhận | Cửa hàng có 48 giờ để xác nhận |
-| Đã xác nhận | Cửa hàng có 1 ngày để giao cho đơn vị vận chuyển |
-| Đang giao | Hàng đã được bàn giao, chờ đến tay bạn |
+| Chờ xác nhận | Cửa hàng có 48 giờ để xác nhận và bắt đầu giao đơn |
+| Đang giao | Cửa hàng đã bắt đầu giao, hàng đang trên đường đến bạn |
 | Đã nhận hàng | Đơn hoàn thành |
 | Đã hủy | Bạn tự hủy hoặc cửa hàng không xử lý đúng hạn |
 
 ## Thông báo
 
-Bạn nhận thông báo trong ứng dụng khi cửa hàng xác nhận đơn và khi báo giao. Bấm vào thông báo để mở đúng đơn đó.
+Bạn nhận thông báo trong ứng dụng khi cửa hàng bắt đầu giao đơn. Bấm vào thông báo để mở đúng đơn đó.
 
 ## Đơn tự động hủy
 
-Nếu cửa hàng không xác nhận trong 48 giờ, hoặc đã xác nhận nhưng không báo giao trong 1 ngày, đơn tự hủy và tiền hoàn về ví của bạn. Xem thêm [Hoàn tiền](/help/payment/refund).
+Nếu cửa hàng không xác nhận và bắt đầu giao trong 48 giờ, đơn tự hủy và tiền hoàn về ví của bạn. Xem thêm [Hoàn tiền](/help/payment/refund).
 
 ## Đánh giá sản phẩm
 

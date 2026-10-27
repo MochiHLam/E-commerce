@@ -37,7 +37,7 @@
 - Tiền đã khóa bị trừ ngay khi chốt: NaviShop thu hoa hồng riêng cho đấu giá, phần còn lại chuyển cho cửa hàng.
 - Một đơn hàng được tạo để cửa hàng giao cho bạn.
 - Phí vận chuyển được trừ từ ví bạn lúc cửa hàng bấm giao. Ví chưa đủ thì cửa hàng chưa giao được và bạn nhận thông báo nạp thêm, nên hãy giữ đủ số dư sau khi thắng.
-- Bạn bấm "Đã nhận hàng", hoặc đơn tự hoàn thành sau 3 ngày kể từ lúc báo giao. Bước này chỉ chuyển phí vận chuyển, không ảnh hưởng tiền vật phẩm.
+- Bạn bấm "Đã nhận hàng", hoặc đơn tự hoàn thành sau 3 ngày kể từ lúc cửa hàng bắt đầu giao. Bước này chỉ chuyển phí vận chuyển, không ảnh hưởng tiền vật phẩm.
 - Nếu tài khoản bị khóa khi đang dẫn đầu, lượt đặt giá vẫn được chốt bình thường.
 `,
 }

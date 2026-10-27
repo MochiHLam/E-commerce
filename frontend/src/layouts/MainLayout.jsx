@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import ComingSoon from '@/components/ComingSoon'
 import Footer from '@/components/Footer'
 import Navbar from '@/components/Navbar'
 import AccountPage from '@/features/account/AccountPage'
@@ -22,30 +21,20 @@ import HomePage from '@/pages/HomePage'
 import InfoPage from '@/pages/InfoPage'
 import MockShopPage from '@/pages/MockShopPage'
 import SearchPage from '@/features/search/pages/SearchPage'
-import SellerAccessPage from '@/features/seller/pages/SellerAccessPage'
-import SellerRegisterPage from '@/features/seller/pages/SellerRegisterPage'
-import SellerOnboardingPage from '@/features/seller/pages/SellerOnboardingPage'
-import SellerPendingPage from '@/features/seller/pages/SellerPendingPage'
-import SellerDashboardPage from '@/features/seller/pages/SellerDashboardPage'
-import SellerApplicationsReviewPage from '@/features/seller/pages/SellerApplicationsReviewPage'
 
 export default function MainLayout() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
 
   const isAuctionPage = pathname.startsWith('/auction')
-  const isSellerRoute = pathname === '/seller' || pathname.startsWith('/seller/')
   const isFooterContentRoute = pathname.startsWith('/help') || pathname.startsWith('/info')
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <Navbar variant={isSellerRoute ? 'seller' : isFooterContentRoute ? 'content' : isAuctionPage ? 'auction' : 'default'} />
+      <Navbar variant={isFooterContentRoute ? 'content' : isAuctionPage ? 'auction' : 'default'} />
       <div className="flex flex-1 flex-col">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/seller" element={<SellerAccessPage />} />
-          <Route path="/seller/register" element={<SellerRegisterPage />} />
-          <Route path="/seller/pending" element={<SellerPendingPage />} />
           <Route path="/products" element={<Navigate to="/search" replace />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/:shopSlug" element={<MockShopPage />} />
@@ -54,8 +43,6 @@ export default function MainLayout() {
             <Route path="/search" element={<SearchPage />} />
           </Route>
           <Route element={<RequireRole roles={['user']} />}>
-            <Route path="/seller/onboarding" element={<SellerOnboardingPage />} />
-            <Route path="/seller/dashboard" element={<SellerDashboardPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-success" element={<OrderSuccessPage />} />
@@ -85,14 +72,6 @@ export default function MainLayout() {
             <Route path="/auction/history/:sessionId/items/:itemId" element={<AuctionHistoryItemPage />} />
             <Route path="/auction/:id" element={<AuctionSessionPage />} />
             <Route path="/auction/:id/items/:itemId" element={<AuctionSessionItemPage />} />
-          </Route>
-          <Route element={<RequireRole roles={['mod']} />}>
-            <Route path="/moderator/*" element={<ComingSoon title="Dashboard kiểm duyệt" />} />
-            <Route path="/mod/*" element={<Navigate to="/moderator/dashboard" replace />} />
-          </Route>
-          <Route element={<RequireRole roles={['admin']} />}>
-            <Route path="/admin/seller-applications" element={<SellerApplicationsReviewPage />} />
-            <Route path="/admin/*" element={<ComingSoon title="Dashboard quản trị" />} />
           </Route>
           <Route path="/help" element={<HelpPage />} />
           <Route path="/help/:groupSlug" element={<HelpPage />} />

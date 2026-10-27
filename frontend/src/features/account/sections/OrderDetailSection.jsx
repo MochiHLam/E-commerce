@@ -69,7 +69,7 @@ export default function OrderDetailSection({ order, fallbackShippingAddress, onA
     : 'bg-green-50 text-[#056F1C]'
   const orderStatusCopy = {
     pending: 'Đơn hàng đang chờ cửa hàng xác nhận.',
-    shipping: 'Cửa hàng đã xác nhận và đơn hàng đang được vận chuyển.',
+    shipping: 'Cửa hàng đã bắt đầu giao đơn và hàng đang trên đường đến bạn.',
     delivered: 'Hàng đã đến nơi. Vui lòng xác nhận khi bạn đã nhận được hàng. Nếu bạn chưa xác nhận, đơn sẽ tự động hoàn thành sau 3 ngày.',
     completed: 'Đơn hàng đã được giao thành công.',
     cancelled: 'Đơn hàng đã bị hủy.',

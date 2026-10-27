@@ -92,7 +92,7 @@ export function getShopAssistantReply({ shop, text }) {
 
   if (/(ship|giao hang|van chuyen|phi giao|phi ship)/.test(normalized)) {
     return {
-      text: 'Theo chính sách NaviShop, phí vận chuyển là mức cố định do sàn cấu hình và sẽ hiện ở bước xác nhận đơn. Shop có tối đa 48 giờ để xác nhận đơn và 1 ngày sau khi xác nhận để giao cho đơn vị vận chuyển.',
+      text: 'Theo chính sách NaviShop, phí vận chuyển là mức cố định do sàn cấu hình và sẽ hiện ở bước xác nhận đơn. Shop có tối đa 48 giờ để xác nhận và bắt đầu giao đơn. Sau đó, bạn có 3 ngày để xác nhận đã nhận hàng.',
       products: [],
     }
   }
