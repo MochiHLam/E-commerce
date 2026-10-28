@@ -40,7 +40,7 @@ export default function SellerSettingsPage() {
   const isDirty = avatar !== savedAvatar || aiAssistantEnabled !== savedAiAssistantEnabled
 
   if (!isLoggedIn || user?.role !== 'user') return <Navigate to="/seller" replace />
-  if (!application || !['approved', 'suspended', 'banned'].includes(application.status)) {
+  if (!application || !['approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(application.status)) {
     return <Navigate to="/seller/dashboard" replace />
   }
 
@@ -112,7 +112,7 @@ export default function SellerSettingsPage() {
 
       {isReadOnly && (
         <div role="status" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-          Shop đang ở trạng thái {application.status === 'suspended' ? 'tạm khóa' : 'đã khóa'}; các thiết lập chỉ xem, không thể chỉnh sửa.
+          Shop đang ở trạng thái {application.status === 'suspended' ? 'tạm khóa' : application.status === 'pending_deletion' ? 'chờ duyệt xóa' : application.status === 'deleted' ? 'đã xóa' : 'đã bị cấm'}; các thiết lập chỉ xem, không thể chỉnh sửa.
         </div>
       )}
       {error && <p role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>}

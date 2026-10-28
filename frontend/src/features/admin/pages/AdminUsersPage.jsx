@@ -596,7 +596,6 @@ export default function AdminUsersPage() {
               <select className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-9 text-sm text-gray-800 outline-2 outline-transparent outline-offset-1 focus-visible:outline-emerald-700 sm:min-w-40" onChange={(event) => setUserRole(event.target.value)} value={userRole}>
                 <option value="all">Tất cả vai trò</option>
                 <option value="user">Người dùng</option>
-                <option value="mod">Moderator</option>
                 <option value="admin">Admin</option>
               </select>
               <ChevronDown aria-hidden="true" className="pointer-events-none absolute bottom-3 right-3 text-gray-500" size={16} />

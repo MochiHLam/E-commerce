@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { isSellerShopActive } from '@/mocks/seller'
 
 const CartContext = createContext(null)
 const CART_STORAGE_KEY = 'navishop.mockCart.items'
@@ -37,6 +38,7 @@ export function CartProvider({ children }) {
   }, [items])
 
   const addToCart = useCallback((product) => {
+    if (!isSellerShopActive(product.shopSlug)) return false
     setItems((prev) => {
       const quantity = product.quantity ?? 1
       const existing = prev.find(
@@ -50,6 +52,7 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...product, quantity }]
     })
+    return true
   }, [])
 
   const removeFromCart = useCallback((productId, variantId) => {

@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { getMockProductReviews, getProductDetailMock } from '@/mocks/productDetails'
 import { PRODUCTS } from '@/mocks/products'
-import { INITIAL_NOTIFICATIONS } from '@/mocks/mockNotifications'
+import { getUserNotifications, saveUserNotifications } from '@/mocks/userNotifications'
 import AuctionsSection from '@/features/account/sections/AuctionsSection'
 import AuctionWonItemsSection from '@/features/account/sections/AuctionWonItemsSection'
 import AddressSection from '@/features/account/sections/AddressSection'
@@ -30,7 +30,6 @@ function getDeliveredTimestamp(order) {
 
 const ROLE_LABELS = {
   user: 'Khách hàng',
-  mod: 'Kiểm duyệt viên',
   admin: 'Quản trị viên',
 }
 
@@ -185,7 +184,7 @@ export default function AccountPage({ section = 'profile' }) {
   const [areAuctionsCollapsed, setAreAuctionsCollapsed] = useState(false)
   const [form, setForm] = useState(() => getProfileForm(user))
   const [addresses, setAddresses] = useState(() => getAddresses(user))
-  const [notifications, setNotifications] = useState(() => INITIAL_NOTIFICATIONS)
+  const [notifications, setNotifications] = useState(() => getUserNotifications(user?.id))
   const [activeOrderTab, setActiveOrderTab] = useState('all')
   const [orderSearch, setOrderSearch] = useState('')
   const [mockOrders, setMockOrders] = useState(() => {
@@ -214,6 +213,29 @@ export default function AccountPage({ section = 'profile' }) {
   })
   const [orderActionError, setOrderActionError] = useState('')
   const [pendingCancelOrderId, setPendingCancelOrderId] = useState(null)
+
+  useEffect(() => {
+    setNotifications(getUserNotifications(user?.id))
+  }, [user?.id])
+
+  useEffect(() => {
+    const refreshNotifications = (event) => {
+      if (event.detail?.userId && event.detail.userId !== user?.id) return
+      setNotifications(getUserNotifications(user?.id))
+    }
+    window.addEventListener('navishop:reporter-notifications-updated', refreshNotifications)
+    window.addEventListener('navishop:user-notifications-updated', refreshNotifications)
+    return () => {
+      window.removeEventListener('navishop:reporter-notifications-updated', refreshNotifications)
+      window.removeEventListener('navishop:user-notifications-updated', refreshNotifications)
+    }
+  }, [user?.id])
+
+  const updateNotifications = (update) => {
+    const nextNotifications = typeof update === 'function' ? update(notifications) : update
+    setNotifications(nextNotifications)
+    if (user?.id) saveUserNotifications(user.id, nextNotifications)
+  }
   const [pendingReceiveOrderId, setPendingReceiveOrderId] = useState(null)
   const [showRefundInfo, setShowRefundInfo] = useState(false)
   const [addressForm, setAddressForm] = useState({ recipientName: '', phone: '', address: '' })
@@ -725,7 +747,7 @@ export default function AccountPage({ section = 'profile' }) {
             {isNotificationsSectionActive && (
               <NotificationsSection
                 notifications={notifications}
-                setNotifications={setNotifications}
+                setNotifications={updateNotifications}
                 filter={activeSection === 'notification-orders' ? 'order' : activeSection === 'notification-auctions' ? 'auction' : 'all'}
               />
             )}

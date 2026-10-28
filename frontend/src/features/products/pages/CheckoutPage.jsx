@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Check, ChevronLeft, MessageCircle, MapPin, Package, ShoppingBag, Store, Wallet, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -10,6 +10,7 @@ import { MOCK_SHOPS } from '@/mocks/mockShops'
 import { saveCheckoutMockOrders } from '@/mocks/account/orders'
 import { getMockAuctionLockedBalance } from '@/mocks/auction/sessionMock'
 import { createOrderPaymentNotification } from '@/mocks/mockNotifications'
+import useShopAvailability from '@/hooks/useShopAvailability'
 
 const SHIPPING_FEE_PER_SHOP = 30000
 
@@ -32,6 +33,7 @@ export default function CheckoutPage() {
   const { user, updateUser } = useAuth()
   const { removeFromCart } = useCart()
   const items = state?.items ?? []
+  const availabilityVersion = useShopAvailability()
   const addresses = Array.isArray(user?.shippingAddresses) && user.shippingAddresses.length > 0
     ? user.shippingAddresses
     : user?.address
@@ -64,7 +66,10 @@ export default function CheckoutPage() {
     setSelectedAddressId(defaultAddressId)
   }, [defaultAddress?.id])
 
-  const inventoryIssues = getCartInventoryIssues(items)
+  const inventoryIssues = useMemo(
+    () => getCartInventoryIssues(items),
+    [availabilityVersion, items],
+  )
   const shopGroups = groupItemsByShop(items)
   const merchandiseTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const shippingFee = shopGroups.length * SHIPPING_FEE_PER_SHOP
@@ -125,6 +130,11 @@ export default function CheckoutPage() {
   }
 
   const placeOrder = () => {
+    const currentInventoryIssues = getCartInventoryIssues(items)
+    if (currentInventoryIssues.length) {
+      setOrderError('Một số sản phẩm thuộc Shop không còn hoạt động hoặc vượt tồn kho. Hãy quay lại giỏ hàng.')
+      return
+    }
     if (orderSubmissionInProgress.current || !selectedAddress || inventoryIssues.length > 0) return
     orderSubmissionInProgress.current = true
     setOrderError('')
@@ -427,10 +437,10 @@ export default function CheckoutPage() {
             {inventoryIssues.length > 0 && (
               <div role="alert" className="mt-5 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between">
                 <p>
-                  Số lượng một số sản phẩm không còn khả dụng. Vui lòng quay lại giỏ hàng để điều chỉnh trước khi thanh toán.
-                  {inventoryIssues.map(({ item }) => (
+                  Một số sản phẩm không còn khả dụng hoặc Shop đã ngừng hoạt động. Không thể thanh toán các sản phẩm này.
+                  {inventoryIssues.map(({ item, unavailable }) => (
                     <span key={`${item.id}-${item.variantId}`} className="mt-1 block">
-                      {item.name || item.title}
+                      {item.name || item.title}{unavailable ? ' · Shop không hoạt động' : ' · Vượt tồn kho'}
                     </span>
                   ))}
                 </p>

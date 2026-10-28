@@ -1,5 +1,6 @@
 import { getProductDetailMock } from '@/mocks/productDetails'
 import { PRODUCTS } from '@/mocks/products'
+import { isSellerShopActive } from '@/mocks/seller'
 
 export function getCartItemStock(item) {
   const product = PRODUCTS.find((entry) => entry.id === item.id)
@@ -13,6 +14,10 @@ export function getCartItemStock(item) {
 
 export function getCartInventoryIssues(items) {
   return items
-    .map((item) => ({ item, stock: getCartItemStock(item) }))
-    .filter(({ item, stock }) => item.quantity > stock)
+    .map((item) => ({
+      item,
+      stock: getCartItemStock(item),
+      unavailable: !isSellerShopActive(item.shopSlug),
+    }))
+    .filter(({ item, stock, unavailable }) => unavailable || item.quantity > stock)
 }

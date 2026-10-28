@@ -5,11 +5,10 @@ import { useAuth } from '@/context/AuthContext'
 import {
   createShopSlug,
   getSellerApplication,
-  getSellerInformationChangeAvailableAt,
   isSellerFieldAvailable,
   saveSellerApplication,
   saveSellerDraft,
-  submitSellerInformationUpdate,
+  updateSellerInformation,
 } from '@/mocks/seller'
 
 const EMPTY_FORM = {
@@ -134,20 +133,12 @@ export default function SellerOnboardingPage({ isInformationUpdate = false }) {
   if (isInformationUpdate && savedApplication?.status !== 'approved') {
     return <Navigate to="/seller/dashboard" replace />
   }
-  if (isInformationUpdate && savedApplication.pendingInformationUpdate) {
-    return <Navigate to="/seller/information" replace />
-  }
   if (!isInformationUpdate && savedApplication?.status === 'pending') return <Navigate to="/seller/pending" replace />
-  if (!isInformationUpdate && ['approved', 'suspended', 'banned'].includes(savedApplication?.status)) {
+  if (!isInformationUpdate && ['approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(savedApplication?.status)) {
     return <Navigate to="/seller/dashboard" replace />
   }
 
   const isEditingRejectedApplication = savedApplication?.status === 'rejected'
-  const informationChangeAvailableAt = getSellerInformationChangeAvailableAt(savedApplication)
-  const isInformationChangeLocked = Boolean(
-    informationChangeAvailableAt && Date.now() < informationChangeAvailableAt.getTime(),
-  )
-
   const persistDraft = (nextForm, nextStep = step) => {
     if (isInformationUpdate) return true
     try {
@@ -234,10 +225,6 @@ export default function SellerOnboardingPage({ isInformationUpdate = false }) {
   }
 
   const submitApplication = () => {
-    if (isInformationUpdate && isInformationChangeLocked) {
-      setFormError(`Bạn có thể gửi yêu cầu đổi thông tin sau ngày ${informationChangeAvailableAt.toLocaleDateString('vi-VN')}.`)
-      return
-    }
     const validationErrors = [1, 2, 3].map((stepNumber) => validateStep(stepNumber))
     const firstInvalidStep = validationErrors.findIndex((stepErrors) => Object.keys(stepErrors).length > 0)
     if (firstInvalidStep >= 0) {
@@ -254,7 +241,7 @@ export default function SellerOnboardingPage({ isInformationUpdate = false }) {
     setFormError('')
     try {
       if (isInformationUpdate) {
-        submitSellerInformationUpdate(user.id, {
+        updateSellerInformation(user.id, {
           ...form,
           slug: savedApplication.slug,
           email: savedApplication.email || user.email || '',
@@ -302,21 +289,10 @@ export default function SellerOnboardingPage({ isInformationUpdate = false }) {
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-600">
             {isInformationUpdate
-              ? 'Thông tin thay đổi sẽ được gửi admin xét duyệt. Shop vẫn hoạt động với thông tin hiện tại trong thời gian chờ.'
+              ? 'Thông tin sẽ được cập nhật trực tiếp sau khi bạn lưu thay đổi.'
               : 'Hoàn tất thông tin cửa hàng, liên hệ và xác minh để gửi hồ sơ xét duyệt.'}
           </p>
         </header>
-        {isInformationUpdate && (
-          <div className={`mb-6 rounded-xl border p-4 text-sm leading-6 ${
-            isInformationChangeLocked
-              ? 'border-amber-200 bg-amber-50 text-amber-900'
-              : 'border-green-200 bg-green-50 text-green-900'
-          }`}>
-            {isInformationChangeLocked
-              ? `Shop có thể gửi yêu cầu thay đổi tiếp theo từ ngày ${informationChangeAvailableAt.toLocaleDateString('vi-VN')}.`
-              : 'Yêu cầu thay đổi cần được admin duyệt trước khi áp dụng; shop vẫn hoạt động bình thường trong lúc chờ.'}
-          </div>
-        )}
         {isEditingRejectedApplication && savedApplication.reviewNote && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-800">
             <p className="font-semibold">Lý do hồ sơ chưa được duyệt</p>

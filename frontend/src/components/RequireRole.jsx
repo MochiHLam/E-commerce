@@ -8,7 +8,7 @@ export default function RequireRole({ roles }) {
   if (!isLoggedIn) {
     const loginPath = roles.includes('admin')
       ? '/admin'
-      : roles.includes('mod') ? '/moderator' : '/login'
+      : '/login'
     return <Navigate to={loginPath} replace state={{ returnTo: pathname + search }} />
   }
   if (!roles.includes(user.role)) return <Navigate to="/" replace />

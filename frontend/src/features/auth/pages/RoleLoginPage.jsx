@@ -9,11 +9,6 @@ const ROLE_CONFIG = {
     description: 'Dành cho quản trị viên NaviShop',
     dashboard: '/admin/dashboard',
   },
-  mod: {
-    title: 'Đăng nhập kiểm duyệt',
-    description: 'Dành cho nhân viên kiểm duyệt NaviShop',
-    dashboard: '/moderator/dashboard',
-  },
 }
 
 export default function RoleLoginPage({ role }) {

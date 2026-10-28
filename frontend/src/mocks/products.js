@@ -1,4 +1,5 @@
 import { MOCK_SHOPS } from '@/mocks/mockShops'
+import { CATEGORIES } from '@/mocks/categories'
 
 const TYPES = [
   { name: 'Chuột không dây', category: 'Máy Tính & Laptop', shopSlug: 'cong-nghe-moi' },
@@ -18,6 +19,7 @@ export const PRODUCTS = Array.from({ length: 96 }, (_, index) => {
     id: `prd_${index + 1}`,
     name: `${type.name} mẫu ${index + 1}`,
     category: type.category,
+    categoryId: CATEGORIES.find((category) => category.name === type.category)?.id ?? null,
     price: 50000 + ((index * 37) % 40) * 25000,
     rating: 3.5 + ((index * 7) % 16) / 10,
     sold: 20 + ((index * 53) % 900),

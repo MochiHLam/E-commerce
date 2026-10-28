@@ -3,20 +3,8 @@ import { MOCK_SHOPS } from '@/mocks/mockShops'
 const APPLICATIONS_KEY = 'navishop.mockSeller.applications'
 const PRODUCTS_KEY = 'navishop.mockSeller.products'
 const SHOP_SETTINGS_KEY = 'navishop.mockSeller.settings'
-const INFORMATION_CHANGE_INTERVAL_MONTHS = 6
+const SHOP_AUDIT_KEY = 'navishop.mockSeller.shopAudit'
 const MOCK_APPLICATION_USER_ID = 'demo_seller_application'
-const SELLER_PROFILE_FIELDS = [
-  'shopName',
-  'slug',
-  'categoryId',
-  'contactName',
-  'phone',
-  'email',
-  'pickupAddress',
-  'taxCode',
-  'identityNumber',
-  'description',
-]
 const MOCK_SELLER_APPLICATIONS = [
   {
     userId: MOCK_APPLICATION_USER_ID,
@@ -188,93 +176,6 @@ const MOCK_SELLER_APPLICATIONS = [
   },
 ]
 
-const MOCK_SELLER_INFORMATION_UPDATE_REQUESTS = [
-  {
-    userId: 'demo_existing_shop_update_1',
-    application: {
-      shopName: 'Mộc Nhiên Living',
-      slug: 'moc-nhien-living',
-      categoryId: '13',
-      description: 'Đồ trang trí và vật dụng tiện ích cho không gian sống.',
-      contactName: 'Đặng Minh Khoa',
-      phone: '0978123456',
-      pickupAddress: '12 Lê Lợi, Phường 4, Thành phố Vũng Tàu, Bà Rịa - Vũng Tàu',
-      email: 'mocnhien@navishop.test',
-      submittedAt: new Date(2026, 2, 15, 9, 0, 0).toISOString(),
-      reviewedAt: new Date(2026, 2, 18, 14, 30, 0).toISOString(),
-      lastInformationChangeAt: new Date(2026, 2, 18, 14, 30, 0).toISOString(),
-      status: 'approved',
-      pendingInformationUpdate: {
-        shopName: 'Mộc Nhiên Home',
-        slug: 'moc-nhien-living',
-        categoryId: '13',
-        description: 'Đồ gia dụng và vật dụng trang trí cho không gian sống.',
-        contactName: 'Đặng Minh Khoa',
-        phone: '0978123456',
-        pickupAddress: '25 Lê Lợi, Phường 4, Thành phố Vũng Tàu, Bà Rịa - Vũng Tàu',
-        email: 'mocnhien@navishop.test',
-        submittedAt: new Date(2026, 9, 26, 9, 15, 0).toISOString(),
-      },
-    },
-  },
-  {
-    userId: 'demo_existing_shop_update_2',
-    application: {
-      shopName: 'Lam Tech Store',
-      slug: 'lam-tech-store',
-      categoryId: '2',
-      description: 'Phụ kiện điện thoại và thiết bị công nghệ.',
-      contactName: 'Phạm Quốc Bảo',
-      phone: '0908765432',
-      pickupAddress: '82 Cách Mạng Tháng Tám, Phường 5, Quận 3, Thành phố Hồ Chí Minh',
-      email: 'lamtech@navishop.test',
-      submittedAt: new Date(2026, 1, 10, 10, 0, 0).toISOString(),
-      reviewedAt: new Date(2026, 1, 12, 16, 0, 0).toISOString(),
-      lastInformationChangeAt: new Date(2026, 1, 12, 16, 0, 0).toISOString(),
-      status: 'approved',
-      pendingInformationUpdate: {
-        shopName: 'Lam Tech & Phụ Kiện',
-        slug: 'lam-tech-store',
-        categoryId: '2',
-        description: 'Điện thoại, phụ kiện và thiết bị công nghệ chính hãng.',
-        contactName: 'Phạm Quốc Bảo',
-        phone: '0908765432',
-        pickupAddress: '82 Cách Mạng Tháng Tám, Phường 5, Quận 3, Thành phố Hồ Chí Minh',
-        email: 'lamtech@navishop.test',
-        submittedAt: new Date(2026, 9, 25, 15, 40, 0).toISOString(),
-      },
-    },
-  },
-  {
-    userId: 'demo_existing_shop_update_3',
-    application: {
-      shopName: 'Nắng Vải Studio',
-      slug: 'nang-vai-studio',
-      categoryId: '11',
-      description: 'Thời trang nữ với các thiết kế ứng dụng hằng ngày.',
-      contactName: 'Lê Ngọc Hà',
-      phone: '0987654321',
-      pickupAddress: '18 Nguyễn Trãi, Phường Bến Thành, Quận 1, Thành phố Hồ Chí Minh',
-      email: 'nangvai@navishop.test',
-      submittedAt: new Date(2026, 0, 5, 11, 0, 0).toISOString(),
-      reviewedAt: new Date(2026, 0, 8, 13, 0, 0).toISOString(),
-      lastInformationChangeAt: new Date(2026, 0, 8, 13, 0, 0).toISOString(),
-      status: 'approved',
-      pendingInformationUpdate: {
-        shopName: 'Nắng Vải Boutique',
-        slug: 'nang-vai-studio',
-        categoryId: '11',
-        description: 'Thời trang nữ và phụ kiện cho phong cách thường ngày.',
-        contactName: 'Lê Ngọc Hà',
-        phone: '0987654321',
-        pickupAddress: '18 Nguyễn Trãi, Phường Bến Thành, Quận 1, Thành phố Hồ Chí Minh',
-        email: 'nangvai@navishop.test',
-        submittedAt: new Date(2026, 9, 24, 8, 30, 0).toISOString(),
-      },
-    },
-  },
-]
-
 const MOCK_REJECTED_SELLER_APPLICATIONS = [
   {
     userId: 'demo_rejected_seller_application_1',
@@ -346,6 +247,40 @@ function readCollection(key, label) {
   const value = JSON.parse(localStorage.getItem(key) ?? '{}')
   if (!value || Array.isArray(value) || typeof value !== 'object') {
     throw new Error(`Dữ liệu ${label} mock không hợp lệ.`)
+  }
+  if (key === APPLICATIONS_KEY) {
+    let hasLegacyInformation = false
+    for (const [userId, application] of Object.entries(value)) {
+      if (!application || typeof application !== 'object') continue
+      let updatedApplication = { ...application }
+      const pendingInformationUpdate = updatedApplication.pendingInformationUpdate
+      delete updatedApplication.pendingInformationUpdate
+      delete updatedApplication.lastInformationChangeAt
+      delete updatedApplication.informationUpdateReviewNote
+      delete updatedApplication.informationUpdateReviewedAt
+      if (pendingInformationUpdate) {
+        const submittedAt = updatedApplication.submittedAt
+        const status = updatedApplication.status
+        const createdAt = updatedApplication.createdAt
+        updatedApplication = {
+          ...updatedApplication,
+          ...pendingInformationUpdate,
+          submittedAt,
+          status,
+          createdAt,
+        }
+      }
+      if (Array.isArray(updatedApplication.reviewHistory)) {
+        updatedApplication.reviewHistory = updatedApplication.reviewHistory.filter(
+          (entry) => entry?.reviewType !== 'information-update',
+        )
+      }
+      if (JSON.stringify(application) !== JSON.stringify(updatedApplication)) {
+        value[userId] = updatedApplication
+        hasLegacyInformation = true
+      }
+    }
+    if (hasLegacyInformation) localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(value))
   }
   return value
 }
@@ -421,33 +356,66 @@ export function updateSellerShopSettings(userId, updates) {
   }
 }
 
+function addShopAudit(application, action, reason, actorId, statusBefore, statusAfter, occurredAt) {
+  const entries = getSellerShopAudit()
+  const auditEntry = {
+    id: `${application.userId}-${occurredAt}-${action}`,
+    actorId: actorId || 'seller',
+    action,
+    shopId: application.slug,
+    shopName: application.shopName,
+    reason,
+    statusBefore,
+    statusAfter,
+    occurredAt,
+  }
+  localStorage.setItem(SHOP_AUDIT_KEY, JSON.stringify([auditEntry, ...entries]))
+}
+
+export function getSellerShopAudit() {
+  const entries = JSON.parse(localStorage.getItem(SHOP_AUDIT_KEY) ?? '[]')
+  if (!Array.isArray(entries) || entries.some((entry) => !entry?.id || !entry?.shopId || !entry?.action)) {
+    throw new Error('Dữ liệu nhật ký shop mock không hợp lệ.')
+  }
+  return entries
+}
+
+function saveShopApplication(userId, updatedApplication) {
+  const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
+  localStorage.setItem(APPLICATIONS_KEY, JSON.stringify({
+    ...applications,
+    [userId]: updatedApplication,
+  }))
+  window.dispatchEvent(new CustomEvent('navishop:seller-application-updated', { detail: { userId } }))
+  return updatedApplication
+}
+
 export function getSellerApplications() {
   return Object.entries(readCollection(APPLICATIONS_KEY, 'hồ sơ người bán'))
     .map(([userId, application]) => ({ ...application, userId }))
     .sort((left, right) => (
-      new Date(right.pendingInformationUpdate?.submittedAt ?? right.submittedAt)
-      - new Date(left.pendingInformationUpdate?.submittedAt ?? left.submittedAt)
+      new Date(right.submittedAt) - new Date(left.submittedAt)
     ))
 }
 
 export function updateSellerShopStatus(userId, status, reason, actorId) {
-  if (!userId || !['approved', 'suspended'].includes(status) || !reason?.trim()) {
+  if (!userId || !['approved', 'suspended', 'banned'].includes(status) || !reason?.trim()) {
     throw new Error('Chọn trạng thái shop hợp lệ và nhập lý do thao tác.')
   }
   const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
   const application = applications[userId]
   if (!application || !['approved', 'suspended'].includes(application.status)) {
-    throw new Error('Chỉ có thể tạm khóa hoặc mở lại shop đã được duyệt.')
+    throw new Error('Chỉ có thể thay đổi trạng thái shop đang hoạt động hoặc tạm khóa.')
   }
   if (application.status === status) {
-    throw new Error(status === 'suspended' ? 'Shop đã đang bị tạm khóa.' : 'Shop đang hoạt động.')
+    throw new Error(`Shop đã ở trạng thái ${status}.`)
   }
 
   const changedAt = new Date().toISOString()
   const historyEntry = {
     id: `${userId}-${changedAt}`,
     actorId: actorId ?? '',
-    action: status === 'suspended' ? 'suspend' : 'reactivate',
+    action: status === 'suspended' ? 'suspend' : status === 'banned' ? 'ban' : 'reactivate',
     status,
     reason: reason.trim(),
     changedAt,
@@ -457,33 +425,188 @@ export function updateSellerShopStatus(userId, status, reason, actorId) {
     status,
     statusReason: reason.trim(),
     statusChangedAt: changedAt,
+    statusSource: actorId || 'admin',
     shopStatusHistory: [...(Array.isArray(application.shopStatusHistory) ? application.shopStatusHistory : []), historyEntry],
   }
 
-  localStorage.setItem(APPLICATIONS_KEY, JSON.stringify({
-    ...applications,
-    [userId]: updatedApplication,
-  }))
-  window.dispatchEvent(new CustomEvent('navishop:seller-application-updated', { detail: { userId } }))
+  addShopAudit({ ...application, userId }, historyEntry.action, reason.trim(), actorId, application.status, status, changedAt)
+  saveShopApplication(userId, updatedApplication)
   return updatedApplication
 }
 
-export function getSellerInformationChangeAvailableAt(application) {
-  if (!application?.lastInformationChangeAt) return null
-  const availableAt = new Date(application.lastInformationChangeAt)
-  if (Number.isNaN(availableAt.getTime())) {
-    throw new Error('Ngày cập nhật hồ sơ cửa hàng không hợp lệ.')
+export function requestSellerShopDeletion(userId, orders) {
+  if (!userId || !Array.isArray(orders)) {
+    throw new Error('Thiếu thông tin để gửi yêu cầu xóa Shop.')
   }
-  const originalDay = availableAt.getDate()
-  availableAt.setDate(1)
-  availableAt.setMonth(availableAt.getMonth() + INFORMATION_CHANGE_INTERVAL_MONTHS)
-  const lastDayOfTargetMonth = new Date(
-    availableAt.getFullYear(),
-    availableAt.getMonth() + 1,
-    0,
-  ).getDate()
-  availableAt.setDate(Math.min(originalDay, lastDayOfTargetMonth))
-  return availableAt
+  const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
+  const application = applications[userId]
+  if (!application || application.status !== 'approved') {
+    throw new Error('Chỉ Shop đang hoạt động mới có thể gửi yêu cầu xóa.')
+  }
+  if (application.deletionRequest?.status === 'pending') {
+    throw new Error('Shop đã có yêu cầu xóa đang chờ Admin phê duyệt.')
+  }
+  const shopOrderCount = getSellerShopOrderCount(userId, orders)
+  if (shopOrderCount) {
+    throw new Error(`Không thể yêu cầu xóa Shop vì đang có ${shopOrderCount} đơn hàng. Shop cần không có đơn hàng ở mọi trạng thái.`)
+  }
+  const submittedAt = new Date().toISOString()
+  const deletionRequest = {
+    status: 'pending',
+    requestedBy: userId,
+    submittedAt,
+    reviewedBy: '',
+    reviewedAt: '',
+    rejectionReason: '',
+  }
+  const updatedApplication = {
+    ...application,
+    status: 'pending_deletion',
+    statusReason: 'Chủ Shop đã gửi yêu cầu xóa, đang chờ Admin phê duyệt.',
+    statusChangedAt: submittedAt,
+    statusSource: 'seller',
+    deletionRequest,
+    shopStatusHistory: [
+      ...(Array.isArray(application.shopStatusHistory) ? application.shopStatusHistory : []),
+      { id: `${userId}-${submittedAt}`, actorId: userId, action: 'request-deletion', status: 'pending_deletion', reason: '', changedAt: submittedAt },
+    ],
+  }
+  addShopAudit({ ...application, userId }, 'request-deletion', 'Chủ Shop gửi yêu cầu xóa.', userId, application.status, 'pending_deletion', submittedAt)
+  return saveShopApplication(userId, updatedApplication)
+}
+
+export function getSellerShopOrderCount(userId, orders) {
+  const application = getSellerApplication(userId)
+  if (!application || !Array.isArray(orders)) {
+    throw new Error('Thiếu thông tin để kiểm tra điều kiện xóa Shop.')
+  }
+  return orders.filter((order) => (
+    order.shopSlug === application.slug
+    || order.storeName === application.shopName
+    || order.shop === application.shopName
+  )).length
+}
+
+export function reviewSellerShopDeletion(userId, decision, reason, actorId, restoreStatus = 'approved') {
+  if (!userId || !['approved', 'rejected'].includes(decision) || !reason?.trim()) {
+    throw new Error('Chọn quyết định hợp lệ và nhập lý do xử lý yêu cầu xóa.')
+  }
+  if (decision === 'rejected' && !['approved', 'suspended'].includes(restoreStatus)) {
+    throw new Error('Chọn trạng thái Shop sau khi từ chối yêu cầu.')
+  }
+  const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
+  const application = applications[userId]
+  if (!application || application.status !== 'pending_deletion' || application.deletionRequest?.status !== 'pending') {
+    throw new Error('Yêu cầu xóa đã được xử lý hoặc không còn hợp lệ.')
+  }
+  const reviewedAt = new Date().toISOString()
+  const nextStatus = decision === 'approved' ? 'deleted' : restoreStatus
+  const deletionRequest = {
+    ...application.deletionRequest,
+    status: decision,
+    reviewedBy: actorId || 'Admin',
+    reviewedAt,
+    rejectionReason: decision === 'rejected' ? reason.trim() : '',
+    decisionReason: reason.trim(),
+  }
+  const updatedApplication = {
+    ...application,
+    status: nextStatus,
+    statusReason: decision === 'approved' || nextStatus === 'suspended' ? reason.trim() : '',
+    statusChangedAt: reviewedAt,
+    statusSource: actorId || 'admin',
+    deletionRequest,
+    shopStatusHistory: [
+      ...(Array.isArray(application.shopStatusHistory) ? application.shopStatusHistory : []),
+      { id: `${userId}-${reviewedAt}`, actorId: actorId || '', action: decision === 'approved' ? 'approve-deletion' : 'reject-deletion', status: nextStatus, reason: reason.trim(), changedAt: reviewedAt },
+    ],
+  }
+  addShopAudit({ ...application, userId }, `${decision}-deletion`, reason.trim(), actorId, application.status, nextStatus, reviewedAt)
+  return saveShopApplication(userId, updatedApplication)
+}
+
+export function submitSellerShopAppeal(userId, reason, explanation) {
+  if (!userId || !reason?.trim() || !explanation?.trim()) {
+    throw new Error('Vui lòng nhập lý do khiếu nại và nội dung giải trình.')
+  }
+  const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
+  const application = applications[userId]
+  if (!application || application.status !== 'suspended') {
+    throw new Error('Chỉ Shop đang bị tạm khóa mới có thể gửi khiếu nại.')
+  }
+  if (application.appeal?.status === 'pending') {
+    throw new Error('Bạn đã có khiếu nại đang chờ Admin xem xét.')
+  }
+  const submittedAt = new Date().toISOString()
+  const appeal = {
+    status: 'pending',
+    reason: reason.trim(),
+    explanation: explanation.trim(),
+    submittedAt,
+    reviewedBy: '',
+    reviewedAt: '',
+    response: '',
+  }
+  const updatedApplication = { ...application, appeal }
+  addShopAudit({ ...application, userId }, 'submit-appeal', reason.trim(), userId, application.status, application.status, submittedAt)
+  return saveShopApplication(userId, updatedApplication)
+}
+
+export function reviewSellerShopAppeal(userId, decision, reason, actorId) {
+  if (!userId || !['approved', 'rejected'].includes(decision) || !reason?.trim()) {
+    throw new Error('Chọn kết quả khiếu nại và nhập nội dung phản hồi.')
+  }
+  const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
+  const application = applications[userId]
+  if (!application || application.status !== 'suspended' || application.appeal?.status !== 'pending') {
+    throw new Error('Không tìm thấy khiếu nại đang chờ xử lý.')
+  }
+  const reviewedAt = new Date().toISOString()
+  const nextStatus = decision === 'approved' ? 'approved' : 'suspended'
+  const appeal = {
+    ...application.appeal,
+    status: decision,
+    reviewedBy: actorId || 'Admin',
+    reviewedAt,
+    response: reason.trim(),
+  }
+  const updatedApplication = {
+    ...application,
+    status: nextStatus,
+    statusReason: nextStatus === 'suspended' ? application.statusReason : '',
+    statusChangedAt: decision === 'approved' ? reviewedAt : application.statusChangedAt,
+    statusSource: actorId || 'admin',
+    appeal,
+    shopStatusHistory: decision === 'approved'
+      ? [...(Array.isArray(application.shopStatusHistory) ? application.shopStatusHistory : []), {
+          id: `${userId}-${reviewedAt}`,
+          actorId: actorId || '',
+          action: 'appeal-approved',
+          status: 'approved',
+          reason: reason.trim(),
+          changedAt: reviewedAt,
+        }]
+      : application.shopStatusHistory,
+  }
+  addShopAudit({ ...application, userId }, `appeal-${decision}`, reason.trim(), actorId, application.status, nextStatus, reviewedAt)
+  return saveShopApplication(userId, updatedApplication)
+}
+
+export function getShopApplicationBySlug(slug) {
+  if (!slug) return null
+  return getSellerApplications().find((application) => application.slug === slug) ?? null
+}
+
+export function isSellerShopActive(slug) {
+  const application = getShopApplicationBySlug(slug)
+  return !application || application.status === 'approved'
+}
+
+function assertSellerCanManage(userId) {
+  const application = getSellerApplication(userId)
+  if (!application || application.status !== 'approved') {
+    throw new Error('Shop không ở trạng thái hoạt động; thao tác bán hàng và chỉnh sửa đã bị khóa.')
+  }
 }
 
 export function ensureMockSellerApplication() {
@@ -499,24 +622,6 @@ export function ensureMockSellerApplication() {
       createdAt: application.submittedAt,
       reviewedAt: null,
       reviewNote: '',
-    }
-    hasChanges = true
-  }
-
-  for (const { userId, application } of MOCK_SELLER_INFORMATION_UPDATE_REQUESTS) {
-    if (applications[userId]) continue
-    applications[userId] = {
-      ...application,
-      step: 4,
-      createdAt: application.submittedAt,
-      reviewNote: '',
-      reviewHistory: [{
-        type: 'review',
-        reviewType: 'registration',
-        status: 'approved',
-        note: '',
-        reviewedAt: application.reviewedAt,
-      }],
     }
     hasChanges = true
   }
@@ -541,17 +646,13 @@ export function ensureMockSellerApplication() {
   if (hasChanges) localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(applications))
 }
 
-function getSellerProfileSnapshot(application) {
-  return Object.fromEntries(SELLER_PROFILE_FIELDS.map((field) => [field, application[field] ?? '']))
-}
-
 export function saveSellerDraft(userId, details, step) {
   if (!userId || !Number.isInteger(step) || step < 1 || step > 4) {
     throw new Error('Không thể lưu nháp hồ sơ người bán không hợp lệ.')
   }
   const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
   const previousApplication = applications[userId]
-  if (previousApplication?.status === 'pending' || previousApplication?.status === 'approved') {
+  if (['pending', 'approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(previousApplication?.status)) {
     throw new Error('Hồ sơ hiện tại không thể chỉnh sửa.')
   }
   const application = {
@@ -574,7 +675,7 @@ export function saveSellerApplication(userId, details) {
   }
   const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
   const previousApplication = applications[userId]
-  if (previousApplication?.status === 'pending' || previousApplication?.status === 'approved') {
+  if (['pending', 'approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(previousApplication?.status)) {
     throw new Error('Hồ sơ hiện tại không thể gửi hoặc chỉnh sửa.')
   }
   const submittedAt = new Date().toISOString()
@@ -608,21 +709,15 @@ export function saveSellerApplication(userId, details) {
   return application
 }
 
-export function submitSellerInformationUpdate(userId, details) {
+export function updateSellerInformation(userId, details) {
   if (!userId || !details?.shopName?.trim()) {
     throw new Error('Vui lòng đăng nhập và nhập tên cửa hàng.')
   }
   const applications = readCollection(APPLICATIONS_KEY, 'hồ sơ người bán')
   const application = applications[userId]
+  assertSellerCanManage(userId)
   if (!application || application.status !== 'approved') {
-    throw new Error('Chỉ shop đang hoạt động mới có thể gửi yêu cầu cập nhật.')
-  }
-  if (application.pendingInformationUpdate) {
-    throw new Error('Shop đang có yêu cầu cập nhật thông tin chờ duyệt.')
-  }
-  const availableAt = getSellerInformationChangeAvailableAt(application)
-  if (availableAt && Date.now() < availableAt.getTime()) {
-    throw new Error(`Bạn có thể gửi yêu cầu đổi thông tin sau ngày ${availableAt.toLocaleDateString('vi-VN')}.`)
+    throw new Error('Chỉ shop đang hoạt động mới có thể cập nhật thông tin.')
   }
   if (details.shopName.trim().length < 2 || details.shopName.trim().length > 50) {
     throw new Error('Tên shop cần từ 2 đến 50 ký tự.')
@@ -633,17 +728,24 @@ export function submitSellerInformationUpdate(userId, details) {
     throw new Error('Tên shop đã được sử dụng.')
   }
 
-  const pendingInformationUpdate = {
-    ...details,
+  const updatedApplication = {
+    ...application,
+    categoryId: details.categoryId,
+    description: details.description,
+    contactName: details.contactName,
+    phone: details.phone,
+    pickupAddress: details.pickupAddress,
+    identityNumber: details.identityNumber,
+    taxCode: details.taxCode,
     shopName: details.shopName.trim(),
     slug: application.slug,
-    submittedAt: new Date().toISOString(),
+    email: application.email || details.email || '',
   }
-  const updatedApplication = { ...application, pendingInformationUpdate }
   localStorage.setItem(APPLICATIONS_KEY, JSON.stringify({
     ...applications,
     [userId]: updatedApplication,
   }))
+  window.dispatchEvent(new CustomEvent('navishop:seller-application-updated', { detail: { userId } }))
   return updatedApplication
 }
 
@@ -659,16 +761,10 @@ export function reviewSellerApplication(userId, status, reviewNote = '', options
   if (!application) {
     throw new Error('Không tìm thấy hồ sơ đang chờ duyệt.')
   }
-  const hasPendingInformationUpdate = Boolean(application.pendingInformationUpdate)
-  const isInformationUpdate = options.reviewType === 'information-update'
-  if (isInformationUpdate !== hasPendingInformationUpdate
-    || (!isInformationUpdate && application.status !== 'pending')) {
+  if (application.status !== 'pending') {
     throw new Error('Không tìm thấy hồ sơ đang chờ duyệt.')
   }
-  const currentRequestSubmittedAt = isInformationUpdate
-    ? application.pendingInformationUpdate.submittedAt
-    : application.submittedAt
-  if (options.submittedAt && currentRequestSubmittedAt !== options.submittedAt) {
+  if (options.submittedAt && application.submittedAt !== options.submittedAt) {
     throw new Error('Hồ sơ đã được cập nhật hoặc xử lý bởi tài khoản khác. Danh sách đã được làm mới.')
   }
 
@@ -677,45 +773,13 @@ export function reviewSellerApplication(userId, status, reviewNote = '', options
     ...(Array.isArray(application.reviewHistory) ? application.reviewHistory : []),
     {
       type: 'review',
-      reviewType: isInformationUpdate ? 'information-update' : 'registration',
+      reviewType: 'registration',
       status,
       note: reviewNote.trim(),
-      submittedAt: currentRequestSubmittedAt,
+      submittedAt: application.submittedAt,
       reviewedAt,
-      ...(isInformationUpdate ? {
-        previousInformation: getSellerProfileSnapshot(application),
-        requestedInformation: getSellerProfileSnapshot(application.pendingInformationUpdate),
-      } : {}),
     },
   ]
-
-  if (isInformationUpdate) {
-    const updatedApplication = status === 'approved'
-      ? {
-          ...application,
-          ...application.pendingInformationUpdate,
-          avatar: application.avatar,
-          submittedAt: application.submittedAt,
-          status: 'approved',
-          lastInformationChangeAt: reviewedAt,
-          informationUpdateReviewNote: reviewNote.trim(),
-          informationUpdateReviewedAt: reviewedAt,
-          pendingInformationUpdate: null,
-          reviewHistory,
-        }
-      : {
-          ...application,
-          informationUpdateReviewNote: reviewNote.trim(),
-          informationUpdateReviewedAt: reviewedAt,
-          pendingInformationUpdate: null,
-          reviewHistory,
-        }
-    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify({
-      ...applications,
-      [userId]: updatedApplication,
-    }))
-    return updatedApplication
-  }
 
   const updatedApplication = {
     ...application,
@@ -739,6 +803,7 @@ export function getSellerProducts(userId) {
 
 export function createSellerProduct(userId, product) {
   if (!userId) throw new Error('Vui lòng đăng nhập để thêm sản phẩm.')
+  assertSellerCanManage(userId)
   if (!product?.name?.trim() || !product?.category?.trim() || !product?.description?.trim() || !product?.image) {
     throw new Error('Vui lòng nhập đầy đủ thông tin và chọn ít nhất một ảnh sản phẩm.')
   }
@@ -767,6 +832,7 @@ export function createSellerProduct(userId, product) {
 
 export function updateSellerProduct(userId, productId, updates) {
   if (!userId || !productId) throw new Error('Thiếu thông tin sản phẩm cần cập nhật.')
+  assertSellerCanManage(userId)
   if (!updates?.name?.trim() || !updates?.category?.trim() || !updates?.description?.trim() || !updates?.image) {
     throw new Error('Vui lòng nhập đầy đủ thông tin và chọn ít nhất một ảnh sản phẩm.')
   }
@@ -809,6 +875,7 @@ export function setSellerProductVisibility(userId, productId, isHidden) {
   if (!userId || !productId || typeof isHidden !== 'boolean') {
     throw new Error('Thông tin thao tác ẩn sản phẩm không hợp lệ.')
   }
+  assertSellerCanManage(userId)
   const products = readCollection(PRODUCTS_KEY, 'sản phẩm người bán')
   const sellerProducts = products[userId] ?? []
   const productIndex = sellerProducts.findIndex((product) => product.id === productId)
@@ -837,6 +904,7 @@ export function setSellerProductVisibility(userId, productId, isHidden) {
 
 export function deleteSellerProduct(userId, productId) {
   if (!userId || !productId) throw new Error('Thiếu thông tin sản phẩm cần xóa.')
+  assertSellerCanManage(userId)
   const products = readCollection(PRODUCTS_KEY, 'sản phẩm người bán')
   const sellerProducts = products[userId] ?? []
   const product = sellerProducts.find((item) => item.id === productId)

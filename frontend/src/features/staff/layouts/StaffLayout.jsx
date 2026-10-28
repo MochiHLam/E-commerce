@@ -26,7 +26,7 @@ import { getSellerApplication, isSellerShopOwner } from '@/mocks/seller'
 const ADMIN_NAVIGATION = [
   { label: 'Tổng quan', to: '/admin/dashboard', icon: LayoutDashboard },
   {
-    label: 'Người dùng & cửa hàng',
+    label: 'Quản lý hồ sơ',
     id: 'admin-users-shops',
     icon: Users,
     children: [
@@ -35,11 +35,12 @@ const ADMIN_NAVIGATION = [
     ],
   },
   {
-    label: 'Danh mục & nội dung',
+    label: 'Danh mục & sản phẩm',
     id: 'admin-catalog',
     icon: Boxes,
     children: [
-      { label: 'Sản phẩm & danh mục', to: '/admin/catalog', icon: Boxes },
+      { label: 'Danh mục', to: '/admin/catalog/categories', icon: Boxes },
+      { label: 'Sản phẩm', to: '/admin/catalog/products', icon: Package },
     ],
   },
   {
@@ -47,8 +48,7 @@ const ADMIN_NAVIGATION = [
     id: 'admin-moderation',
     icon: ShieldAlert,
     children: [
-      { label: 'Hàng đợi báo cáo', to: '/admin/moderation', icon: ShieldAlert },
-      { label: 'Case đã chuyển admin', to: '/admin/moderation/escalated', icon: ClipboardList },
+      { label: 'Báo cáo & kiểm duyệt', to: '/admin/moderation', icon: ShieldAlert },
     ],
   },
   {
@@ -70,15 +70,6 @@ const ADMIN_NAVIGATION = [
     ],
   },
   { label: 'Nhật ký hoạt động', to: '/admin/audit-log', icon: Activity },
-]
-
-const MODERATOR_NAVIGATION = [
-  { label: 'Tổng quan', to: '/moderator/dashboard', icon: LayoutDashboard },
-  { label: 'Báo cáo cửa hàng', to: '/moderator/reports/shops', icon: Store },
-  { label: 'Báo cáo sản phẩm', to: '/moderator/reports/products', icon: Boxes },
-  { label: 'Báo cáo đánh giá', to: '/moderator/reports/reviews', icon: ShieldAlert },
-  { label: 'Lịch sử xử lý', to: '/moderator/history', icon: Activity },
-  { label: 'Tài khoản bị khóa', to: '/moderator/locked-users', icon: Users },
 ]
 
 const SELLER_NAVIGATION = [
@@ -112,13 +103,6 @@ const STAFF_CONFIG = {
     navLabel: 'Tác vụ quản trị',
     roleLabel: 'Quản trị viên',
     navigation: ADMIN_NAVIGATION,
-  },
-  mod: {
-    title: 'Kênh kiểm duyệt',
-    workspace: 'Không gian kiểm duyệt',
-    navLabel: 'Tác vụ kiểm duyệt',
-    roleLabel: 'Nhân viên kiểm duyệt',
-    navigation: MODERATOR_NAVIGATION,
   },
   seller: {
     title: 'Kênh người bán',

@@ -14,6 +14,7 @@ import { getSellerDashboardMock, transitionSellerOrder } from '@/mocks/sellerDas
 const ORDER_FILTERS = [
   { id: 'all', label: 'Tất cả' },
   { id: 'pending_confirm', label: 'Chờ xác nhận' },
+  { id: 'confirmed', label: 'Chờ báo giao' },
   { id: 'shipping', label: 'Đang giao' },
   { id: 'completed', label: 'Hoàn thành' },
   { id: 'cancelled', label: 'Đã hủy' },
@@ -22,6 +23,7 @@ const ORDER_FILTERS = [
 const ORDER_STATUS_LABELS = {
   auction_won: 'Đơn đấu giá được tạo',
   pending_confirm: 'Chờ xác nhận',
+  confirmed: 'Chờ báo giao',
   shipping: 'Đang giao',
   completed: 'Hoàn thành',
   cancelled: 'Đã hủy',
@@ -56,12 +58,14 @@ function getStatusTone(status) {
   if (status === 'completed') return 'bg-green-50 text-green-800'
   if (status === 'cancelled') return 'bg-gray-100 text-gray-600'
   if (status === 'pending_confirm') return 'bg-amber-50 text-amber-800'
+  if (status === 'confirmed') return 'bg-blue-50 text-blue-800'
   return 'bg-indigo-50 text-indigo-800'
 }
 
 function getDeadlineLabel(order) {
   if (order.source === 'auction') return 'Theo quy trình đấu giá'
   if (order.status === 'pending_confirm') return 'Hạn xác nhận'
+  if (order.status === 'confirmed') return 'Hạn báo giao'
   if (order.status === 'shipping' && order.source === 'normal') return 'Dự kiến hoàn thành'
   return '—'
 }
@@ -236,7 +240,7 @@ export default function SellerOrdersPage() {
     application ? readOrdersForShop(user.id, application.slug) : []
   ))
   const [error, setError] = useState('')
-  const [selectedOrderId, setSelectedOrderId] = useState('')
+  const [selectedOrderId, setSelectedOrderId] = useState(() => searchParams.get('order') ?? '')
   const [orderSearch, setOrderSearch] = useState('')
   const [buyerSearch, setBuyerSearch] = useState('')
   const [dateStart, setDateStart] = useState('')
@@ -249,6 +253,10 @@ export default function SellerOrdersPage() {
   }, [application?.slug, user?.id])
 
   useEffect(() => {
+    setSelectedOrderId(searchParams.get('order') ?? '')
+  }, [searchParams])
+
+  useEffect(() => {
     if (dateStart && dateEnd && dateStart > dateEnd) {
       setDateError('Ngày kết thúc không được trước ngày bắt đầu.')
     } else {
@@ -259,7 +267,7 @@ export default function SellerOrdersPage() {
   if (!isLoggedIn || user?.role !== 'user') return <Navigate to="/seller" replace />
   if (!application) return <Navigate to="/seller/onboarding" replace />
 
-  const isReadOnly = application.status === 'suspended' || application.status === 'banned'
+  const isReadOnly = application.status !== 'approved'
   const activeFilter = ORDER_FILTERS.some((filter) => filter.id === requestedStatus) ? requestedStatus : 'all'
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? null
   const filteredOrders = orders
@@ -280,6 +288,18 @@ export default function SellerOrdersPage() {
 
   const handleFilterChange = (filterId) => {
     setSearchParams(filterId === 'all' ? {} : { status: filterId })
+  }
+
+  const openOrderDetails = (orderId) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('order', orderId)
+    setSearchParams(nextParams, { replace: true })
+  }
+
+  const closeOrderDetails = () => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('order')
+    setSearchParams(nextParams, { replace: true })
   }
 
   const updateOrderStatus = (order, nextStatus) => {
@@ -307,10 +327,21 @@ export default function SellerOrdersPage() {
       return (
         <button
           type="button"
+          onClick={() => updateOrderStatus(order, 'confirmed')}
+          className="min-h-9 whitespace-nowrap rounded-lg bg-[#056F1C] px-3 text-xs font-semibold text-white hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2"
+        >
+          Xác nhận đơn
+        </button>
+      )
+    }
+    if (import.meta.env.DEV && order.status === 'confirmed') {
+      return (
+        <button
+          type="button"
           onClick={() => updateOrderStatus(order, 'shipping')}
           className="min-h-9 whitespace-nowrap rounded-lg bg-[#056F1C] px-3 text-xs font-semibold text-white hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2"
         >
-          Xác nhận &amp; bắt đầu giao
+          Báo đã giao
         </button>
       )
     }
@@ -336,26 +367,12 @@ export default function SellerOrdersPage() {
         </div>
         <OrderStatus order={order} />
       </div>
-      <div className="mt-4 border-t border-gray-100 pt-3">
-        <p className="text-sm font-semibold text-gray-900">{order.productName}</p>
-        <p className="mt-1 text-xs text-gray-500">
-          {order.buyer?.name || 'Chưa có người mua'} · {order.source === 'auction' ? 'Đấu giá' : 'Đơn thường'}
-        </p>
-      </div>
-      <div className="mt-3 flex flex-wrap justify-between gap-3 text-sm">
-        <span className="text-gray-500">Tiền hàng</span>
-        <span className="font-semibold text-gray-900">{formatVND(order.itemTotal)}</span>
-      </div>
-      <div className="mt-1 flex flex-wrap justify-between gap-3 text-xs">
-        <span className="text-gray-500">Phí vận chuyển</span>
-        <span className="text-gray-700">{formatVND(order.shippingFee)}</span>
-      </div>
-      <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs">
-        <span className="text-gray-500">{getDeadlineLabel(order)}: </span>
-        <span className={getDeadlineTone(order)}>{order.deadlineAt ? `${formatDate(order.deadlineAt)} · ${formatRemaining(order.deadlineAt)}` : '—'}</span>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-gray-100 pt-3">
+        <p className="min-w-0 truncate text-sm font-medium text-gray-800">{order.productName || 'Sản phẩm'}</p>
+        <p className="shrink-0 text-sm font-semibold text-gray-900">{formatVND(order.itemTotal)}</p>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <button type="button" onClick={() => setSelectedOrderId(order.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C]">
+        <button type="button" onClick={() => openOrderDetails(order.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C]">
           <Eye className="h-4 w-4" /> Chi tiết
         </button>
         {renderActions(order)}
@@ -455,20 +472,14 @@ export default function SellerOrdersPage() {
       ) : (
         <>
           <div className="mt-5 hidden overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm shadow-gray-900/[0.02] xl:block">
-            <p className="px-4 pt-3 text-xs text-gray-400">Bảng rộng — cuộn ngang để xem các cột còn lại.</p>
-            <table className="w-full min-w-[1350px] text-left text-sm">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-gray-50 text-xs text-gray-500">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">Mã đơn / Ngày</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Nguồn</th>
                   <th scope="col" className="px-3 py-3 font-medium">Sản phẩm</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Người mua</th>
                   <th scope="col" className="px-3 py-3 text-right font-medium">Tiền hàng</th>
-                  <th scope="col" className="px-3 py-3 text-right font-medium">Phí ship</th>
                   <th scope="col" className="px-3 py-3 font-medium">Trạng thái</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Hạn xử lý</th>
                   <th scope="col" className="px-3 py-3 font-medium">Hành động</th>
-                  <th scope="col" className="px-3 py-3 font-medium">Chi tiết</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -478,27 +489,18 @@ export default function SellerOrdersPage() {
                       <p className="max-w-40 break-all font-semibold text-gray-900">{order.id}</p>
                       <p className="mt-1 whitespace-nowrap text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                     </td>
-                    <td className="px-3 py-3 text-xs text-gray-600">{order.source === 'auction' ? 'Đấu giá' : 'Đơn thường'}</td>
                     <td className="max-w-48 px-3 py-3">
                       <p className="line-clamp-2 font-medium text-gray-800">{order.productName}</p>
-                      <p className="mt-1 text-xs text-gray-500">SL: {order.items?.[0]?.quantity ?? 1}</p>
-                    </td>
-                    <td className="px-3 py-3">
-                      <p className="whitespace-nowrap font-medium text-gray-800">{order.buyer?.name || '—'}</p>
-                      <p className="mt-1 text-xs text-gray-500">{order.buyer?.phone || '—'}</p>
                     </td>
                     <td className="whitespace-nowrap px-3 py-3 text-right font-medium text-gray-800">{formatVND(order.itemTotal)}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-right text-gray-700">{formatVND(order.shippingFee)}</td>
                     <td className="px-3 py-3"><OrderStatus order={order} /></td>
                     <td className="px-3 py-3">
-                      <p className="whitespace-nowrap text-xs text-gray-500">{getDeadlineLabel(order)}</p>
-                      <p className={`mt-1 whitespace-nowrap text-xs ${getDeadlineTone(order)}`}>{order.deadlineAt ? formatRemaining(order.deadlineAt) : '—'}</p>
-                    </td>
-                    <td className="px-3 py-3">{renderActions(order)}</td>
-                    <td className="px-3 py-3">
-                      <button type="button" onClick={() => setSelectedOrderId(order.id)} className="min-h-9 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C]">
-                        Chi tiết
-                      </button>
+                      <div className="flex min-w-48 flex-wrap items-center gap-2">
+                        {renderActions(order)}
+                        <button type="button" onClick={() => openOrderDetails(order.id)} className="min-h-9 rounded-lg border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C]">
+                          Chi tiết
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -512,10 +514,10 @@ export default function SellerOrdersPage() {
       )}
 
       <p className="mt-4 text-xs leading-5 text-gray-500">
-        Seller xác nhận đơn và bắt đầu giao trong một bước. Khi đơn đang giao, chờ người mua xác nhận đã nhận hàng; đơn hoàn thành/đã hủy chỉ xem. Không có thao tác hủy đơn thường.
+        Đơn thường đi theo luồng chờ xác nhận → chờ báo giao → đang giao. Khi đơn đang giao, chờ người mua xác nhận đã nhận hàng; đơn hoàn thành/đã hủy chỉ xem. Không có thao tác hủy đơn thường.
       </p>
 
-      {selectedOrder && <OrderDetailsDialog order={selectedOrder} onClose={() => setSelectedOrderId('')} />}
+      {selectedOrder && <OrderDetailsDialog order={selectedOrder} onClose={closeOrderDetails} />}
       <Link to="/seller/dashboard" className="mt-3 inline-flex text-sm font-semibold text-[#056F1C] hover:underline">Quay lại tổng quan</Link>
     </div>
   )

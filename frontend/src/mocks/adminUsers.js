@@ -6,7 +6,6 @@ const MOCK_USER_DIRECTORY_DETAILS = {
   usr_001: { joinedAt: '2025-06-12T09:20:00.000Z', completedOrders: 8, reportWarnings: 0 },
   usr_002: { joinedAt: '2025-08-01T14:10:00.000Z', completedOrders: 3, reportWarnings: 1 },
   usr_google_001: { joinedAt: '2025-11-16T06:45:00.000Z', completedOrders: 0, reportWarnings: 0 },
-  mod_001: { joinedAt: '2025-01-10T08:00:00.000Z', completedOrders: null, reportWarnings: null },
   adm_001: { joinedAt: '2025-01-01T08:00:00.000Z', completedOrders: null, reportWarnings: null },
 }
 
@@ -49,7 +48,7 @@ export function getAdminUserDirectory(currentUserId, currentUser = null) {
       isCurrentUser: account.id === currentUserId,
     }
   }).sort((left, right) => {
-    const roleOrder = { user: 0, mod: 1, admin: 2 }
+    const roleOrder = { user: 0, admin: 1 }
     return roleOrder[left.role] - roleOrder[right.role] || left.name.localeCompare(right.name, 'vi')
   })
 }

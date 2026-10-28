@@ -1,3 +1,5 @@
+import { getSellerApplication } from '@/mocks/seller'
+
 const PRODUCT_CATALOG = [
   { id: 'demo-headphones', name: 'Tai nghe không dây AirBeat', stock: 18 },
   { id: 'demo-keyboard', name: 'Bàn phím cơ Nova 75', stock: 7 },
@@ -21,6 +23,7 @@ const ORDER_ITEMS = [
 const COMMISSION_RATE = 0.05
 const ORDER_CONFIG_SNAPSHOT = {
   confirmHours: 48,
+  dispatchHours: 24,
   autoCompleteDays: 3,
 }
 const SELLER_ORDER_OVERRIDES_KEY = 'navishop.mockSeller.orderOverrides'
@@ -47,25 +50,44 @@ function createOrder(id, status, createdAt, itemIndex, options = {}) {
     : item
   const commission = source === 'auction' ? 0 : Math.round(item.merchandiseTotal * COMMISSION_RATE)
   const shippingAt = options.shippingAt ?? null
-  const deadlineDuration = status === 'pending_confirm'
-    ? ORDER_CONFIG_SNAPSHOT.confirmHours * 60 * 60 * 1000
-    : status === 'shipping' && source === 'normal'
-      ? ORDER_CONFIG_SNAPSHOT.autoCompleteDays * 24 * 60 * 60 * 1000
-      : 0
-  const derivedDeadline = deadlineDuration
-    ? new Date(((status === 'shipping' ? shippingAt : null)
-      ? new Date(shippingAt)
-      : createdAt).getTime() + deadlineDuration)
-    : null
   const completedAt = status === 'completed' ? options.completedAt ?? createdAt : null
   const inferredShippingAt = shippingAt
-    ?? (status === 'completed' ? new Date(createdAt.getTime() + 6 * 60 * 60 * 1000) : null)
+    ?? (status === 'completed' ? new Date(completedAt.getTime() - 30 * 60 * 1000) : null)
+  const confirmedAt = options.confirmedAt
+    ?? (source === 'normal' && status === 'confirmed'
+      ? new Date(createdAt.getTime() + 15 * 60 * 1000)
+      : source === 'normal' && inferredShippingAt
+        ? new Date(new Date(inferredShippingAt).getTime() - 15 * 60 * 1000)
+        : null)
+  const deadlineDuration = status === 'pending_confirm'
+    ? ORDER_CONFIG_SNAPSHOT.confirmHours * 60 * 60 * 1000
+    : status === 'confirmed'
+      ? ORDER_CONFIG_SNAPSHOT.dispatchHours * 60 * 60 * 1000
+      : status === 'shipping' && source === 'normal'
+        ? ORDER_CONFIG_SNAPSHOT.autoCompleteDays * 24 * 60 * 60 * 1000
+        : 0
+  const deadlineBase = status === 'confirmed'
+    ? confirmedAt
+    : status === 'shipping'
+      ? inferredShippingAt
+      : createdAt
+  const derivedDeadline = deadlineDuration
+    ? new Date(new Date(deadlineBase).getTime() + deadlineDuration)
+    : null
   const statusHistory = [{
     status: source === 'auction' ? 'auction_won' : 'pending_confirm',
     at: createdAt.toISOString(),
     actor: 'Người mua',
     note: source === 'auction' ? 'Đơn được tạo từ giao dịch đấu giá.' : 'Người mua đặt hàng.',
   }]
+  if (confirmedAt) {
+    statusHistory.push({
+      status: 'confirmed',
+      at: new Date(confirmedAt).toISOString(),
+      actor: options.confirmedBy ?? 'Chủ shop',
+      note: 'Shop xác nhận đơn hàng.',
+    })
+  }
   if (inferredShippingAt) {
     statusHistory.push({
       status: 'shipping',
@@ -134,17 +156,13 @@ function applySellerOrderOverrides(userId, orders) {
   return orders.map((order) => {
     const override = overrides[order.id]
     if (!override) return order
-    const statusHistory = (override.statusHistory ?? order.statusHistory)
-      .filter((entry) => entry.status !== 'confirmed')
-    if (override.status !== 'confirmed') return { ...order, ...override, statusHistory }
-
     return {
       ...order,
       ...override,
-      status: 'pending_confirm',
-      shippingAt: null,
-      deadlineAt: new Date(new Date(order.createdAt).getTime() + ORDER_CONFIG_SNAPSHOT.confirmHours * 60 * 60 * 1000).toISOString(),
-      statusHistory,
+      deadlineAt: override.status === 'confirmed' && !override.deadlineAt
+        ? new Date(new Date(order.createdAt).getTime() + ORDER_CONFIG_SNAPSHOT.dispatchHours * 60 * 60 * 1000).toISOString()
+        : override.deadlineAt ?? order.deadlineAt,
+      statusHistory: override.statusHistory ?? order.statusHistory,
     }
   })
 }
@@ -164,13 +182,21 @@ export function getSellerDashboardMock(userId, shopSlug, now = new Date()) {
   }
 
   const completedOffsets = [0, -1, -2, -4, -7, -10, -14, -18, -23, -31, -38, -49]
-  const orders = completedOffsets.map((offset, index) => createOrder(
-    `DEMO-${String(index + 1).padStart(4, '0')}`,
-    'completed',
-    dateAtOffset(now, offset, 9 + (index % 8), (index % 4) * 15),
-    index,
-    { completedAt: dateAtOffset(now, offset, 12 + (index % 6), (index % 4) * 15) },
-  ))
+  const orders = completedOffsets.map((offset, index) => {
+    const createdAt = offset === 0
+      ? new Date(now.getTime() - 2 * 60 * 60 * 1000)
+      : dateAtOffset(now, offset, 9 + (index % 8), (index % 4) * 15)
+    const completedAt = offset === 0
+      ? new Date(now.getTime() - 60 * 60 * 1000)
+      : new Date(createdAt.getTime() + 8 * 60 * 60 * 1000)
+    return createOrder(
+      `DEMO-${String(index + 1).padStart(4, '0')}`,
+      'completed',
+      createdAt,
+      index,
+      { completedAt },
+    )
+  })
 
   orders.push(
     createOrder(
@@ -190,14 +216,28 @@ export function getSellerDashboardMock(userId, shopSlug, now = new Date()) {
       'shipping',
       new Date(now.getTime() - 8 * 60 * 60 * 1000),
       1,
-      { shippingAt: new Date(now.getTime() - 8 * 60 * 60 * 1000) },
+      { shippingAt: new Date(now.getTime() - 7 * 60 * 60 * 1000) },
+    ),
+    createOrder(
+      'DEMO-READY-01',
+      'confirmed',
+      new Date(now.getTime() - 18 * 60 * 60 * 1000),
+      3,
+      { confirmedAt: new Date(now.getTime() - 17.5 * 60 * 60 * 1000) },
+    ),
+    createOrder(
+      'DEMO-READY-02',
+      'confirmed',
+      new Date(now.getTime() - 2 * 60 * 60 * 1000),
+      1,
+      { confirmedAt: new Date(now.getTime() - 1.5 * 60 * 60 * 1000) },
     ),
     createOrder(
       'DEMO-OPEN-04',
       'shipping',
       new Date(now.getTime() - 28 * 60 * 60 * 1000),
       3,
-      { shippingAt: new Date(now.getTime() - 28 * 60 * 60 * 1000) },
+      { shippingAt: new Date(now.getTime() - 27 * 60 * 60 * 1000) },
     ),
     createOrder(
       'DEMO-SHIPPING-01',
@@ -205,7 +245,7 @@ export function getSellerDashboardMock(userId, shopSlug, now = new Date()) {
       new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
       4,
       {
-        shippingAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+        shippingAt: new Date(now.getTime() - 47 * 60 * 60 * 1000),
       },
     ),
     createOrder(
@@ -215,7 +255,7 @@ export function getSellerDashboardMock(userId, shopSlug, now = new Date()) {
       5,
       {
         source: 'auction',
-        shippingAt: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+        shippingAt: new Date(now.getTime() - 23 * 60 * 60 * 1000),
         buyerName: 'Đỗ Thanh Tùng',
         deliveryAddress: '52 Lê Lợi, Phường Bến Thành, TP. Hồ Chí Minh',
       },
@@ -225,7 +265,7 @@ export function getSellerDashboardMock(userId, shopSlug, now = new Date()) {
   const resolvedOrders = applySellerOrderOverrides(userId, orders)
   const completedOrders = resolvedOrders.filter((order) => order.status === 'completed')
   const escrow = resolvedOrders
-    .filter((order) => ['pending_confirm', 'shipping'].includes(order.status))
+    .filter((order) => ['pending_confirm', 'confirmed', 'shipping'].includes(order.status))
     .reduce((total, order) => total + order.itemTotal + order.shippingFee, 0)
 
   return {
@@ -303,13 +343,21 @@ export function transitionSellerOrder(userId, shopSlug, orderId, nextStatus, act
   if (!userId || !shopSlug || !orderId) {
     throw new Error('Thiếu thông tin shop hoặc đơn hàng để cập nhật trạng thái.')
   }
+  const application = getSellerApplication(userId)
+  if (application && application.status !== 'approved') {
+    throw new Error('Shop không hoạt động; không thể cập nhật đơn hàng.')
+  }
   const order = getSellerDashboardMock(userId, shopSlug, now).orders.find((item) => item.id === orderId)
   if (!order) throw new Error('Không tìm thấy đơn hàng trong dữ liệu mock của shop.')
   if (order.source === 'auction') {
     throw new Error('Đơn đấu giá không dùng hành động cập nhật trạng thái của đơn thường.')
   }
 
-  if (order.status !== 'pending_confirm' || nextStatus !== 'shipping') {
+  const allowedNextStatus = {
+    pending_confirm: 'confirmed',
+    confirmed: 'shipping',
+  }[order.status]
+  if (nextStatus !== allowedNextStatus) {
     throw new Error(`Không thể chuyển đơn từ "${order.status}" sang "${nextStatus}". Tải lại danh sách để kiểm tra trạng thái mới nhất.`)
   }
 
@@ -320,16 +368,19 @@ export function transitionSellerOrder(userId, shopSlug, orderId, nextStatus, act
       status: nextStatus,
       at: timestamp,
       actor,
-      note: 'Shop xác nhận đơn và bắt đầu giao hàng.',
+      note: nextStatus === 'confirmed' ? 'Shop xác nhận đơn hàng.' : 'Shop báo đã giao cho đơn vị vận chuyển.',
     },
   ]
   const override = {
     ...order,
     status: nextStatus,
-    shippingAt: timestamp,
-    deadlineAt: order.deadlineSnapshot
-      ? new Date(now.getTime() + order.deadlineSnapshot.autoCompleteDays * 24 * 60 * 60 * 1000).toISOString()
-      : null,
+    confirmedAt: nextStatus === 'confirmed' ? timestamp : order.confirmedAt,
+    shippingAt: nextStatus === 'shipping' ? timestamp : null,
+    deadlineAt: nextStatus === 'confirmed'
+      ? new Date(now.getTime() + ORDER_CONFIG_SNAPSHOT.dispatchHours * 60 * 60 * 1000).toISOString()
+      : order.deadlineSnapshot
+        ? new Date(now.getTime() + order.deadlineSnapshot.autoCompleteDays * 24 * 60 * 60 * 1000).toISOString()
+        : null,
     statusHistory,
   }
   saveSellerOrderOverride(userId, orderId, override)

@@ -9,7 +9,7 @@ export default function RequireSeller() {
   if (user?.role !== 'user') return <Navigate to="/seller" replace />
 
   const status = getSellerStatus(user.id)
-  if (!['approved', 'suspended', 'banned'].includes(status)) {
+  if (!['approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(status)) {
     return <Navigate to={getSellerHome(user.id)} replace />
   }
   return <Outlet />

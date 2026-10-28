@@ -179,9 +179,9 @@ export default function SellerProductsPage() {
   const application = getSellerApplication(user.id)
   if (!application) return <Navigate to="/seller/onboarding" replace />
   if (application.status === 'pending') return <Navigate to="/seller/pending" replace />
-  if (!['approved', 'suspended', 'banned'].includes(application.status)) return <Navigate to="/seller/onboarding" replace />
+  if (!['approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(application.status)) return <Navigate to="/seller/onboarding" replace />
 
-  const isReadOnly = application.status === 'suspended' || application.status === 'banned'
+  const isReadOnly = application.status !== 'approved'
   const stockFilter = searchParams.get('stock') || ''
   const statusFilter = searchParams.get('status') || ''
   const availableCategories = [...new Set(products.map((product) => product.category).filter(Boolean))]

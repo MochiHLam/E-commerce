@@ -12,7 +12,7 @@ export default function SellerPendingPage() {
   if (isLoggedIn && user?.role !== 'user') return <Navigate to="/seller" replace />
   if (!application) return <Navigate to="/seller/onboarding" replace />
   if (application.status === 'draft') return <Navigate to="/seller/onboarding" replace />
-  if (['approved', 'suspended', 'banned'].includes(application.status)) return <Navigate to="/seller/dashboard" replace />
+  if (['approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(application.status)) return <Navigate to="/seller/dashboard" replace />
   if (!['pending', 'rejected'].includes(application.status)) return <Navigate to="/seller/onboarding" replace />
 
   const isRejected = application.status === 'rejected'

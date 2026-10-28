@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ArrowRight,
   BadgeCheck,
   Ban,
   Clock3,
@@ -51,30 +50,17 @@ function getCategoryName(categoryId) {
 }
 
 function getReviewItems(applications, tab) {
-  return applications.flatMap((application) => {
-    const hasInformationUpdate = Boolean(application.pendingInformationUpdate)
-    const updateMatches = tab === 'pending' && hasInformationUpdate && application.status !== 'pending'
-    const data = updateMatches ? application.pendingInformationUpdate : application
-    const registrationMatches = tab === 'pending'
+  return applications
+    .filter((application) => tab === 'pending'
       ? application.status === 'pending'
       : tab === 'locked'
         ? ['suspended', 'banned'].includes(application.status)
-        : (tab === 'approved' || tab === 'rejected') && application.status === tab
-    const items = []
-
-    if (registrationMatches || updateMatches) {
-      items.push({
-        ...application,
-        ...data,
-        reviewType: updateMatches ? 'information-update' : 'registration',
-        currentInformation: updateMatches ? application : null,
-        requestSubmittedAt: updateMatches ? data.submittedAt : application.submittedAt,
-        reviewItemId: `${application.userId}-${updateMatches ? 'information-update' : 'registration'}-${updateMatches ? data.submittedAt : application.submittedAt}`,
-      })
-    }
-
-    return items
-  })
+        : (tab === 'approved' || tab === 'rejected') && application.status === tab)
+    .map((application) => ({
+      ...application,
+      requestSubmittedAt: application.submittedAt,
+      reviewItemId: `${application.userId}-${application.submittedAt}`,
+    }))
 }
 
 function formatFieldValue(field, value) {
@@ -171,7 +157,6 @@ export default function SellerApplicationsReviewPage() {
     return sortRows(filtered, sortState, (application, key) => {
       if (key === 'category') return getCategoryName(application.categoryId)
       if (key === 'requestSubmittedAt') return application.requestSubmittedAt ? new Date(application.requestSubmittedAt).getTime() : null
-      if (key === 'reviewType') return application.reviewType === 'information-update' ? 'Cập nhật thông tin shop' : 'Đăng ký shop'
       return application[key] ?? null
     })
   }, [categoryFilter, search, selectedTab, sortState, submittedAfter, submittedBefore, tabItems])
@@ -233,7 +218,6 @@ export default function SellerApplicationsReviewPage() {
     setIsSubmitting(true)
     try {
       reviewSellerApplication(application.userId, status, reviewNote, {
-        reviewType: application.reviewType,
         submittedAt: application.requestSubmittedAt,
       })
       const nextApplications = getSellerApplications()
@@ -242,12 +226,8 @@ export default function SellerApplicationsReviewPage() {
       setSelectedApplication(null)
       setReviewNote('')
       setSuccess(status === 'approved'
-        ? application.reviewType === 'information-update'
-          ? `Đã duyệt thay đổi thông tin shop ${application.shopName}.`
-          : `Đã duyệt shop ${application.shopName}.`
-        : application.reviewType === 'information-update'
-          ? `Đã từ chối yêu cầu thay đổi thông tin shop ${application.shopName}. Thông tin hiện hành được giữ nguyên.`
-          : `Đã từ chối hồ sơ ${application.shopName}; lý do đã được lưu để người đăng ký xem.`)
+        ? `Đã duyệt shop ${application.shopName}.`
+        : `Đã từ chối hồ sơ ${application.shopName}; lý do đã được lưu để người đăng ký xem.`)
     } catch (reviewError) {
       setError(reviewError instanceof Error ? reviewError.message : 'Không thể cập nhật hồ sơ.')
       setApplications(getSellerApplications())
@@ -414,7 +394,7 @@ export default function SellerApplicationsReviewPage() {
                 ? 'Thử thay đổi từ khóa hoặc bộ lọc danh mục/ngày gửi.'
                 : selectedTab === 'locked'
                   ? 'Các shop đang tạm khóa hoặc đã khóa sẽ xuất hiện tại đây.'
-                  : 'Hồ sơ mới sẽ xuất hiện sau khi người bán gửi đăng ký hoặc yêu cầu cập nhật.'}
+                  : 'Hồ sơ mới sẽ xuất hiện sau khi người bán gửi đăng ký.'}
             </p>
           </div>
         ) : (
@@ -428,7 +408,6 @@ export default function SellerApplicationsReviewPage() {
                       <SortableTableHeader className="px-4 py-3 font-semibold" label="Người đại diện" onSort={() => { setSortState((current) => toggleSort(current, 'contactName')); setCurrentPage(1) }} sortKey="contactName" sortState={sortState} />
                       <SortableTableHeader className="px-4 py-3 font-semibold" label="Danh mục" onSort={() => { setSortState((current) => toggleSort(current, 'category')); setCurrentPage(1) }} sortKey="category" sortState={sortState} />
                       <SortableTableHeader className="px-4 py-3 font-semibold" label="Ngày gửi" onSort={() => { setSortState((current) => toggleSort(current, 'requestSubmittedAt')); setCurrentPage(1) }} sortKey="requestSubmittedAt" sortState={sortState} />
-                      <SortableTableHeader className="px-4 py-3 font-semibold" label="Loại hồ sơ" onSort={() => { setSortState((current) => toggleSort(current, 'reviewType')); setCurrentPage(1) }} sortKey="reviewType" sortState={sortState} />
                       <th scope="col" className="px-4 py-3 font-semibold">Hành động</th>
                     </tr>
                   </thead>
@@ -444,15 +423,6 @@ export default function SellerApplicationsReviewPage() {
                         <td className="px-4 py-4 text-gray-700">{application.contactName || '—'}</td>
                         <td className="px-4 py-4 text-gray-700">{getCategoryName(application.categoryId)}</td>
                         <td className="px-4 py-4 text-gray-600">{formatDate(application.requestSubmittedAt)}</td>
-                        <td className="px-4 py-4">
-                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            application.reviewType === 'information-update'
-                              ? 'bg-blue-50 text-blue-800'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {application.reviewType === 'information-update' ? 'Cập nhật thông tin shop' : 'Đăng ký shop'}
-                          </span>
-                        </td>
                         <td className="px-4 py-4">
                           <button type="button" onClick={() => openApplication(application)} className="min-h-9 rounded-lg px-3 text-sm font-semibold text-[#056F1C] hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C]">
                             Xem hồ sơ
@@ -473,11 +443,6 @@ export default function SellerApplicationsReviewPage() {
                       <h2 className="break-words font-semibold text-gray-900">{application.shopName || '—'}</h2>
                       <p className="mt-1 break-words text-xs text-gray-500">{application.email || '—'}</p>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      application.reviewType === 'information-update' ? 'bg-blue-50 text-blue-800' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {application.reviewType === 'information-update' ? 'Cập nhật thông tin shop' : 'Đăng ký shop'}
-                    </span>
                   </div>
                   <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
                     <div><dt className="text-gray-500">Người đại diện</dt><dd className="mt-1 break-words font-medium text-gray-800">{application.contactName || '—'}</dd></div>
@@ -513,20 +478,16 @@ export default function SellerApplicationsReviewPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="seller-application-title"
-            className={`my-auto max-h-[calc(100dvh-1.5rem)] w-full ${
-              selectedApplication.reviewType === 'information-update' ? 'max-w-6xl' : 'max-w-3xl'
-            } overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:max-h-[calc(100dvh-2.5rem)] sm:p-7`}
+            className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:max-h-[calc(100dvh-2.5rem)] sm:p-7"
           >
             <header className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[#056F1C]">
-                  {selectedApplication.reviewType === 'information-update'
-                    ? 'Yêu cầu cập nhật thông tin'
-                    : selectedApplication.status === 'suspended'
-                      ? 'Shop đã tạm khóa'
-                      : selectedApplication.status === 'banned'
-                        ? 'Shop đã khóa'
-                        : `Hồ sơ ${selectedApplication.status === 'pending' ? 'chờ duyệt' : selectedApplication.status === 'approved' ? 'đã duyệt' : 'bị từ chối'}`}
+                  {selectedApplication.status === 'suspended'
+                    ? 'Shop đã tạm khóa'
+                    : selectedApplication.status === 'banned'
+                      ? 'Shop đã khóa'
+                      : `Hồ sơ ${selectedApplication.status === 'pending' ? 'chờ duyệt' : selectedApplication.status === 'approved' ? 'đã duyệt' : 'bị từ chối'}`}
                 </p>
                 <h2 id="seller-application-title" className="mt-1 break-words text-xl font-bold text-gray-900">{selectedApplication.shopName}</h2>
               </div>
@@ -541,77 +502,23 @@ export default function SellerApplicationsReviewPage() {
               </button>
             </header>
 
-            {selectedApplication.reviewType === 'information-update' && (
-              <div className="mt-5">
-                <p className="font-semibold text-blue-950">Đối chiếu yêu cầu cập nhật</p>
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  {selectedApplication.currentInformation
-                    ? 'Thông tin hiện hành chỉ thay đổi sau khi admin duyệt yêu cầu này.'
-                    : 'Hồ sơ cũ không được lưu trong dữ liệu lịch sử; hồ sơ mới là thông tin tại thời điểm ghi nhận quyết định.'}
-                </p>
-                <div className="mt-4 grid items-stretch gap-4 text-sm lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-                  <section className="min-w-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-                    <h3 className="font-semibold text-gray-900">Hồ sơ cũ</h3>
-                    <dl className="mt-3 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                      {REVIEW_FIELDS.map(([field, label]) => (
-                        <div key={field} className={field === 'description' || field === 'pickupAddress' ? 'sm:col-span-2' : ''}>
-                          <dt className="text-xs text-gray-500">{label}</dt>
-                          <dd className="mt-1 break-words whitespace-pre-wrap font-medium leading-6 text-gray-900">
-                            {formatFieldValue(field, selectedApplication.currentInformation?.[field] ?? selectedApplication[field])}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
-                  <div className="flex items-center justify-center" aria-label="Hồ sơ cũ chuyển thành hồ sơ mới">
-                    <ArrowRight className="h-6 w-6 rotate-90 text-[#056F1C] lg:rotate-0" aria-hidden="true" />
-                  </div>
-                  <section className="min-w-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-                    <h3 className="font-semibold text-gray-900">Hồ sơ mới</h3>
-                    <dl className="mt-3 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                      {REVIEW_FIELDS.map(([field, label]) => (
-                        <div key={field} className={field === 'description' || field === 'pickupAddress' ? 'sm:col-span-2' : ''}>
-                          <dt className="text-xs text-gray-500">{label}</dt>
-                          <dd className="mt-1 break-words whitespace-pre-wrap font-medium leading-6 text-gray-900">
-                            {formatFieldValue(field, selectedApplication[field])}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
-                </div>
-              </div>
-            )}
-
             <div className="mt-5">
-              {selectedApplication.reviewType !== 'information-update' && (
-                <>
-                  <h3 className="font-semibold text-gray-900">Thông tin cần xem xét</h3>
-                  <dl className="mt-3 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
-                    {REVIEW_FIELDS.map(([field, label]) => (
-                      <div key={field} className={field === 'description' || field === 'pickupAddress' ? 'sm:col-span-2' : ''}>
-                        <dt className="text-gray-500">{label}</dt>
-                        <dd className="mt-1 break-words whitespace-pre-wrap font-medium leading-6 text-gray-900">
-                          {formatFieldValue(field, selectedApplication[field])}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </>
-              )}
+              <h3 className="font-semibold text-gray-900">Thông tin hồ sơ</h3>
+              <dl className="mt-3 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
+                {REVIEW_FIELDS.map(([field, label]) => (
+                  <div key={field} className={field === 'description' || field === 'pickupAddress' ? 'sm:col-span-2' : ''}>
+                    <dt className="text-gray-500">{label}</dt>
+                    <dd className="mt-1 break-words whitespace-pre-wrap font-medium leading-6 text-gray-900">
+                      {formatFieldValue(field, selectedApplication[field])}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
               <dl className="mt-3 grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-gray-500">Ngày gửi yêu cầu</dt>
                   <dd className="mt-1 font-medium text-gray-900">{formatDate(selectedApplication.requestSubmittedAt)}</dd>
                 </div>
-                {selectedApplication.reviewType === 'information-update' && (
-                  <div>
-                    <dt className="text-gray-500">Trạng thái shop</dt>
-                    <dd className={`mt-1 font-medium ${selectedApplication.status === 'suspended' ? 'text-red-700' : 'text-green-800'}`}>
-                      {selectedApplication.status === 'suspended' ? 'Shop đang tạm khóa' : 'Shop vẫn hoạt động với thông tin hiện tại'}
-                    </dd>
-                  </div>
-                )}
                 {['suspended', 'banned'].includes(selectedApplication.status) && (
                   <div>
                     <dt className="text-gray-500">Lý do khóa</dt>
@@ -679,13 +586,12 @@ export default function SellerApplicationsReviewPage() {
                     className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#056F1C] px-4 text-sm font-semibold text-white hover:bg-[#045517] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#056F1C] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <BadgeCheck className="h-4 w-4" aria-hidden="true" />
-                    {isSubmitting ? 'Đang gửi…' : selectedApplication.reviewType === 'information-update' ? 'Duyệt thay đổi' : 'Duyệt shop'}
+                    {isSubmitting ? 'Đang gửi…' : 'Duyệt shop'}
                   </button>
                 </div>
               </div>
             )}
             {['approved', 'locked'].includes(selectedTab)
-              && selectedApplication.reviewType !== 'information-update'
               && ['approved', 'suspended'].includes(selectedApplication.status) && (
                 <div className="mt-5 border-t border-gray-100 pt-5">
                   <label htmlFor={`shop-status-note-${selectedApplication.userId}`} className="mb-1.5 block text-sm font-medium text-gray-700">
@@ -818,18 +724,14 @@ export default function SellerApplicationsReviewPage() {
                   )}
                   <span className={pendingDecision.status === 'approved' ? 'whitespace-nowrap' : ''}>
                     {pendingDecision.status === 'approved'
-                      ? pendingDecision.application.reviewType === 'information-update' ? 'Xác nhận duyệt thay đổi' : 'Xác nhận duyệt hồ sơ shop'
-                      : pendingDecision.application.reviewType === 'information-update' ? 'Xác nhận từ chối thay đổi' : 'Xác nhận từ chối hồ sơ shop'}
+                      ? 'Xác nhận duyệt hồ sơ shop'
+                      : 'Xác nhận từ chối hồ sơ shop'}
                   </span>
                 </h2>
                 <p id="seller-decision-confirmation-description" className="mt-2 text-sm leading-6 text-gray-600">
                   {pendingDecision.status === 'approved'
-                    ? pendingDecision.application.reviewType === 'information-update'
-                      ? <>Thông tin đề xuất của shop <strong className="text-gray-900">{pendingDecision.application.shopName}</strong> sẽ được áp dụng sau khi duyệt.</>
-                      : <>Shop <strong className="text-gray-900">{pendingDecision.application.shopName}</strong> sẽ được chuyển sang trạng thái đã duyệt.</>
-                    : pendingDecision.application.reviewType === 'information-update'
-                      ? <>Yêu cầu cập nhật của shop <strong className="text-gray-900">{pendingDecision.application.shopName}</strong> sẽ bị từ chối. Thông tin hiện hành được giữ nguyên.</>
-                      : <>Hồ sơ shop <strong className="text-gray-900">{pendingDecision.application.shopName}</strong> sẽ bị từ chối. Người đăng ký sẽ thấy lý do bên dưới.</>}
+                    ? <>Shop <strong className="text-gray-900">{pendingDecision.application.shopName}</strong> sẽ được chuyển sang trạng thái đã duyệt.</>
+                    : <>Hồ sơ shop <strong className="text-gray-900">{pendingDecision.application.shopName}</strong> sẽ bị từ chối. Người đăng ký sẽ thấy lý do bên dưới.</>}
                 </p>
                 {pendingDecision.status === 'rejected' && (
                   <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm leading-5 text-red-800">

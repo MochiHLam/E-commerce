@@ -3,6 +3,7 @@ import { parseFilters } from '@/lib/searchFilters'
 import { searchProducts } from '@/services/searchProducts'
 
 export default function useProductSearch(queryString) {
+  const [availabilityVersion, setAvailabilityVersion] = useState(0)
   const [state, setState] = useState({
     loading: true,
     error: '',
@@ -13,6 +14,19 @@ export default function useProductSearch(queryString) {
     categories: [],
     shops: [],
   })
+
+  useEffect(() => {
+    const refresh = (event) => {
+      if (event?.key && event.key !== 'navishop.mockSeller.applications') return
+      setAvailabilityVersion((version) => version + 1)
+    }
+    window.addEventListener('navishop:seller-application-updated', refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener('navishop:seller-application-updated', refresh)
+      window.removeEventListener('storage', refresh)
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -37,7 +51,7 @@ export default function useProductSearch(queryString) {
     return () => {
       cancelled = true
     }
-  }, [queryString])
+  }, [availabilityVersion, queryString])
 
   return state
 }

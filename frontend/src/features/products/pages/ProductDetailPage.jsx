@@ -13,6 +13,8 @@ import { getCheckoutMockOrders, getOrderItems, MOCK_ORDERS } from '@/mocks/accou
 import { getMockProductReviews, getProductDetailMock, saveMockProductReview } from '@/mocks/productDetails'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
 import { PRODUCTS } from '@/mocks/products'
+import { compressReportEvidence, createAdminReport } from '@/mocks/adminModeration'
+import useShopAvailability from '@/hooks/useShopAvailability'
 
 const RATINGS = [5, 4, 3, 2, 1]
 const REVIEWS_PER_PAGE = 8
@@ -92,6 +94,7 @@ export default function ProductDetailPage() {
   const { user, isLoggedIn } = useAuth()
   const { items: cartItems, addToCart } = useCart()
   const product = PRODUCTS.find((item) => item.id === id)
+  const shopIsActive = useShopAvailability(product?.shopSlug)
   const [savedReviews, setSavedReviews] = useState(() => getMockProductReviews())
   const detail = useMemo(
     () => (product ? getProductDetailMock(product, savedReviews) : null),
@@ -128,6 +131,7 @@ export default function ProductDetailPage() {
   const [reportValidationErrors, setReportValidationErrors] = useState({})
   const [reportImages, setReportImages] = useState([])
   const [reportSubmitted, setReportSubmitted] = useState(false)
+  const [reportSubmissionError, setReportSubmissionError] = useState('')
   const [reviewFilter, setReviewFilter] = useState('all')
   const [reviewSort, setReviewSort] = useState('helpful')
   const [reviewPage, setReviewPage] = useState(1)
@@ -161,7 +165,8 @@ export default function ProductDetailPage() {
   }, [expandedReviewImage])
 
   const variant = detail?.variants.find((item) => item.id === selectedVariantId) ?? detail?.variants[0]
-  const shop = product ? MOCK_SHOPS.find((item) => item.slug === product.shopSlug) : null
+  const foundShop = product ? MOCK_SHOPS.find((item) => item.slug === product.shopSlug) : null
+  const shop = shopIsActive ? foundShop : null
   const shopProductCount = shop ? PRODUCTS.filter((item) => item.shopSlug === shop.slug).length : 0
   const cartQuantity = cartItems.find(
     (item) => item.id === product?.id && item.variantId === variant?.id,
@@ -237,6 +242,10 @@ export default function ProductDetailPage() {
   }
 
   const submitCartAction = (buyNow = false) => {
+    if (!shopIsActive) {
+      setNotice('Shop không còn hoạt động; sản phẩm không thể mua.')
+      return
+    }
     if (!variant) {
       setNotice(`Vui lòng chọn ${detail.optionLabel.toLocaleLowerCase('vi-VN')} trước khi tiếp tục.`)
       return
@@ -267,7 +276,10 @@ export default function ProductDetailPage() {
       navigate('/checkout', { state: { items: [checkoutItem] } })
       return
     }
-    addToCart(checkoutItem)
+    if (addToCart(checkoutItem) === false) {
+      setNotice('Shop không còn hoạt động; sản phẩm không thể thêm vào giỏ hàng.')
+      return
+    }
     setNotice('')
     setIsCartAddedPopupOpen(true)
   }
@@ -284,7 +296,7 @@ export default function ProductDetailPage() {
     gallery.scrollBy({ left: direction * gallery.clientWidth, behavior: 'smooth' })
   }
 
-  const submitReport = (event) => {
+  const submitReport = async (event) => {
     event.preventDefault()
     const errors = {}
     if (!reportReason) errors.reason = 'Vui lòng chọn lý do báo cáo.'
@@ -293,7 +305,40 @@ export default function ProductDetailPage() {
     }
     setReportValidationErrors(errors)
     if (Object.keys(errors).length) return
-    setReportSubmitted(true)
+    setReportSubmissionError('')
+    try {
+      const evidenceImages = await compressReportEvidence(reportImages)
+      const target = reportTarget.type === 'review'
+        ? {
+            type: 'review',
+            id: reportTarget.review.id,
+            label: reportTargetLabel,
+            owner: shop?.name ?? '',
+            shopId: product.shopSlug,
+            productId: product.id,
+            isHidden: reportTarget.review.isHidden === true,
+          }
+        : {
+            type: 'product',
+            id: product.id,
+            label: product.name,
+            owner: shop?.name ?? '',
+            shopId: product.shopSlug,
+            image: product.images?.[0] || product.image || '',
+          }
+      createAdminReport({
+        target,
+        reporterId: user.id,
+        reporterName: user.name,
+        reason: (REPORT_REASONS[reportTarget.type] ?? REPORT_REASONS.product)
+          .find(([value]) => value === reportReason)?.[1] ?? reportReason,
+        details: reportDetails,
+        evidenceImages,
+      })
+      setReportSubmitted(true)
+    } catch (submitError) {
+      setReportSubmissionError(submitError instanceof Error ? submitError.message : 'Không thể lưu báo cáo.')
+    }
   }
 
   const addReviewImages = (event) => {
@@ -373,6 +418,7 @@ export default function ProductDetailPage() {
     setReportValidationErrors({})
     setReportImages([])
     setReportSubmitted(false)
+    setReportSubmissionError('')
     setIsReportOpen(true)
   }
 
@@ -388,6 +434,18 @@ export default function ProductDetailPage() {
   const reportTargetLabel = reportTarget?.type === 'review'
     ? `Đánh giá của ${reportTarget.review.name}`
     : product?.name
+
+  if (!product || !shopIsActive) {
+    return (
+      <main className="flex flex-1 items-center justify-center bg-gray-50 px-4 py-16">
+        <section className="max-w-lg rounded-2xl border border-gray-200 bg-white p-6 text-center">
+          <h1 className="text-xl font-bold text-gray-900">{product ? 'Sản phẩm không còn khả dụng' : 'Không tìm thấy sản phẩm'}</h1>
+          <p className="mt-2 text-sm leading-6 text-gray-600">Shop hoặc sản phẩm này hiện không hoạt động và không thể mua.</p>
+          <Link to="/search" className="mt-4 inline-flex min-h-10 items-center rounded-lg bg-[#056F1C] px-4 text-sm font-semibold text-white">Quay lại mua sắm</Link>
+        </section>
+      </main>
+    )
+  }
 
   return (
     <main className="flex-1 bg-gray-50">
@@ -909,7 +967,7 @@ export default function ProductDetailPage() {
             </div>
             {reportSubmitted ? (
               <div role="status" className="mt-5 rounded-lg bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                Giao diện báo cáo đã ghi nhận lựa chọn của bạn trong phiên này. Báo cáo chưa được gửi lên máy chủ vì trang hiện đang dùng dữ liệu mock.
+                Báo cáo đã được ghi nhận trong dữ liệu mô phỏng. Khi case được đóng, NaviShop sẽ gửi thông báo cảm ơn bạn đã hỗ trợ giữ môi trường mua sắm an toàn.
               </div>
             ) : (
               <form onSubmit={submitReport} className="mt-5">
@@ -950,6 +1008,7 @@ export default function ProductDetailPage() {
                   detailsRequired={reportReason === 'other'}
                   detailsError={reportValidationErrors.details}
                 />
+                {reportSubmissionError && <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{reportSubmissionError}</p>}
                 <div className="mt-5 flex justify-end gap-2">
                   <button type="button" onClick={() => setIsReportOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Hủy</button>
                   <button type="submit" className="rounded-lg bg-[#056F1C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#045517]">Gửi báo cáo</button>

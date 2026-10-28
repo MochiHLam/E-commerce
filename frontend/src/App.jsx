@@ -32,20 +32,23 @@ import AdminFinancePage from '@/features/admin/pages/AdminFinancePage'
 import AdminQueuePage from '@/features/admin/pages/AdminQueuePage'
 import AdminSectionPage from '@/features/admin/pages/AdminSectionPage'
 import AdminUsersPage from '@/features/admin/pages/AdminUsersPage'
+import AdminShopsManagementPage from '@/features/admin/pages/AdminShopsManagementPage'
+import AdminCategoriesPage from '@/features/admin/pages/AdminCategoriesPage'
+import AdminCatalogProductsPage, {
+  AdminProductDetailPage,
+  AdminShopProductsPage,
+} from '@/features/admin/pages/AdminCatalogProductsPage'
+import AdminModerationPage from '@/features/admin/pages/AdminModerationPage'
 import SellerApplicationsReviewPage from '@/features/seller/pages/SellerApplicationsReviewPage'
-import ModeratorDashboardPage from '@/features/moderator/pages/ModeratorDashboardPage'
-import ModeratorSectionPage from '@/features/moderator/pages/ModeratorSectionPage'
 
 function FloatingChatRouteGate({ isLoggedIn, role }) {
   const { pathname } = useLocation()
   const isSellerRoute = pathname === '/seller' || pathname.startsWith('/seller/')
   const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/')
-  const isModeratorRoute = pathname === '/moderator' || pathname.startsWith('/moderator/')
-    || pathname === '/mod' || pathname.startsWith('/mod/')
   const isAuthRoute = ['/login', '/forgot-password', '/register'].some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   )
-  const isBuyerRoute = !isSellerRoute && !isAdminRoute && !isModeratorRoute && !isAuthRoute
+  const isBuyerRoute = !isSellerRoute && !isAdminRoute && !isAuthRoute
 
   return isLoggedIn && role === 'user' && (isSellerRoute || isBuyerRoute)
     ? <FloatingChatButton />
@@ -66,27 +69,18 @@ export default function App() {
           <Route path="/register/onboard" element={<AuthLayout><OnboardPage /></AuthLayout>} />
         </Route>
         <Route path="/admin" element={<RoleLoginPage role="admin" />} />
-        <Route path="/moderator" element={<RoleLoginPage role="mod" />} />
         <Route element={<RequireRole roles={['admin']} />}>
           <Route element={<StaffLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/seller-applications" element={<SellerApplicationsReviewPage />} />
-            <Route path="/admin/shops" element={<SellerApplicationsReviewPage />} />
+            <Route path="/admin/shops" element={<AdminShopsManagementPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/catalog" element={<AdminSectionPage title="Sản phẩm & danh mục" />} />
-            <Route path="/admin/moderation" element={<AdminSectionPage title="Báo cáo & kiểm duyệt" />} />
-            <Route
-              path="/admin/moderation/escalated"
-              element={(
-                <AdminQueuePage
-                  title="Case đã chuyển admin"
-                  description="Xem các ReportCase được moderator chuyển cấp để admin quyết định."
-                  source="Chưa có collection ReportCase mock toàn sàn để xác định case escalated. Danh sách sẽ hiển thị tại đây khi được tích hợp."
-                  backTo="/admin/moderation"
-                  backLabel="Mở khu vực kiểm duyệt"
-                />
-              )}
-            />
+            <Route path="/admin/catalog" element={<Navigate to="/admin/catalog/products" replace />} />
+            <Route path="/admin/catalog/products" element={<AdminCatalogProductsPage />} />
+            <Route path="/admin/catalog/products/:shopId" element={<AdminShopProductsPage />} />
+            <Route path="/admin/catalog/products/:shopId/:productId" element={<AdminProductDetailPage />} />
+            <Route path="/admin/catalog/categories" element={<AdminCategoriesPage />} />
+            <Route path="/admin/moderation" element={<AdminModerationPage />} />
             <Route path="/admin/auctions" element={<AdminSectionPage title="Quản lý đấu giá" />} />
             <Route
               path="/admin/auctions/items"
@@ -105,17 +99,6 @@ export default function App() {
             <Route path="/admin/finance" element={<AdminFinancePage />} />
           </Route>
         </Route>
-        <Route element={<RequireRole roles={['mod']} />}>
-          <Route element={<StaffLayout role="mod" />}>
-            <Route path="/moderator/dashboard" element={<ModeratorDashboardPage />} />
-            <Route path="/moderator/reports/shops" element={<ModeratorSectionPage title="Báo cáo cửa hàng" />} />
-            <Route path="/moderator/reports/products" element={<ModeratorSectionPage title="Báo cáo sản phẩm" />} />
-            <Route path="/moderator/reports/reviews" element={<ModeratorSectionPage title="Báo cáo đánh giá" />} />
-            <Route path="/moderator/history" element={<ModeratorSectionPage title="Lịch sử xử lý" />} />
-            <Route path="/moderator/locked-users" element={<ModeratorSectionPage title="Tài khoản bị khóa" />} />
-          </Route>
-        </Route>
-        <Route path="/mod/*" element={<Navigate to="/moderator/dashboard" replace />} />
         <Route path="/seller" element={<SellerPublicLayout />}>
           <Route index element={<SellerAccessPage />} />
           <Route path="register" element={<Navigate to="/register" replace state={{ returnTo: '/seller' }} />} />

@@ -8,6 +8,8 @@ export const SELLER_HOME = {
   approved: '/seller/dashboard',
   suspended: '/seller/dashboard',
   banned: '/seller/dashboard',
+  pending_deletion: '/seller/dashboard',
+  deleted: '/seller/dashboard',
 }
 
 export function getSellerStatus(userId) {

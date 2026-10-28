@@ -8,6 +8,8 @@ import ProductCard from '@/features/search/components/ProductCard'
 import { SORT_OPTIONS, sortProducts } from '@/lib/searchFilters'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
 import { PRODUCTS } from '@/mocks/products'
+import { compressReportEvidence, createAdminReport } from '@/mocks/adminModeration'
+import useShopAvailability from '@/hooks/useShopAvailability'
 
 const PAGE_SIZE = 30
 const SHOP_REPORT_REASONS = [
@@ -22,7 +24,7 @@ export default function MockShopPage() {
   const { shopSlug } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const { isLoggedIn } = useAuth()
+  const { user, isLoggedIn } = useAuth()
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState('newest')
   const [isReportOpen, setIsReportOpen] = useState(false)
@@ -31,7 +33,10 @@ export default function MockShopPage() {
   const [reportValidationErrors, setReportValidationErrors] = useState({})
   const [reportImages, setReportImages] = useState([])
   const [reportSubmitted, setReportSubmitted] = useState(false)
-  const shop = MOCK_SHOPS.find((item) => item.slug === shopSlug)
+  const [reportSubmissionError, setReportSubmissionError] = useState('')
+  const foundShop = MOCK_SHOPS.find((item) => item.slug === shopSlug)
+  const shopIsActive = useShopAvailability(shopSlug)
+  const shop = foundShop && shopIsActive ? foundShop : null
   const shopProducts = shop ? PRODUCTS.filter((product) => product.shopSlug === shop.slug) : []
   const sortedProducts = sortProducts(shopProducts, sort)
   const totalPages = Math.ceil(sortedProducts.length / PAGE_SIZE)
@@ -68,7 +73,7 @@ export default function MockShopPage() {
     setIsReportOpen(true)
   }
 
-  const submitReport = (event) => {
+  const submitReport = async (event) => {
     event.preventDefault()
     const errors = {}
     if (!reportReason) errors.reason = 'Vui lòng chọn lý do báo cáo.'
@@ -77,7 +82,21 @@ export default function MockShopPage() {
     }
     setReportValidationErrors(errors)
     if (Object.keys(errors).length) return
-    setReportSubmitted(true)
+    setReportSubmissionError('')
+    try {
+      const evidenceImages = await compressReportEvidence(reportImages)
+      createAdminReport({
+        target: { type: 'shop', id: shop.id, label: shop.name, owner: shop.name, shopId: shop.slug },
+        reporterId: user.id,
+        reporterName: user.name,
+        reason: SHOP_REPORT_REASONS.find(([value]) => value === reportReason)?.[1] ?? reportReason,
+        details: reportDetails,
+        evidenceImages,
+      })
+      setReportSubmitted(true)
+    } catch (submitError) {
+      setReportSubmissionError(submitError instanceof Error ? submitError.message : 'Không thể lưu báo cáo.')
+    }
   }
 
   if (!shop) {
@@ -228,7 +247,7 @@ export default function MockShopPage() {
                 <h2 id="shop-report-title" className="mt-4 text-xl font-bold text-gray-900">Cảm ơn bạn đã gửi báo cáo</h2>
                 <p className="mt-3 text-sm leading-6 text-gray-600">
                   NaviShop sẽ chuyển thông tin đến bộ phận kiểm duyệt để xem xét cửa hàng này.
-                  Quá trình xử lý được thực hiện nội bộ; vì lý do bảo mật, chúng tôi có thể không gửi chi tiết kết quả xử lý.
+                  Khi case được đóng, NaviShop sẽ gửi thông báo cảm ơn bạn đã hỗ trợ giữ môi trường mua sắm an toàn.
                 </p>
                 <button
                   type="button"
@@ -284,6 +303,7 @@ export default function MockShopPage() {
                     detailsRequired={reportReason === 'other'}
                     detailsError={reportValidationErrors.details}
                   />
+                  {reportSubmissionError && <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{reportSubmissionError}</p>}
                   <div className="mt-5 flex justify-end gap-2">
                     <button type="button" onClick={() => setIsReportOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Hủy</button>
                     <button type="submit" className="rounded-lg bg-[#056F1C] px-4 py-2 text-sm font-semibold text-white hover:bg-[#045517]">Gửi báo cáo</button>

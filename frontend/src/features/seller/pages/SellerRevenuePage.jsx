@@ -236,7 +236,7 @@ export default function SellerRevenuePage() {
   )
 
   if (!isLoggedIn || user?.role !== 'user') return <Navigate to="/seller" replace />
-  if (!application || !['approved', 'suspended', 'banned'].includes(application.status)) {
+  if (!application || !['approved', 'suspended', 'banned', 'pending_deletion', 'deleted'].includes(application.status)) {
     return <Navigate to="/seller/dashboard" replace />
   }
 

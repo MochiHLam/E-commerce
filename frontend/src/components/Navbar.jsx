@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
-import { INITIAL_NOTIFICATIONS, NOTIFICATION_ICONS, formatNotificationDateTime } from '@/mocks/mockNotifications'
+import { NOTIFICATION_ICONS, formatNotificationDateTime } from '@/mocks/mockNotifications'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
+import { getUserNotifications, saveUserNotifications } from '@/mocks/userNotifications'
 
 function formatPrice(price) {
   return `${new Intl.NumberFormat('vi-VN').format(price ?? 0)} ₫`
@@ -21,7 +22,7 @@ function formatPrice(price) {
 export default function Navbar({ variant = 'default' }) {
   const [query, setQuery] = useState('')
   const [activeDropdown, setActiveDropdown] = useState(null)
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
+  const [notifications, setNotifications] = useState(() => getUserNotifications())
   const [isNotificationsLoading] = useState(false)
   const dropdownAreaRef = useRef(null)
   const navigate = useNavigate()
@@ -35,18 +36,34 @@ export default function Navbar({ variant = 'default' }) {
   }, [pathname])
 
   useEffect(() => {
+    setNotifications(getUserNotifications(user?.id))
+    const refreshNotifications = (event) => {
+      if (event.detail?.userId && event.detail.userId !== user?.id) return
+      setNotifications(getUserNotifications(user?.id))
+    }
+    window.addEventListener('navishop:reporter-notifications-updated', refreshNotifications)
+    window.addEventListener('navishop:user-notifications-updated', refreshNotifications)
+    return () => {
+      window.removeEventListener('navishop:reporter-notifications-updated', refreshNotifications)
+      window.removeEventListener('navishop:user-notifications-updated', refreshNotifications)
+    }
+  }, [user?.id])
+
+  useEffect(() => {
     const addNotification = (event) => {
       const notification = event.detail?.notification
       if (!notification?.id) return
-      setNotifications((current) => [
+      const nextNotifications = [
         notification,
-        ...current.filter((item) => item.id !== notification.id),
-      ])
+        ...getUserNotifications(user?.id).filter((item) => item.id !== notification.id),
+      ]
+      setNotifications(nextNotifications)
+      if (user?.id) saveUserNotifications(user.id, nextNotifications)
     }
 
     window.addEventListener('navishop:notification', addNotification)
     return () => window.removeEventListener('navishop:notification', addNotification)
-  }, [])
+  }, [user?.id])
 
   useEffect(() => {
     if (!activeDropdown) return undefined
@@ -73,9 +90,11 @@ export default function Navbar({ variant = 'default' }) {
   }
 
   const openNotification = (notification) => {
-    setNotifications((current) => current.map((item) =>
+    const nextNotifications = notifications.map((item) =>
       item.id === notification.id ? { ...item, isRead: true } : item,
-    ))
+    )
+    setNotifications(nextNotifications)
+    if (user?.id) saveUserNotifications(user.id, nextNotifications)
     setActiveDropdown(null)
     navigate(notification.href)
   }
@@ -253,7 +272,11 @@ export default function Navbar({ variant = 'default' }) {
                           <span className="font-semibold">Thông báo</span>
                           <button
                             type="button"
-                            onClick={() => setNotifications((current) => current.map((item) => ({ ...item, isRead: true })))}
+                            onClick={() => {
+                              const nextNotifications = notifications.map((item) => ({ ...item, isRead: true }))
+                              setNotifications(nextNotifications)
+                              if (user?.id) saveUserNotifications(user.id, nextNotifications)
+                            }}
                             disabled={unreadCount === 0}
                             className="inline-flex items-center gap-1 text-xs font-semibold text-[#056F1C] hover:underline disabled:cursor-default disabled:text-gray-400 disabled:no-underline"
                           >

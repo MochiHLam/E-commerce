@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, CircleCheck, X } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { INITIAL_NOTIFICATIONS, formatNotificationDateTime } from '@/mocks/mockNotifications'
+import { useAuth } from '@/context/AuthContext'
+import { formatNotificationDateTime } from '@/mocks/mockNotifications'
+import { getUserNotifications } from '@/mocks/userNotifications'
 
 function DetailRow({ label, children }) {
   return (
@@ -14,8 +16,9 @@ function DetailRow({ label, children }) {
 
 export default function ReportNotificationPage() {
   const { reportId } = useParams()
+  const { user } = useAuth()
   const [expandedImage, setExpandedImage] = useState(null)
-  const notification = INITIAL_NOTIFICATIONS.find((item) =>
+  const notification = getUserNotifications(user?.id).find((item) =>
     item.type === 'report' && item.href === `/user/reports/${encodeURIComponent(reportId)}`,
   )
 

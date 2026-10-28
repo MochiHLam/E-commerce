@@ -2,18 +2,22 @@ import { normalizeVi } from '@/lib/normalizeVi'
 import { PAGE_SIZE, sortProducts } from '@/lib/searchFilters'
 import { MOCK_SHOPS } from '@/mocks/mockShops'
 import { PRODUCTS } from '@/mocks/products'
+import { isSellerShopActive } from '@/mocks/seller'
 
 export async function searchProducts(filters) {
   const keyword = normalizeVi(filters.q)
-  const scopedShop = MOCK_SHOPS.find((shop) => shop.slug === filters.shop)
-  const searchableProducts = scopedShop
-    ? PRODUCTS.filter((product) => product.shopSlug === scopedShop.slug)
-    : PRODUCTS
+  const activeShops = MOCK_SHOPS.filter((shop) => isSellerShopActive(shop.slug))
+  const activeShopSlugs = new Set(activeShops.map((shop) => shop.slug))
+  const scopedShop = activeShops.find((shop) => shop.slug === filters.shop)
+  const searchableProducts = filters.shop
+    ? scopedShop ? PRODUCTS.filter((product) => product.shopSlug === scopedShop.slug) : []
+    : PRODUCTS.filter((product) => activeShopSlugs.has(product.shopSlug))
   const hasProductFilters = filters.category.length > 0
     || filters.minPrice != null
     || filters.maxPrice != null
     || filters.rating != null
-  const matchedShops = (scopedShop ? [scopedShop] : MOCK_SHOPS)
+  const availableShops = filters.shop ? (scopedShop ? [scopedShop] : []) : activeShops
+  const matchedShops = availableShops
     .flatMap((shop) => {
       const shopProducts = searchableProducts.filter((product) => product.shopSlug === shop.slug)
       const matchingProducts = shopProducts.filter((product) =>
@@ -35,7 +39,7 @@ export async function searchProducts(filters) {
     .filter((product) => {
       if (!keyword) return true
       return normalizeVi(product.name).includes(keyword)
-        || normalizeVi(MOCK_SHOPS.find((shop) => shop.slug === product.shopSlug)?.name ?? '').includes(keyword)
+        || normalizeVi(activeShops.find((shop) => shop.slug === product.shopSlug)?.name ?? '').includes(keyword)
     })
     .filter((product) => filters.minPrice == null || product.price >= filters.minPrice)
     .filter((product) => filters.maxPrice == null || product.price <= filters.maxPrice)

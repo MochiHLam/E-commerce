@@ -1,19 +1,25 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, ChevronLeft, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useCart } from '@/context/CartContext'
 import { getCartInventoryIssues, getCartItemStock } from '@/lib/cartInventory'
 import { formatVND } from '@/lib/format'
+import { isSellerShopActive } from '@/mocks/seller'
+import useShopAvailability from '@/hooks/useShopAvailability'
 
 const getItemKey = (item) => `${item.id}-${item.variantId ?? 'default'}`
 
 export default function CartPage() {
   const navigate = useNavigate()
   const { items, removeFromCart, updateQuantity } = useCart()
+  const availabilityVersion = useShopAvailability()
   const [selectedKeys, setSelectedKeys] = useState(() => new Set())
   const selectedItems = items.filter((item) => selectedKeys.has(getItemKey(item)))
   const selectedTotalPrice = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const inventoryIssues = getCartInventoryIssues(selectedItems)
+  const inventoryIssues = useMemo(
+    () => getCartInventoryIssues(selectedItems),
+    [availabilityVersion, selectedItems],
+  )
   const allSelected = items.length > 0 && selectedItems.length === items.length
 
   const checkout = () => {
@@ -69,7 +75,8 @@ export default function CartPage() {
               <ul className="divide-y divide-gray-100">
                 {items.map((item) => {
                   const stock = getCartItemStock(item)
-                  const canIncrease = item.quantity < stock
+                  const shopUnavailable = !isSellerShopActive(item.shopSlug)
+                  const canIncrease = !shopUnavailable && item.quantity < stock
                   const name = `${item.name || item.title || 'Sản phẩm'}${item.variantLabel ? ` (${item.variantLabel})` : ''}`
                   return (
                     <li key={getItemKey(item)} className="grid gap-4 px-4 py-5 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_8rem_2.5rem] sm:items-center sm:px-5">
@@ -101,6 +108,11 @@ export default function CartPage() {
                           </Link>
                           {item.variantName && <p className="mt-1 text-xs text-gray-500">{item.variantName}</p>}
                           <p className="mt-1 text-xs text-gray-500">Tồn kho: {Number.isFinite(stock) ? stock : '—'}</p>
+                          {shopUnavailable && (
+                            <p role="alert" className="mt-1 text-xs font-semibold text-red-700">
+                              Shop không còn hoạt động; sản phẩm không thể thanh toán.
+                            </p>
+                          )}
                           {item.quantity > stock && (
                             <p role="alert" className="mt-1 text-xs font-medium text-red-600">
                               Giỏ hàng vượt quá tồn kho. Vui lòng giảm xuống còn tối đa {stock}.
